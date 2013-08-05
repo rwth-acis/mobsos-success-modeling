@@ -2,3 +2,4 @@
 /.las2peer
 /log
 /export
+/config/i5.las2peer.services.monitoring.provision.MonitoringDataProvisionService.properties
