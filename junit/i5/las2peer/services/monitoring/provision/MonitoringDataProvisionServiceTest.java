@@ -1,6 +1,5 @@
 package i5.las2peer.services.monitoring.provision;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import i5.las2peer.httpConnector.HttpConnector;
 import i5.las2peer.httpConnector.client.Client;
@@ -81,9 +80,6 @@ public class MonitoringDataProvisionServiceTest {
 		try {
 			//Login
 			c.connect();
-			
-			Object result = c.invoke(testServiceClass, "testMethod");
-			assertEquals(result, "This will be the great Provision Service!");
 			
 		} catch (Exception e) {
 			e.printStackTrace();
