@@ -21,7 +21,7 @@ public enum SQLDatabaseType {
 	DB2 (1),
 	
 	/**
-	 * A MySQL 5.1 database. Works with the "mysql-connector-java-5.1.16.jar" archive.
+	 * A MySQL 5.1 database. Works with the "mysqlConnectorJava-5.1.16.jar" archive.
 	 */
 	MySQL (2);
 	

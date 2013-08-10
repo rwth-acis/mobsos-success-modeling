@@ -1,0 +1,21 @@
+<catalog>
+	<measure name="MyFirstMeasure">
+		<query name="AgentUploadStarted">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED';
+		</query>
+		<query name="AgentUploadSuccess">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS';
+		</query>
+		<visualization type="KPI">
+			<operand name="AgentUploadSuccess" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="AgentUploadStarted" index="2"/>
+		</visualization>
+	</measure>
+	<measure name="MySecondMeasure">
+		<query name="GetTypeOfAgentA">
+			SELECT TYPE FROM AGENT WHERE AGENT_ID = -6882384308892167869;
+		</query>
+		<visualization type="Value"/>
+	</measure>
+</catalog>

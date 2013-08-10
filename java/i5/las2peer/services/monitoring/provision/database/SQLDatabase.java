@@ -3,6 +3,7 @@ package i5.las2peer.services.monitoring.provision.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -65,8 +66,8 @@ public class SQLDatabase{
 	public boolean connect() throws Exception{
 		try {
 			Class.forName(jdbcInfo.getDriverName()).newInstance();
-			String JDBCCurl = jdbcInfo.getURLPrefix(this.host, this.database, this.port);
-			this.connection = DriverManager.getConnection(JDBCCurl, this.username, this.password);
+			String urlPrefix = jdbcInfo.getURLPrefix(this.host, this.database, this.port);
+			this.connection = DriverManager.getConnection(urlPrefix, this.username, this.password);
 			
 			if(!this.connection.isClosed()){
 				this.isConnected = true;
@@ -77,7 +78,7 @@ public class SQLDatabase{
 			}
 		} 
 		catch (ClassNotFoundException e){
-			throw new Exception("JDBC-Driver for requested database type not found! Make sure the library is defined in the settings and is placed in the libary folder!", e);
+			throw new Exception("JDBC-Driver for requested database type not found! Make sure the library is defined in the settings and is placed in the library folder!", e);
 		}
 		catch (SQLException e){
 			throw e;
@@ -128,28 +129,24 @@ public class SQLDatabase{
 	
 	/**
 	 * 
-	 * Executes a SQL statement to insert an entry into the database.
+	 * Executes a given query on the database.
 	 * 
 	 * @param SQLStatment
 	 * 
-	 * @return true, if correctly inserted
+	 * @return a ResultSet
 	 * 
-	 * @throws SQLException problems inserting
+	 * @throws SQLException problems inserting or not connected
 	 * 
 	 */
-	public boolean store(String SQLStatment) throws Exception{
+	public ResultSet query(String SQLStatment) throws SQLException{
 		// make sure one is connected to a database
 		if(!isConnected())
-			return false;
+			throw new SQLException("Not connected!");
 		
-		try{
-			Statement statement = connection.createStatement();
-			statement.executeUpdate(SQLStatment);
-			return true;
-		}
-		catch (SQLException e){
-			throw e;
-		}
+		Statement statement = connection.createStatement();
+		ResultSet resultSet = statement.executeQuery(SQLStatment);
+		return resultSet;
+		
 	}
 	
 	

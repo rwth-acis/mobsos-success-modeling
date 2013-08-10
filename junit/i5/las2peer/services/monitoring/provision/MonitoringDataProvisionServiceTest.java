@@ -1,5 +1,7 @@
 package i5.las2peer.services.monitoring.provision;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import i5.las2peer.httpConnector.HttpConnector;
 import i5.las2peer.httpConnector.client.Client;
@@ -15,6 +17,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * 
+ * Tests for the Monitoring Data Provision Service.
+ * Please note, that this tests will only work with a valid database entry
+ * that contains some data. There are no insert statements formulated here,
+ * so all queried results in these tests will have to be generated before running them.
+ * 
+ * @author Peter de Lange
+ *
+ */
 public class MonitoringDataProvisionServiceTest {
 	
 	private static final String HTTP_ADDRESS = "localhost";
@@ -59,12 +71,12 @@ public class MonitoringDataProvisionServiceTest {
 	public void shutDownServer() throws Exception {
 		connector.stop();
 		node.shutDown();
-
+		
 		connector = null;
 		node = null;
-
+		
 		LocalNode.reset();
-
+		
 		System.out.println("Connector-Log:");
 		System.out.println("--------------");
 
@@ -73,13 +85,60 @@ public class MonitoringDataProvisionServiceTest {
 	
 	
 	@Test
-	public void testWorkingSetup() {
+	public void getMeasureNames() {
 		
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
 		
 		try {
 			//Login
 			c.connect();
+			
+			
+			Object result = c.invoke(testServiceClass, "getKnownMeasureNames", true);
+			String[] resultArray = (String[]) result;
+			assertEquals(2, resultArray.length);
+			assertTrue(resultArray[0].equals("MyFirstMeasure"));
+			assertTrue(resultArray[1].equals("MySecondMeasure"));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Exception: " + e);
+		}
+		
+		try {
+		
+		//and logout
+		c.disconnect();
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Exception: " + e);
+		}
+	}
+	
+	
+	@Test
+	public void getMeasures() {
+		
+		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
+		
+		try {
+			//Login
+			c.connect();
+			
+			Object result = c.invoke(testServiceClass, "getMeasure", "MyFirstMeasure");
+			try{
+				Double resultDouble = Double.parseDouble((String) result);
+				System.out.println("MyFirstResult: " + resultDouble);
+			} catch (NumberFormatException e){
+				e.printStackTrace();
+				fail("Exception: " + e);
+			}
+			
+			result = c.invoke(testServiceClass, "getMeasure", "MySecondMeasure");
+			assertTrue(result instanceof String);
+			System.out.println("MySecondMeasureResult: " + result);
+			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
