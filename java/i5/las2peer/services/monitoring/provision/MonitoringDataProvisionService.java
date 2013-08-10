@@ -25,8 +25,6 @@ import java.util.TreeMap;
 
 /**
  * 
- * MonitoringDataProvisionService.java
- * <br>
  * This service will connect to the monitoring database and provide an interface
  * for frontend clients to visualize monitored data.
  * 

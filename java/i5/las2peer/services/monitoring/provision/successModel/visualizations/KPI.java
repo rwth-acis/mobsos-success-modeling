@@ -12,8 +12,6 @@ import net.astesana.javaluator.DoubleEvaluator;
 
 /**
  * 
- * KPI.java
- * <br>
  * Returns a Key Performance Indicator as visualization result.
  * 
  * @author Peter de Lange

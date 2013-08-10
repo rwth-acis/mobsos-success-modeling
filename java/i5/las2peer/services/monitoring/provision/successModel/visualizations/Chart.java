@@ -6,8 +6,6 @@ import java.util.Map;
 
 /**
  * 
- * Chart.java
- * <br>
  * Visualizes a query as a chart.
  * 
  * @author Peter de Lange

@@ -10,8 +10,6 @@ import java.sql.Statement;
 
 /**
  * 
- * SQLDatabase.java
- *<br>
  * Stores the database credentials and provides access to query execution.
  * The original code was taken from the QueryVisualizationService.
  * 

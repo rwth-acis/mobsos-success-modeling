@@ -11,8 +11,6 @@ import java.util.Map;
 
 /**
  * 
- * Value.java
- * <br>
  * Returns a simple value as visualization result.
  * 
  * @author Peter de Lange

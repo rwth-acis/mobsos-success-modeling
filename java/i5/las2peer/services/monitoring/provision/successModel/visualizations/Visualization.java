@@ -6,8 +6,6 @@ import java.util.Map;
 
 /**
  * 
- * Visualization.java
- * <br>
  * Basic abstract class for visualizations of a measure.
  * 
  * @author Peter de Lange

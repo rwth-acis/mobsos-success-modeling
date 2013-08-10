@@ -3,8 +3,6 @@ package i5.las2peer.services.monitoring.provision.database;
 
 /**
  * 
- * SQLDatabaseType.java
- * <br>
  * Enumeration class that provides the right drivers according to the database type.
  * The original code was taken from the QueryVisualizationService.
  * 
