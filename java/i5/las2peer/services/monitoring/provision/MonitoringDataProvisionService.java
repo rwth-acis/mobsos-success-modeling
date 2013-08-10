@@ -35,7 +35,7 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	public final String NODE_QUERY = "SELECT NODE_ID FROM NODE";
-	
+	public final String SERVICE_QUERY = "SELECT AGENT_ID FROM SERVICE";
 	/**
 	 * Configuration parameters, values will be set by the configuration file.
 	 */
@@ -121,14 +121,17 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
+	 * 
 	 * Returns all stored nodes.
 	 * 
 	 * @return an array of node id's
+	 * 
 	 * @throws Exception
+	 * 
 	 */
 	public String[] getNodes() throws Exception{
 		List<String> nodeIds = new ArrayList<String>();
-
+		
 		ResultSet resultSet;
 		try {
 			resultSet = database.query(NODE_QUERY);
@@ -140,6 +143,32 @@ public class MonitoringDataProvisionService extends Service{
 		}
 		return nodeIds.toArray(new String[nodeIds.size()]);
 	}
+	
+	
+	/**
+	 * 
+	 * Returns all stored ( = monitored) services.
+	 * 
+	 * @return an array of service agent id
+	 * 
+	 * @throws Exception
+	 * 
+	 */
+	public String[] getServices() throws Exception{
+		List<String> serviceAgentIds = new ArrayList<String>();
+		
+		ResultSet resultSet;
+		try {
+			resultSet = database.query(SERVICE_QUERY);
+		} catch (SQLException e) {
+			throw new Exception("The query has lead to an error: " + e);
+		}
+		while(resultSet.next()){
+			serviceAgentIds.add(resultSet.getString(1));
+		}
+		return serviceAgentIds.toArray(new String[serviceAgentIds.size()]);
+	}
+	
 	
 	
 	/**

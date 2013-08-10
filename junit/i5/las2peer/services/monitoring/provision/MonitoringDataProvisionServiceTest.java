@@ -118,7 +118,7 @@ public class MonitoringDataProvisionServiceTest {
 	
 	
 	@Test
-	public void getMeasuresAndNodes() {
+	public void getMeasuresServicesAndNodes() {
 		
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
 		
@@ -145,6 +145,11 @@ public class MonitoringDataProvisionServiceTest {
 			for(String node : resultArray)
 				System.out.println(node);
 			
+			result = c.invoke(testServiceClass, "getServices");
+			assertTrue(result instanceof String[]);
+			resultArray = (String[]) result;
+			for(String service : resultArray)
+				System.out.println(service);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
