@@ -14,7 +14,11 @@ import i5.simpleXML.XMLSyntaxException;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -26,8 +30,13 @@ import java.util.TreeMap;
  * This service will connect to the monitoring database and provide an interface
  * for frontend clients to visualize monitored data.
  * 
+ * @author Peter de Lange
+ * 
  */
 public class MonitoringDataProvisionService extends Service{
+	
+	
+	public final String NODE_QUERY = "SELECT NODE_ID FROM NODE";
 	
 	/**
 	 * Configuration parameters, values will be set by the configuration file.
@@ -87,7 +96,7 @@ public class MonitoringDataProvisionService extends Service{
 	 * @return an array of names
 	 * 
 	 */
-	public String[] getKnownMeasureNames(boolean update){
+	public String[] getMeasureNames(boolean update){
 		if(update)
 			try {
 				knownMeasures = updateMeasures();
@@ -110,6 +119,28 @@ public class MonitoringDataProvisionService extends Service{
 		}
 		
 		return returnArray;
+	}
+	
+	
+	/**
+	 * Returns all stored nodes.
+	 * 
+	 * @return an array of node id's
+	 * @throws Exception
+	 */
+	public String[] getNodes() throws Exception{
+		List<String> nodeIds = new ArrayList<String>();
+
+		ResultSet resultSet;
+		try {
+			resultSet = database.query(NODE_QUERY);
+		} catch (SQLException e) {
+			throw new Exception("The query has lead to an error: " + e);
+		}
+		while(resultSet.next()){
+			nodeIds.add(resultSet.getString(1));
+		}
+		return nodeIds.toArray(new String[nodeIds.size()]);
 	}
 	
 	

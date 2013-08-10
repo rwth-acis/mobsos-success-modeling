@@ -52,6 +52,18 @@ public class Measure {
 	
 	
 	/**
+	 * 
+	 * Gets the queries of this measure.
+	 * 
+	 * @return a map of queries
+	 * 
+	 */
+	public Map<String, String> getQueries(){
+		return this.queries;
+	}
+	
+	
+	/**
 	 * Gets the name of this Measure.
 	 * 
 	 * @return the measure name

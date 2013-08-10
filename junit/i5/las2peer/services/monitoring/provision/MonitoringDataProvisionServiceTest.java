@@ -94,7 +94,7 @@ public class MonitoringDataProvisionServiceTest {
 			c.connect();
 			
 			
-			Object result = c.invoke(testServiceClass, "getKnownMeasureNames", true);
+			Object result = c.invoke(testServiceClass, "getMeasureNames", true);
 			String[] resultArray = (String[]) result;
 			assertEquals(2, resultArray.length);
 			assertTrue(resultArray[0].equals("MyFirstMeasure"));
@@ -118,7 +118,7 @@ public class MonitoringDataProvisionServiceTest {
 	
 	
 	@Test
-	public void getMeasures() {
+	public void getMeasuresAndNodes() {
 		
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
 		
@@ -138,6 +138,12 @@ public class MonitoringDataProvisionServiceTest {
 			result = c.invoke(testServiceClass, "getMeasure", "MySecondMeasure");
 			assertTrue(result instanceof String);
 			System.out.println("MySecondMeasureResult: " + result);
+			
+			result = c.invoke(testServiceClass, "getNodes");
+			assertTrue(result instanceof String[]);
+			String[] resultArray = (String[]) result;
+			for(String node : resultArray)
+				System.out.println(node);
 			
 			
 		} catch (Exception e) {
