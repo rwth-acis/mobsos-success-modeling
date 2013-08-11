@@ -126,16 +126,12 @@ public class MonitoringDataProvisionServiceTest {
 			//Login
 			c.connect();
 			
-			Object result = c.invoke(testServiceClass, "getMeasure", "MyFirstMeasure");
-			try{
-				Double resultDouble = Double.parseDouble((String) result);
-				System.out.println("MyFirstResult: " + resultDouble);
-			} catch (NumberFormatException e){
-				e.printStackTrace();
-				fail("Exception: " + e);
-			}
+			Object result = c.invoke(testServiceClass, "visualizeNodeMeasure", "MyFirstMeasure", "<0xC395A0..>");
 			
-			result = c.invoke(testServiceClass, "getMeasure", "MySecondMeasure");
+			Double resultDouble = Double.parseDouble((String) result);
+			System.out.println("MyFirstResult: " + resultDouble);
+			
+			result = c.invoke(testServiceClass, "visualizeMeasure", "MySecondMeasure");
 			assertTrue(result instanceof String);
 			System.out.println("MySecondMeasureResult: " + result);
 			
@@ -143,13 +139,13 @@ public class MonitoringDataProvisionServiceTest {
 			assertTrue(result instanceof String[]);
 			String[] resultArray = (String[]) result;
 			for(String node : resultArray)
-				System.out.println(node);
+				System.out.println("Result of asking for all nodes: " + node);
 			
 			result = c.invoke(testServiceClass, "getServices");
 			assertTrue(result instanceof String[]);
 			resultArray = (String[]) result;
 			for(String service : resultArray)
-				System.out.println(service);
+				System.out.println("Result of asking for all services: " + service);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

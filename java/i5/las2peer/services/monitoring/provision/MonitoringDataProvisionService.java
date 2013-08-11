@@ -18,9 +18,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 
 /**
@@ -170,19 +172,64 @@ public class MonitoringDataProvisionService extends Service{
 	}
 	
 	
+	/**
+	 * 
+	 * Executes a node measure query and returns the result.
+	 * 
+	 * @param measureName the name of the measure
+	 * @param node the name of the node this measure is for
+	 * 
+	 * @return the result as a string
+	 * 
+	 */
+	public String visualizeNodeMeasure(String measureName, String nodeId){
+		return visualizeMeasure(measureName, nodeId, null);
+	}
+	
 	
 	/**
 	 * 
-	 * Executes a Measure Query and returns the Result.
+	 * Executes a service measure query and returns the result.
+	 * 
+	 * @param measureName the name of the measure
+	 * @param the serviceId this measure should be for (can be null)
+	 * 
+	 * @return the result as a string
+	 * 
+	 */
+	public String visualizeServiceMeasure(String measureName, String serviceId){
+		return visualizeMeasure(measureName, null, serviceId);
+	}
+	
+	
+	/**
+	 * 
+	 * Executes a measure query and returns the result.
 	 * 
 	 * @param measureName the name of the measure
 	 * 
 	 * @return the result as a string
 	 * 
 	 */
-	public String getMeasure(String measureName){
+	public String visualizeMeasure(String measureName){
+		return visualizeMeasure(measureName, null, null);
+	}
+	
+	
+	/**
+	 * 
+	 * Executes a measure query and returns the result.
+	 * 
+	 * @param measureName the name of the measure
+	 * @param node the name of the node this measure is for (can be null)
+	 * @param the serviceId this measure should be for (can be null)
+	 * 
+	 * @return the result as a string
+	 * 
+	 */
+	public String visualizeMeasure(String measureName, String nodeId, String serviceId){
 		Measure measure = knownMeasures.get(measureName);
-		
+
 		if(measure == null){
 			//Reload the list
 			try {
@@ -200,6 +247,12 @@ public class MonitoringDataProvisionService extends Service{
 			if(measure == null) //still not found
 				return "Measure does not exist!";
 		}
+		
+		//Insert parameters, if fields are set
+		if(nodeId != null)
+			measure = insertNode(measure, nodeId);
+		if(serviceId != null)
+			measure = insertServiceId(measure, serviceId);
 		
 		try {
 			return measure.visualize(this.database);
@@ -309,4 +362,50 @@ public class MonitoringDataProvisionService extends Service{
 		}
 		return null;
 	}
+	
+	
+	/**
+	 * 
+	 * Inserts the node id into the queries of a measure.
+	 * 
+	 * @param query a query with placeholder
+	 * @param queryParameters the corresponding query parameters
+	 * 
+	 * @return the measure with inserted node id
+	 *  
+	 */
+	private Measure insertNode(Measure measure, String nodeId){
+		Pattern pattern = Pattern.compile("\\$NODE\\$");
+		
+		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
+		while (queries.hasNext()) {
+		    Map.Entry<String, String> entry = queries.next();
+			entry.setValue(pattern.matcher(entry.getValue()).replaceAll(nodeId));
+		}
+		return measure;
+	}
+	
+	
+	/**
+	 * 
+	 * Inserts the service id into the queries of a measure.
+	 * 
+	 * @param query a query with placeholder
+	 * @param queryParameters the corresponding query parameters
+	 * 
+	 * @return the measure with inserted serviceId
+	 * 
+	 */
+	private Measure insertServiceId(Measure measure, String serviceId){
+		Pattern pattern = Pattern.compile("\\$SERVICEID\\$");
+		
+		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
+		while (queries.hasNext()) {
+		    Map.Entry<String, String> entry = queries.next();
+			entry.setValue(pattern.matcher(entry.getValue()).replaceAll(serviceId));
+		}
+		return measure;
+	}
+	
+	
 }

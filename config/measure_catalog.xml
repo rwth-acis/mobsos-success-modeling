@@ -1,10 +1,10 @@
 <catalog>
 	<measure name="MyFirstMeasure">
 		<query name="AgentUploadStarted">
-			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED';
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED' AND SOURCE_NODE = '$NODE$';
 		</query>
 		<query name="AgentUploadSuccess">
-			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS';
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS' AND SOURCE_NODE = '$NODE$';
 		</query>
 		<visualization type="KPI">
 			<operand name="AgentUploadSuccess" index="0"/>
