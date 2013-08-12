@@ -1,0 +1,55 @@
+<successModel name="Chat Service Success Model">
+	<service name="i5.las2peer.services.chatService.ChatService"/>
+	
+	<dimension name="System Quality">
+		<factor name="Stability">
+			<measure name="Error Frequency"/>
+		</factor>
+		<factor name="Performance">
+			<measure name="Time to send Message"/>
+			<measure name="Time to fetch Chatroom Information"/>
+		</factor>
+	</dimension>
+	
+	<dimension name="Information Quality">
+		<factor name="Quantity">
+			<measure name="Number of public Chatrooms over Time"/>
+			<measure name="Number of private Chatrooms over Time"/>
+		</factor>
+		<factor name="Quality">
+			<measure name="Average Users per public Chatroom"/>
+			<measure name="Average Users per private Chatroom"/>
+		</factor>
+	</dimension>
+	
+	<dimension name="Use">
+		<factor name="Active Use">
+			<measure name="Send Messages over Time"/>
+			<measure name="Average Messages send per User"/>
+		</factor>
+		<factor name="Passive Use">
+			<measure name="Received Messages over Time"/>
+			<measure name="Average Messages received per User"/>
+		</factor>
+	</dimension>
+	
+	<dimension name="User Satisfaction">
+		<factor name="Time Spend">
+			<measure name="Average Time spend in Chatroom"/>
+			<measure name="Average Time spend online"/>
+		</factor>
+	</dimension>
+	
+	<dimension name="Individual Impact">
+		<factor name="">
+			
+		</factor>
+	</dimension>
+	
+	<dimension name="Organizational Impact">
+		<factor name="">
+			
+		</factor>
+	</dimension>
+	
+</successModel>

@@ -1,0 +1,22 @@
+<NodeSuccessModel name="Sample Node Success Model">
+	<dimension name="System Quality">
+		<factor name="Stability">
+			<measure name = "Error Frequency"/>
+		</factor>
+	</dimension>
+	<dimension name="Information Quality">
+		
+	</dimension>
+	<dimension name="Use">
+		
+	</dimension>
+	<dimension name="User Satisfaction">
+		
+	</dimension>
+	<dimension name="Individual Impact">
+		
+	</dimension>
+	<dimension name="Organizational Impact">
+		
+	</dimension>
+</NodeSuccessModel>
