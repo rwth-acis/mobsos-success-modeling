@@ -21,8 +21,7 @@ import org.junit.Test;
  * 
  * Tests for the Monitoring Data Provision Service.
  * Please note, that this tests will only work with a valid database entry
- * that contains some data. There are no insert statements formulated here,
- * so all queried results in these tests will have to be generated before running them.
+ * that contains some data. At least one node has to be stored in the database.
  * 
  * @author Peter de Lange
  *
@@ -51,11 +50,11 @@ public class MonitoringDataProvisionServiceTest {
 		node.storeAgent(adam);
 		
 		node.launch();
-
+		
 		ServiceAgent testService = ServiceAgent.generateNewAgent(
 				testServiceClass, "a pass");
 		testService.unlockPrivateKey("a pass");
-
+		
 		node.registerReceiver(testService);
 
 		// start connector
@@ -85,7 +84,7 @@ public class MonitoringDataProvisionServiceTest {
 	
 	
 	@Test
-	public void getMeasureNames() {
+	public void getNamesOfMeasuresServicesAndNodes() {
 		
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
 		
@@ -96,9 +95,25 @@ public class MonitoringDataProvisionServiceTest {
 			
 			Object result = c.invoke(testServiceClass, "getMeasureNames", true);
 			String[] resultArray = (String[]) result;
-			assertEquals(2, resultArray.length);
-			assertTrue(resultArray[0].equals("MyFirstMeasure"));
-			assertTrue(resultArray[1].equals("MySecondMeasure"));
+			assertEquals(3, resultArray.length);
+			//Since they are in an ordered map, this should work
+			assertTrue(resultArray[0].equals("ChartMeasure"));
+			assertTrue(resultArray[1].equals("KPIMeasure"));
+			assertTrue(resultArray[2].equals("ValueMeasure"));
+			
+			
+			result = c.invoke(testServiceClass, "getNodes");
+			assertTrue(result instanceof String[]);
+			resultArray = (String[]) result;
+			for(String node : resultArray)
+				System.out.println("Result of asking for all nodes: " + node);
+			
+			result = c.invoke(testServiceClass, "getServices");
+			assertTrue(result instanceof String[]);
+			resultArray = (String[]) result;
+			for(String service : resultArray)
+				System.out.println("Result of asking for all services: " + service);
+			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -107,7 +122,7 @@ public class MonitoringDataProvisionServiceTest {
 		
 		try {
 		
-		//and logout
+		//Logout
 		c.disconnect();
 		
 		} catch (Exception e) {
@@ -118,34 +133,30 @@ public class MonitoringDataProvisionServiceTest {
 	
 	
 	@Test
-	public void getMeasuresServicesAndNodes() {
+	public void getMeasures() {
 		
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
 		
 		try {
 			//Login
 			c.connect();
+			Object result = c.invoke(testServiceClass, "getNodes");
+			String knownNode = ((String[]) result)[0];
 			
-			Object result = c.invoke(testServiceClass, "visualizeNodeMeasure", "MyFirstMeasure", "<0xC395A0..>");
+
+			System.out.println("Calling Measure Visualizations with node " + knownNode);
+			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "KPIMeasure", knownNode);
 			
 			Double resultDouble = Double.parseDouble((String) result);
-			System.out.println("MyFirstResult: " + resultDouble);
+			System.out.println("KPIMeasure Result: " + resultDouble);
 			
-			result = c.invoke(testServiceClass, "visualizeMeasure", "MySecondMeasure");
+			result = c.invoke(testServiceClass, "visualizeMeasure", "ValueMeasure");
 			assertTrue(result instanceof String);
-			System.out.println("MySecondMeasureResult: " + result);
+			System.out.println("ValueMeasure Result: " + result);
 			
-			result = c.invoke(testServiceClass, "getNodes");
-			assertTrue(result instanceof String[]);
-			String[] resultArray = (String[]) result;
-			for(String node : resultArray)
-				System.out.println("Result of asking for all nodes: " + node);
-			
-			result = c.invoke(testServiceClass, "getServices");
-			assertTrue(result instanceof String[]);
-			resultArray = (String[]) result;
-			for(String service : resultArray)
-				System.out.println("Result of asking for all services: " + service);
+			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "ChartMeasure", knownNode);
+			assertTrue(result instanceof String);
+			System.out.println("ChartMeasure Result: " + result);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -154,7 +165,7 @@ public class MonitoringDataProvisionServiceTest {
 		
 		try {
 		
-		//and logout
+		//Logout
 		c.disconnect();
 		
 		} catch (Exception e) {

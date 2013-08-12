@@ -9,12 +9,12 @@ import java.sql.Statement;
 
 
 /**
- * 
+ *
  * Stores the database credentials and provides access to query execution.
  * The original code was taken from the QueryVisualizationService.
- * 
+ *
  * @author Peter de Lange
- * 
+ *
  */
 public class SQLDatabase{
 	
@@ -30,16 +30,16 @@ public class SQLDatabase{
 	
 	
 	/**
-	 * 
+	 *
 	 * Constructor for a database instance.
-	 * 
+	 *
 	 * @param jdbcInfo
 	 * @param username
 	 * @param password
 	 * @param database
 	 * @param host
 	 * @param port
-	 * 
+	 *
 	 */
 	public SQLDatabase(SQLDatabaseType jdbcInfo, String username, String password, String database, String host, int port){		
 		this.jdbcInfo = jdbcInfo;
@@ -52,14 +52,14 @@ public class SQLDatabase{
 	
 	
 	/**
-	 * 
+	 *
 	 * Connects to the database.
-	 * 
+	 *
 	 * @return true, if connected
-	 * 
+	 *
 	 * @throws ClassNotFoundException if the driver was not found
 	 * @throws SQLException if connecting did not work
-	 * 
+	 *
 	 */
 	public boolean connect() throws Exception{
 		try {
@@ -74,7 +74,7 @@ public class SQLDatabase{
 			else{
 				return false;
 			}
-		} 
+		}
 		catch (ClassNotFoundException e){
 			throw new Exception("JDBC-Driver for requested database type not found! Make sure the library is defined in the settings and is placed in the library folder!", e);
 		}
@@ -85,11 +85,11 @@ public class SQLDatabase{
 	
 	
 	/**
-	 * 
+	 *
 	 * Disconnects from the database.
-	 * 
+	 *
 	 * @return true, if correctly disconnected
-	 * 
+	 *
 	 */
 	public boolean disconnect(){
 		try{
@@ -98,7 +98,7 @@ public class SQLDatabase{
 			this.connection = null;
 			
 			return true;
-		} 
+		}
 		catch (SQLException e){
 			e.printStackTrace();
 			this.isConnected = false;
@@ -109,11 +109,11 @@ public class SQLDatabase{
 	
 	
 	/**
-	 * 
+	 *
 	 * Checks, if this database instance is currently connected.
-	 * 
+	 *
 	 * @return true, if connected
-	 * 
+	 *
 	 */
 	public boolean isConnected(){
 		try{
@@ -126,15 +126,15 @@ public class SQLDatabase{
 	
 	
 	/**
-	 * 
+	 *
 	 * Executes a given query on the database.
-	 * 
+	 *
 	 * @param SQLStatment
-	 * 
+	 *
 	 * @return a ResultSet
-	 * 
+	 *
 	 * @throws SQLException problems inserting or not connected
-	 * 
+	 *
 	 */
 	public ResultSet query(String SQLStatment) throws SQLException{
 		// make sure one is connected to a database

@@ -5,9 +5,9 @@ import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
 import java.util.Map;
 
 /**
- * 
+ *
  * Basic abstract class for visualizations of a measure.
- * 
+ *
  * @author Peter de Lange
  *
  */
@@ -15,9 +15,9 @@ public abstract class Visualization {
 	
 	
 	/**
-	 * 
+	 *
 	 * This enumeration stores the type of a visualization.
-	 * 
+	 *
 	 * @author Peter de Lange
 	 *
 	 */
@@ -47,11 +47,11 @@ public abstract class Visualization {
 		
 		
 		/**
-		 * 
+		 *
 		 * Returns the code of the database.
-		 * 
+		 *
 		 * @return a code
-		 * 
+		 *
 		 */
 		public int getCode(){
 			return this.code;
@@ -59,15 +59,15 @@ public abstract class Visualization {
 		
 	}
 	
-	protected Type type;
+	private Type type;
 	
 	
 	/**
-	 * 
+	 *
 	 * Gets the type of this visualization
-	 * 
+	 *
 	 * @return the type
-	 * 
+	 *
 	 */
 	public Type getType() {
 		return type;
@@ -75,11 +75,11 @@ public abstract class Visualization {
 	
 	
 	/**
-	 * 
+	 *
 	 * Constructor for a new visualization.
-	 * 
+	 *
 	 * @param type the {@link Type} of the visualization
-	 * 
+	 *
 	 */
 	public Visualization(Type type){
 		this.type = type;
@@ -87,16 +87,16 @@ public abstract class Visualization {
 	
 	
 	/**
-	 * 
+	 *
 	 * Executes the given database queries and visualizes the results according to the visualization.
-	 * 
+	 *
 	 * @param queries
 	 * @param database
-	 * 
+	 *
 	 * @return the visualization as a String
-	 * 
+	 *
 	 * @throws Exception
-	 * 
+	 *
 	 */
 	public abstract String visualize(Map<String, String> queries, SQLDatabase database) throws Exception;
 	

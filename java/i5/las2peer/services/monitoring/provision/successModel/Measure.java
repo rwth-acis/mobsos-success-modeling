@@ -8,10 +8,10 @@ import java.util.Map;
 
 
 /**
- * 
+ *
  * A measure contains a name, a number of queries and a {@link Visualization}.
  * It can be used to visualize these queries on a database.
- * 
+ *
  * @author Peter de Lange
  *
  */
@@ -23,13 +23,13 @@ public class Measure {
 	
 	
 	/**
-	 * 
+	 *
 	 * Constructor
-	 * 
+	 *
 	 * @param name the name of the measure
 	 * @param queries a map of queries
 	 * @param visualization the desired {@link Visualization} for this measure
-	 * 
+	 *
 	 */
 	public Measure(String name, Map<String,String> queries, Visualization visualization){
 		this.name = name;
@@ -40,10 +40,10 @@ public class Measure {
 	
 	/**
 	 * Visualizes the measure.
-	 * 
+	 *
 	 * @param database the database the queries should be executed on
 	 * @return the result as a String
-	 * 
+	 *
 	 * @throws Exception If something went wrong with the visualization (Database errors, wrong query results..)
 	 */
 	public String visualize(SQLDatabase database) throws Exception{
@@ -52,11 +52,11 @@ public class Measure {
 	
 	
 	/**
-	 * 
+	 *
 	 * Gets the queries of this measure.
-	 * 
+	 *
 	 * @return a map of queries
-	 * 
+	 *
 	 */
 	public Map<String, String> getQueries(){
 		return this.queries;
@@ -65,7 +65,7 @@ public class Measure {
 	
 	/**
 	 * Gets the name of this Measure.
-	 * 
+	 *
 	 * @return the measure name
 	 */
 	public String getName(){

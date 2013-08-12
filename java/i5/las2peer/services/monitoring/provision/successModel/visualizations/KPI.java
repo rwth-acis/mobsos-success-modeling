@@ -11,9 +11,9 @@ import java.util.TreeMap;
 import net.astesana.javaluator.DoubleEvaluator;
 
 /**
- * 
+ *
  * Returns a Key Performance Indicator as visualization result.
- * 
+ *
  * @author Peter de Lange
  *
  */
@@ -26,11 +26,11 @@ public class KPI extends Visualization {
 	
 	
 	/**
-	 * 
+	 *
 	 * Constructor, calls the {@link Visualization} constructor with the type.
-	 * 
+	 *
 	 * @param expression a (sorted) map of Strings, containing the expression to calculate the KPI
-	 * 
+	 *
 	 */
 	public KPI(Map<Integer, String> expression){
 		super(Type.KPI);

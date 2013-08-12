@@ -5,6 +5,8 @@ import i5.las2peer.persistency.MalformedXMLException;
 import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
 import i5.las2peer.services.monitoring.provision.database.SQLDatabaseType;
 import i5.las2peer.services.monitoring.provision.successModel.Measure;
+import i5.las2peer.services.monitoring.provision.successModel.visualizations.Chart;
+import i5.las2peer.services.monitoring.provision.successModel.visualizations.Chart.ChartType;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.KPI;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.Value;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.Visualization;
@@ -26,12 +28,12 @@ import java.util.regex.Pattern;
 
 
 /**
- * 
+ *
  * This service will connect to the monitoring database and provide an interface
  * for frontend clients to visualize monitored data.
- * 
+ *
  * @author Peter de Lange
- * 
+ *
  */
 public class MonitoringDataProvisionService extends Service{
 	
@@ -56,9 +58,9 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.
-	 * 
+	 *
 	 */
 	public MonitoringDataProvisionService(){
 		setFieldValues(); //This sets the values of the configuration file
@@ -88,13 +90,13 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Gets the names of all known measures.
-	 * 
+	 *
 	 * @param update if true, the list is read again
-	 * 
+	 *
 	 * @return an array of names
-	 * 
+	 *
 	 */
 	public String[] getMeasureNames(boolean update){
 		if(update)
@@ -117,19 +119,18 @@ public class MonitoringDataProvisionService extends Service{
 		    returnArray[counter] = key;
 		    counter++;
 		}
-		
 		return returnArray;
 	}
 	
 	
 	/**
-	 * 
-	 * Returns all stored nodes.
-	 * 
+	 *
+	 * Returns all stored ( = monitored) nodes.
+	 *
 	 * @return an array of node id's
-	 * 
+	 *
 	 * @throws Exception
-	 * 
+	 *
 	 */
 	public String[] getNodes() throws Exception{
 		List<String> nodeIds = new ArrayList<String>();
@@ -148,13 +149,13 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Returns all stored ( = monitored) services.
-	 * 
+	 *
 	 * @return an array of service agent id
-	 * 
+	 *
 	 * @throws Exception
-	 * 
+	 *
 	 */
 	public String[] getServices() throws Exception{
 		List<String> serviceAgentIds = new ArrayList<String>();
@@ -173,14 +174,14 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Executes a node measure query and returns the result.
-	 * 
+	 *
 	 * @param measureName the name of the measure
 	 * @param node the name of the node this measure is for
-	 * 
+	 *
 	 * @return the result as a string
-	 * 
+	 *
 	 */
 	public String visualizeNodeMeasure(String measureName, String nodeId){
 		return visualizeMeasure(measureName, nodeId, null);
@@ -188,14 +189,14 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Executes a service measure query and returns the result.
-	 * 
+	 *
 	 * @param measureName the name of the measure
 	 * @param the serviceId this measure should be for (can be null)
-	 * 
+	 *
 	 * @return the result as a string
-	 * 
+	 *
 	 */
 	public String visualizeServiceMeasure(String measureName, String serviceId){
 		return visualizeMeasure(measureName, null, serviceId);
@@ -203,13 +204,13 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Executes a measure query and returns the result.
-	 * 
+	 *
 	 * @param measureName the name of the measure
-	 * 
+	 *
 	 * @return the result as a string
-	 * 
+	 *
 	 */
 	public String visualizeMeasure(String measureName){
 		return visualizeMeasure(measureName, null, null);
@@ -217,15 +218,15 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Executes a measure query and returns the result.
-	 * 
+	 *
 	 * @param measureName the name of the measure
 	 * @param node the name of the node this measure is for (can be null)
 	 * @param the serviceId this measure should be for (can be null)
-	 * 
+	 *
 	 * @return the result as a string
-	 * 
+	 *
 	 */
 	public String visualizeMeasure(String measureName, String nodeId, String serviceId){
 		Measure measure = knownMeasures.get(measureName);
@@ -264,15 +265,15 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * This method will read the contents of the catalog file and update the available measures.
-	 * 
+	 *
 	 * @return a map with the measures
-	 * 
+	 *
 	 * @throws MalformedXMLException
 	 * @throws XMLSyntaxException
 	 * @throws IOException if the catalog file does not exist
-	 * 
+	 *
 	 */
 	public  Map<String, Measure> updateMeasures() throws MalformedXMLException, XMLSyntaxException, IOException{
 		
@@ -333,14 +334,14 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Helper method that reads a visualization object of the catalog file.
-	 * 
+	 *
 	 * @return a visualization object
-	 * 
+	 *
 	 * @throws MalformedXMLException
 	 * @throws XMLSyntaxException
-	 * 
+	 *
 	 */
 	private Visualization readVisualization(Element visualizationElement) throws XMLSyntaxException, MalformedXMLException{
 		String visualizationType = visualizationElement.getAttribute("type");
@@ -357,29 +358,53 @@ public class MonitoringDataProvisionService extends Service{
 			return new KPI(expression);
 		}
 		else if(visualizationType.equals("Chart")){
-			//TODO
-			throw new MalformedXMLException("Sorry, not implemented yet!");
+			String type;
+			ChartType chartType = null;
+			String parameters[] = new String[4];
+
+			type = visualizationElement.getChild(0).getFirstChild().getText();
+			
+			parameters[0] = visualizationElement.getChild(1).getFirstChild().getText();
+			parameters[1] = visualizationElement.getChild(2).getFirstChild().getText();
+			parameters[2] = visualizationElement.getChild(3).getFirstChild().getText();
+			parameters[3] = visualizationElement.getChild(4).getFirstChild().getText();
+			
+			if(type.equals("BarChart"))
+				chartType = ChartType.BarChart;
+			if(type.equals("LineChart"))
+				chartType = ChartType.LineChart;
+			if(type.equals("PieChart"))
+				chartType = ChartType.PieChart;
+			if(type.equals("RadarChart"))
+				chartType = ChartType.RadarChart;
+			if(type.equals("TimelineChart"))
+				chartType = ChartType.TimelineChart;
+			
+			try {
+				return new Chart(chartType, parameters);
+			} catch (Exception e) {
+				throw new MalformedXMLException("Could not create chart: " + e);
+			}
 		}
-		return null;
+		throw new MalformedXMLException("Unknown visualization type: " + visualizationType);
 	}
 	
 	
 	/**
-	 * 
+	 *
 	 * Inserts the node id into the queries of a measure.
-	 * 
+	 *
 	 * @param query a query with placeholder
 	 * @param queryParameters the corresponding query parameters
-	 * 
-	 * @return the measure with inserted node id
-	 *  
+	 *
+	 * @return the measure with inserted nodeId
+	 *
 	 */
 	private Measure insertNode(Measure measure, String nodeId){
 		Pattern pattern = Pattern.compile("\\$NODE\\$");
-		
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
-		    Map.Entry<String, String> entry = queries.next();
+			Map.Entry<String, String> entry = queries.next();
 			entry.setValue(pattern.matcher(entry.getValue()).replaceAll(nodeId));
 		}
 		return measure;
@@ -387,21 +412,20 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 * 
+	 *
 	 * Inserts the service id into the queries of a measure.
-	 * 
+	 *
 	 * @param query a query with placeholder
 	 * @param queryParameters the corresponding query parameters
-	 * 
+	 *
 	 * @return the measure with inserted serviceId
-	 * 
+	 *
 	 */
 	private Measure insertServiceId(Measure measure, String serviceId){
 		Pattern pattern = Pattern.compile("\\$SERVICEID\\$");
-		
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
-		    Map.Entry<String, String> entry = queries.next();
+			Map.Entry<String, String> entry = queries.next();
 			entry.setValue(pattern.matcher(entry.getValue()).replaceAll(serviceId));
 		}
 		return measure;

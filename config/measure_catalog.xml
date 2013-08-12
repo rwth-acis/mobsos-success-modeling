@@ -1,5 +1,5 @@
 <catalog>
-	<measure name="MyFirstMeasure">
+	<measure name="KPIMeasure">
 		<query name="AgentUploadStarted">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED' AND SOURCE_NODE = '$NODE$';
 		</query>
@@ -12,10 +12,25 @@
 			<operand name="AgentUploadStarted" index="2"/>
 		</visualization>
 	</measure>
-	<measure name="MySecondMeasure">
+	<measure name="ValueMeasure">
 		<query name="GetTypeOfAgentA">
 			SELECT TYPE FROM AGENT WHERE AGENT_ID = -6882384308892167869;
 		</query>
 		<visualization type="Value"/>
+	</measure>
+	<measure name="ChartMeasure">
+		<query name="SendedMessages">
+			SELECT TIME_STAMP AS TIME, COUNT( EVENT ) AS MESSAGE_SENDING FROM MESSAGE
+			WHERE EVENT =  'MESSAGE_SENDING'
+			AND SOURCE_NODE =  '$NODE$'
+			GROUP BY TIME_STAMP;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>ChartMeasure</nodeId>
+			<title>Send Messages</title>
+			<width>500</width>
+			<height>500</height>
+		</visualization>
 	</measure>
 </catalog>

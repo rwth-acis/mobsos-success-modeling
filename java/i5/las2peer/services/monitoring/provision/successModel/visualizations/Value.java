@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 
+ *
  * Returns a simple value as visualization result.
- * 
+ *
  * @author Peter de Lange
  *
  */
@@ -20,9 +20,9 @@ public class Value extends Visualization {
 	
 	
 	/**
-	 * 
+	 *
 	 * Constructor, calls the {@link Visualization} constructor with the type.
-	 * 
+	 *
 	 */
 	public Value(){
 		super(Type.Value);
