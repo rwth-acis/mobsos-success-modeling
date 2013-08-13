@@ -78,7 +78,6 @@ public class Chart extends Visualization {
 	 *
 	 */
 	public Chart(ChartType type, String[] parameters) throws Exception {
-		super(Type.Chart);
 		this.chartType = type;
 		if(parameters.length != 4)
 			throw new Exception("Exactly four parameters needed!");

@@ -5,6 +5,7 @@ import i5.las2peer.persistency.MalformedXMLException;
 import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
 import i5.las2peer.services.monitoring.provision.database.SQLDatabaseType;
 import i5.las2peer.services.monitoring.provision.successModel.Measure;
+import i5.las2peer.services.monitoring.provision.successModel.SuccessModel;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.Chart;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.Chart.ChartType;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.KPI;
@@ -51,11 +52,11 @@ public class MonitoringDataProvisionService extends Service{
 	private String databaseUser;
 	private String databasePassword;
 	private String catalogFileLocation;
-	private String successModelsFolder;
+	private String successModelsFolderLocation;
 	
 	private SQLDatabase database; //The database instance to write to.
 	private Map<String, Measure> knownMeasures = new TreeMap<String, Measure>();
-	
+	private Map<String, SuccessModel> knownModels = new TreeMap<String, SuccessModel>();
 	
 	/**
 	 *
@@ -74,8 +75,22 @@ public class MonitoringDataProvisionService extends Service{
 			System.out.println("Monitoring: Could not connect to database!");
 			e.printStackTrace();
 		}
+		
 		try {
 			knownMeasures = updateMeasures();
+		} catch (MalformedXMLException e) {
+			System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			e.printStackTrace();
+		} catch (XMLSyntaxException e) {
+			System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			e.printStackTrace();
+		}
+		
+		try {
+			knownModels = updateModels();
 		} catch (MalformedXMLException e) {
 			System.out.println("Measure Catalog seems broken: " + e.getMessage());
 			e.printStackTrace();
@@ -275,7 +290,7 @@ public class MonitoringDataProvisionService extends Service{
 	 * @throws IOException if the catalog file does not exist
 	 *
 	 */
-	public  Map<String, Measure> updateMeasures() throws MalformedXMLException, XMLSyntaxException, IOException{
+	private Map<String, Measure> updateMeasures() throws MalformedXMLException, XMLSyntaxException, IOException{
 		
 		Map<String, Measure> measures = new TreeMap<String, Measure>();
 		
@@ -330,6 +345,46 @@ public class MonitoringDataProvisionService extends Service{
 		}
 		
 		return measures;
+	}
+	
+	
+	/**
+	 *
+	 * This method will read the content of the success model folder and generate a
+	 * {@link SuccessModel} for each file.
+	 *
+	 * @return a map with the {@link SuccessModel}s
+	 *
+	 * @throws MalformedXMLException
+	 * @throws XMLSyntaxException
+	 * @throws IOException if there exists a problem with the file handling
+	 *
+	 */
+	private Map<String, SuccessModel> updateModels() throws MalformedXMLException, XMLSyntaxException, IOException{
+		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
+		File sucessModelsFolder = new File(successModelsFolderLocation);
+		if(!sucessModelsFolder.isDirectory())
+			throw new IOException("The given path for the success model folder is not a directory!");
+		for (File fileEntry : sucessModelsFolder.listFiles()) {
+			String successModelFile = fileEntry.getName();
+			SuccessModel successModel = readSuccessModelFile(successModelFile);
+			models.put(successModel.getName(), successModel);
+		}
+		return models;
+	}
+	
+	
+	/**
+	 * 
+	 * Reads a success model file.
+	 * 
+	 * @param successModelFile
+	 * 
+	 * @return a {@link SuccessModel}
+	 * 
+	 */
+	private SuccessModel readSuccessModelFile(String successModelFile) {
+		return null;
 	}
 	
 	

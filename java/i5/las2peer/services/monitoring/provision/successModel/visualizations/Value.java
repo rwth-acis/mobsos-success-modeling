@@ -19,16 +19,6 @@ import java.util.Map;
 public class Value extends Visualization {
 	
 	
-	/**
-	 *
-	 * Constructor, calls the {@link Visualization} constructor with the type.
-	 *
-	 */
-	public Value(){
-		super(Type.Value);
-	}
-	
-	
 	@Override
 	public String visualize(Map<String, String> queries, SQLDatabase database) throws Exception{
 		String queryResult = "";

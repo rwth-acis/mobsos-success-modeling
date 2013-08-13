@@ -27,13 +27,12 @@ public class KPI extends Visualization {
 	
 	/**
 	 *
-	 * Constructor, calls the {@link Visualization} constructor with the type.
+	 * Constructor.
 	 *
 	 * @param expression a (sorted) map of Strings, containing the expression to calculate the KPI
 	 *
 	 */
 	public KPI(Map<Integer, String> expression){
-		super(Type.KPI);
 		this.expression = expression;
 		this.evaluator = new DoubleEvaluator();
 	}
