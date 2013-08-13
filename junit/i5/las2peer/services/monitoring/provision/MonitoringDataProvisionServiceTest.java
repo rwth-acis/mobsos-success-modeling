@@ -133,7 +133,7 @@ public class MonitoringDataProvisionServiceTest {
 	
 	
 	@Test
-	public void getMeasures() {
+	public void getMeasuresAndModels() {
 		
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
 		

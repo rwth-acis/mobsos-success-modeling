@@ -32,40 +32,16 @@ public class Chart extends Visualization {
 	 *
 	 */
 	public enum ChartType {
-		
-		BarChart (1),
-		
-		LineChart(2),
-		
-		PieChart (3),
-		
-		TimelineChart (4),
-		
-		RadarChart (5);
-		
-		private final int code;
-		
-		
-		private ChartType (int code){
-			this.code = code;
-		}
-		
-		
-		/**
-		 *
-		 * Returns the code of the ChartType.
-		 *
-		 * @return a code
-		 *
-		 */
-		public int getCode(){
-			return this.code;
-		}
-		
+		BarChart,
+		LineChart,
+		PieChart,
+		TimelineChart,
+		RadarChart;
 	}
 	
 	private ChartType chartType;
 	private String[] parameters;
+	
 	
 	/**
 	 *
@@ -119,4 +95,6 @@ public class Chart extends Visualization {
 		}
 		throw new Exception("More than one query defined for chart visualization!");
 	}
+	
+	
 }

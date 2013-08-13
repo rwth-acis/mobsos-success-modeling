@@ -4,8 +4,10 @@ import i5.las2peer.api.Service;
 import i5.las2peer.persistency.MalformedXMLException;
 import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
 import i5.las2peer.services.monitoring.provision.database.SQLDatabaseType;
+import i5.las2peer.services.monitoring.provision.successModel.Factor;
 import i5.las2peer.services.monitoring.provision.successModel.Measure;
 import i5.las2peer.services.monitoring.provision.successModel.SuccessModel;
+import i5.las2peer.services.monitoring.provision.successModel.SuccessModel.Dimension;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.Chart;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.Chart.ChartType;
 import i5.las2peer.services.monitoring.provision.successModel.visualizations.KPI;
@@ -92,13 +94,13 @@ public class MonitoringDataProvisionService extends Service{
 		try {
 			knownModels = updateModels();
 		} catch (MalformedXMLException e) {
-			System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			System.out.println("Success Model seems broken: " + e.getMessage());
 			e.printStackTrace();
 		} catch (XMLSyntaxException e) {
-			System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			System.out.println("Success Model seems broken: " + e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			System.out.println("Success Model seems broken: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -185,6 +187,25 @@ public class MonitoringDataProvisionService extends Service{
 			serviceAgentIds.add(resultSet.getString(1));
 		}
 		return serviceAgentIds.toArray(new String[serviceAgentIds.size()]);
+	}
+	
+	
+	/**
+	 * 
+	 * Returns the name of all stored success models.
+	 * 
+	 * @param update updates the available success models with the content
+	 * of the success model folder
+	 * 
+	 * @return an array of success model names
+	 * 
+	 * @throws Exception if something with the update went wrong
+	 * 
+	 */
+	public String[] getModels(boolean update) throws Exception{
+		if(update)
+			knownModels = updateModels();
+		return knownModels.keySet().toArray(new String[0]);
 	}
 	
 	
@@ -298,12 +319,12 @@ public class MonitoringDataProvisionService extends Service{
 		Element root;
 		root = Parser.parse(file, false);
 		
-		if (!root.getName().equals("catalog"))
-			throw new MalformedXMLException("Catalog expeced");
+		if (!root.getName().equals("Catalog"))
+			throw new MalformedXMLException("Catalog expeced!");
 			
-		for(int rootChildCount = 0; rootChildCount < root.getChildCount(); rootChildCount++){
-			Element measureElement = root.getChild(rootChildCount);
-
+		for(int measureNumber = 0; measureNumber < root.getChildCount(); measureNumber++){
+			Element measureElement = root.getChild(measureNumber);
+			
 			Map<String,String> queries = new HashMap<String, String>();
 			Visualization visualization = null;
 			
@@ -345,46 +366,6 @@ public class MonitoringDataProvisionService extends Service{
 		}
 		
 		return measures;
-	}
-	
-	
-	/**
-	 *
-	 * This method will read the content of the success model folder and generate a
-	 * {@link SuccessModel} for each file.
-	 *
-	 * @return a map with the {@link SuccessModel}s
-	 *
-	 * @throws MalformedXMLException
-	 * @throws XMLSyntaxException
-	 * @throws IOException if there exists a problem with the file handling
-	 *
-	 */
-	private Map<String, SuccessModel> updateModels() throws MalformedXMLException, XMLSyntaxException, IOException{
-		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
-		File sucessModelsFolder = new File(successModelsFolderLocation);
-		if(!sucessModelsFolder.isDirectory())
-			throw new IOException("The given path for the success model folder is not a directory!");
-		for (File fileEntry : sucessModelsFolder.listFiles()) {
-			String successModelFile = fileEntry.getName();
-			SuccessModel successModel = readSuccessModelFile(successModelFile);
-			models.put(successModel.getName(), successModel);
-		}
-		return models;
-	}
-	
-	
-	/**
-	 * 
-	 * Reads a success model file.
-	 * 
-	 * @param successModelFile
-	 * 
-	 * @return a {@link SuccessModel}
-	 * 
-	 */
-	private SuccessModel readSuccessModelFile(String successModelFile) {
-		return null;
 	}
 	
 	
@@ -442,6 +423,108 @@ public class MonitoringDataProvisionService extends Service{
 			}
 		}
 		throw new MalformedXMLException("Unknown visualization type: " + visualizationType);
+	}
+	
+	
+	/**
+	 *
+	 * This method will read the content of the success model folder and generate a
+	 * {@link SuccessModel} for each file.
+	 *
+	 * @return a map with the {@link SuccessModel}s
+	 *
+	 * @throws MalformedXMLException
+	 * @throws XMLSyntaxException
+	 * @throws IOException if there exists a problem with the file handling
+	 *
+	 */
+	private Map<String, SuccessModel> updateModels() throws MalformedXMLException, XMLSyntaxException, IOException{
+		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
+		File sucessModelsFolder = new File(successModelsFolderLocation);
+		if(!sucessModelsFolder.isDirectory())
+			throw new IOException("The given path for the success model folder is not a directory!");
+		for (File file : sucessModelsFolder.listFiles()){
+			SuccessModel successModel = readSuccessModelFile(file);
+			models.put(successModel.getName(), successModel);
+		}
+		return models;
+	}
+	
+	
+	/**
+	 * 
+	 * Reads a success model file.
+	 * 
+	 * @param successModelFile
+	 * 
+	 * @return a {@link SuccessModel}
+	 * @throws MalformedXMLException
+	 * @throws XMLSyntaxException
+	 * @throws IOException
+	 * 
+	 */
+	private SuccessModel readSuccessModelFile(File successModelFile) throws MalformedXMLException, XMLSyntaxException, IOException {
+		Element root;
+		root = Parser.parse(successModelFile, false);
+		boolean nodeSuccessModel = false;
+		String modelName = root.getAttribute("name");
+		
+		if(root.getName().equals("NodeSuccessModel"))
+			nodeSuccessModel = true;
+		
+		//If not a node success model, get the service name
+		String serviceName = null;
+		if(!nodeSuccessModel){
+			if (!root.getName().equals("SuccessModel"))
+				throw new MalformedXMLException(successModelFile.toString() + ": Success model expected!");
+			if (!root.hasAttribute("service"))
+				throw new MalformedXMLException("Service attribute expected!");
+			serviceName = root.getAttribute("name");
+		}
+		if(root.getChildCount() != 6)
+			throw new MalformedXMLException(successModelFile.toString() + ": Six dimensions expected!");
+		
+		List<Factor> factors = new ArrayList<Factor>();
+		
+		for(int dimensionNumber = 0; dimensionNumber < root.getChildCount(); dimensionNumber++){
+			Element dimensionElement = root.getChild(dimensionNumber);
+			
+			String dimensionName = dimensionElement.getAttribute("name");
+			Dimension dimension;
+			if(dimensionName.equals("System Quality"))
+				dimension = Dimension.SystemQuality;
+			else if(dimensionName.equals("Information Quality"))
+				dimension = Dimension.InformationQuality;
+			else if(dimensionName.equals("Use"))
+				dimension = Dimension.Use;
+			else if(dimensionName.equals("User Satisfaction"))
+				dimension = Dimension.UserSatisfaction;
+			else if(dimensionName.equals("Individual Impact"))
+				dimension = Dimension.IndividualImpact;
+			else if(dimensionName.equals("Organizational Impact"))
+				dimension = Dimension.OrganizationalImpact;
+			else
+				throw new MalformedXMLException(successModelFile.toString() + ": Dimension " + dimensionName + " is unknown!");
+			
+			for(int factorNumber = 0; factorNumber < dimensionElement.getChildCount(); factorNumber++){
+				Element factorElement = dimensionElement.getChild(factorNumber);
+				String factorName = factorElement.getAttribute("name");
+				
+				List<Measure> factorMeasures = new ArrayList<Measure>();
+				for(int measureNumber = 0; measureNumber < factorElement.getChildCount(); measureNumber++){
+					Element measureElement = factorElement.getChild(measureNumber);
+					String measureName = measureElement.getAttribute("name");
+					if(!knownMeasures.containsKey(measureName))
+						knownMeasures = updateMeasures();
+					if(!knownMeasures.containsKey(measureName))
+						throw new MalformedXMLException(successModelFile.toString() + ": Measure name " + measureName + " is unknown!");
+					factorMeasures.add(knownMeasures.get(measureName));
+				}
+				Factor factor = new Factor(factorName, dimension, factorMeasures);
+				factors.add(factor);
+			}
+		}
+		return new SuccessModel(modelName, serviceName, factors);
 	}
 	
 	

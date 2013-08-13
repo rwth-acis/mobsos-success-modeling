@@ -76,4 +76,6 @@ public class KPI extends Visualization {
 		
 		return returnValue.toString();
 	}
+	
+	
 }

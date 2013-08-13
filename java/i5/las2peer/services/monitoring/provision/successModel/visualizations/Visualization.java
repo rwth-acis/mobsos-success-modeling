@@ -12,16 +12,7 @@ import java.util.Map;
  *
  */
 public abstract class Visualization {
-	
-	
-	/**
-	 *
-	 * Constructor for a new visualization.
-	 *
-	 */
-	public Visualization(){
-	}
-	
+
 	
 	/**
 	 *
@@ -36,5 +27,6 @@ public abstract class Visualization {
 	 *
 	 */
 	public abstract String visualize(Map<String, String> queries, SQLDatabase database) throws Exception;
+	
 	
 }

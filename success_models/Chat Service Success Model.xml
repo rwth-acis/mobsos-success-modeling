@@ -1,5 +1,4 @@
-<successModel name="Chat Service Success Model">
-	<service name="i5.las2peer.services.chatService.ChatService"/>
+<SuccessModel name="Chat Service Success Model" service="i5.las2peer.services.chatService.ChatService">
 	
 	<dimension name="System Quality">
 		<factor name="Stability">
@@ -52,4 +51,4 @@
 		</factor>
 	</dimension>
 	
-</successModel>
+</SuccessModel>

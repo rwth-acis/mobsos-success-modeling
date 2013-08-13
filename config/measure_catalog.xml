@@ -1,4 +1,4 @@
-<catalog>
+<Catalog>
 	<measure name="KPIMeasure">
 		<query name="AgentUploadStarted">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED' AND SOURCE_NODE = '$NODE$';
@@ -33,4 +33,4 @@
 			<height>500</height>
 		</visualization>
 	</measure>
-</catalog>
+</Catalog>
