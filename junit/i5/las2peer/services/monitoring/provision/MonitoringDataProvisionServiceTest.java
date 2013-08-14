@@ -84,7 +84,7 @@ public class MonitoringDataProvisionServiceTest {
 	
 	
 	@Test
-	public void getNamesOfMeasuresServicesAndNodes() {
+	public void getNames() {
 		
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
 		
@@ -98,7 +98,7 @@ public class MonitoringDataProvisionServiceTest {
 			assertEquals(3, resultArray.length);
 			//Since they are in an ordered map, this should work
 			assertTrue(resultArray[0].equals("ChartMeasure"));
-			assertTrue(resultArray[1].equals("KPIMeasure"));
+			assertTrue(resultArray[1].equals("Successful Agent Uploads"));
 			assertTrue(resultArray[2].equals("ValueMeasure"));
 			
 			
@@ -113,6 +113,12 @@ public class MonitoringDataProvisionServiceTest {
 			resultArray = (String[]) result;
 			for(String service : resultArray)
 				System.out.println("Result of asking for all services: " + service);
+			
+			result = c.invoke(testServiceClass, "getModels", true);
+			assertTrue(result instanceof String[]);
+			resultArray = (String[]) result;
+			for(String service : resultArray)
+				System.out.println("Result of asking for all models: " + service);
 			
 			
 		} catch (Exception e) {
@@ -145,7 +151,7 @@ public class MonitoringDataProvisionServiceTest {
 			
 
 			System.out.println("Calling Measure Visualizations with node " + knownNode);
-			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "KPIMeasure", knownNode);
+			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Successful Agent Uploads", knownNode);
 			
 			Double resultDouble = Double.parseDouble((String) result);
 			System.out.println("KPIMeasure Result: " + resultDouble);

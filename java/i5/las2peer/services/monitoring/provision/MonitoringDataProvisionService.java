@@ -43,6 +43,7 @@ public class MonitoringDataProvisionService extends Service{
 	
 	public final String NODE_QUERY = "SELECT NODE_ID FROM NODE";
 	public final String SERVICE_QUERY = "SELECT AGENT_ID FROM SERVICE";
+	
 	/**
 	 * Configuration parameters, values will be set by the configuration file.
 	 */
@@ -62,7 +63,8 @@ public class MonitoringDataProvisionService extends Service{
 	
 	/**
 	 *
-	 * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.
+	 * Constructor of the Service.
+	 * Loads the database values from a property file and tries to connect to the database.
 	 *
 	 */
 	public MonitoringDataProvisionService(){
@@ -93,12 +95,6 @@ public class MonitoringDataProvisionService extends Service{
 		
 		try {
 			knownModels = updateModels();
-		} catch (MalformedXMLException e) {
-			System.out.println("Success Model seems broken: " + e.getMessage());
-			e.printStackTrace();
-		} catch (XMLSyntaxException e) {
-			System.out.println("Success Model seems broken: " + e.getMessage());
-			e.printStackTrace();
 		} catch (IOException e) {
 			System.out.println("Success Model seems broken: " + e.getMessage());
 			e.printStackTrace();
@@ -146,7 +142,7 @@ public class MonitoringDataProvisionService extends Service{
 	 *
 	 * @return an array of node id's
 	 *
-	 * @throws Exception
+	 * @throws Exception SQL problems
 	 *
 	 */
 	public String[] getNodes() throws Exception{
@@ -204,7 +200,12 @@ public class MonitoringDataProvisionService extends Service{
 	 */
 	public String[] getModels(boolean update) throws Exception{
 		if(update)
-			knownModels = updateModels();
+			try {
+				knownModels = updateModels();
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+				e.printStackTrace();
+			}
 		return knownModels.keySet().toArray(new String[0]);
 	}
 	
@@ -438,14 +439,26 @@ public class MonitoringDataProvisionService extends Service{
 	 * @throws IOException if there exists a problem with the file handling
 	 *
 	 */
-	private Map<String, SuccessModel> updateModels() throws MalformedXMLException, XMLSyntaxException, IOException{
+	private Map<String, SuccessModel> updateModels() throws IOException{
 		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
 		File sucessModelsFolder = new File(successModelsFolderLocation);
 		if(!sucessModelsFolder.isDirectory())
 			throw new IOException("The given path for the success model folder is not a directory!");
 		for (File file : sucessModelsFolder.listFiles()){
-			SuccessModel successModel = readSuccessModelFile(file);
-			models.put(successModel.getName(), successModel);
+			SuccessModel successModel;
+			try {
+				successModel = readSuccessModelFile(file);
+				models.put(successModel.getName(), successModel);
+			} catch (XMLSyntaxException e) {
+				System.out.println("Error reading Success Model: " + e);
+				e.printStackTrace();
+			} catch (MalformedXMLException e) {
+				System.out.println("Error reading Success Model: " + e);
+				e.printStackTrace();
+			} catch (IOException e) {
+				System.out.println("Error reading Success Model: " + e);
+				e.printStackTrace();
+			}
 		}
 		return models;
 	}

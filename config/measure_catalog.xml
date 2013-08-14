@@ -1,5 +1,5 @@
 <Catalog>
-	<measure name="KPIMeasure">
+	<measure name="Successful Agent Uploads">
 		<query name="AgentUploadStarted">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED' AND SOURCE_NODE = '$NODE$';
 		</query>

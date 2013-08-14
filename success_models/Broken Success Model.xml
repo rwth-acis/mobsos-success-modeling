@@ -1,0 +1,7 @@
+<NodeSuccessModel name="Broken Success Model">
+	<dimension name="something">
+		<factor name="Something">
+			<measure name="Unknwon"/>
+		</factor>
+	</dimension>
+</NodeSuccessModel>
