@@ -95,11 +95,12 @@ public class MonitoringDataProvisionServiceTest {
 			
 			Object result = c.invoke(testServiceClass, "getMeasureNames", true);
 			String[] resultArray = (String[]) result;
-			assertEquals(3, resultArray.length);
+			assertEquals(4, resultArray.length);
 			//Since they are in an ordered map, this should work
-			assertTrue(resultArray[0].equals("ChartMeasure"));
-			assertTrue(resultArray[1].equals("Successful Agent Uploads"));
-			assertTrue(resultArray[2].equals("ValueMeasure"));
+			assertTrue(resultArray[0].equals("Send Messages over Time (Node)"));
+			assertTrue(resultArray[1].equals("Send Messages over Time (Service)"));
+			assertTrue(resultArray[2].equals("Successful Agent Uploads"));
+			assertTrue(resultArray[3].equals("Type of Agent A"));
 			
 			
 			result = c.invoke(testServiceClass, "getNodes");
@@ -156,11 +157,11 @@ public class MonitoringDataProvisionServiceTest {
 			Double resultDouble = Double.parseDouble((String) result);
 			System.out.println("KPIMeasure Result: " + resultDouble);
 			
-			result = c.invoke(testServiceClass, "visualizeMeasure", "ValueMeasure");
+			result = c.invoke(testServiceClass, "visualizeMeasure", "Type of Agent A");
 			assertTrue(result instanceof String);
 			System.out.println("ValueMeasure Result: " + result);
 			
-			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "ChartMeasure", knownNode);
+			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Send Messages over Time (Node)", knownNode);
 			assertTrue(result instanceof String);
 			System.out.println("ChartMeasure Result: " + result);
 			

@@ -12,17 +12,19 @@
 			<operand name="AgentUploadStarted" index="2"/>
 		</visualization>
 	</measure>
-	<measure name="ValueMeasure">
+	
+	<measure name="Type of Agent A">
 		<query name="GetTypeOfAgentA">
 			SELECT TYPE FROM AGENT WHERE AGENT_ID = -6882384308892167869;
 		</query>
 		<visualization type="Value"/>
 	</measure>
-	<measure name="ChartMeasure">
+	
+	<measure name="Send Messages over Time (Node)">
 		<query name="SendedMessages">
-			SELECT TIME_STAMP AS TIME, COUNT( EVENT ) AS MESSAGE_SENDING FROM MESSAGE
-			WHERE EVENT =  'MESSAGE_SENDING'
-			AND SOURCE_NODE =  '$NODE$'
+			SELECT TIME_STAMP AS Time, COUNT(EVENT) AS SendMessages FROM MESSAGE
+			WHERE EVENT = 'MESSAGE_SENDING'
+			AND SOURCE_NODE = '$NODE$'
 			GROUP BY TIME_STAMP;
 		</query>
 		<visualization type="Chart">
@@ -33,4 +35,204 @@
 			<height>500</height>
 		</visualization>
 	</measure>
+	
+	
+	<measure name="Send Messages over Time (Service)">
+		<query name="SendedMessages">
+			SELECT TIME_STAMP AS Time, COUNT(EVENT) AS SendMessages FROM MESSAGE
+			WHERE EVENT =  'MESSAGE_SENDING'
+			AND SOURCE_AGENT =  '$SERVICE$'
+			GROUP BY TIME_STAMP;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>ChartMeasure</nodeId>
+			<title>Send Messages</title>
+			<width>500</width>
+			<height>500</height>
+		</visualization>
+	</measure>
+	
+	<!-- Chat Service -->
+	
+	<measure name="Number of private Chatrooms over Time (ChatService)">
+		<query name="PrivateChatrooms">
+			SELECT TIME_STAMP AS Time, COUNT(*) AS PrivateChatrooms FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT =  '$SERVICE$'
+			GROUP BY TIME_STAMP;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>ChartMeasure</nodeId>
+			<title>Send Messages</title>
+			<width>500</width>
+			<height>500</height>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of public Chatrooms over Time (ChatService)">
+		<query name="PublicChatrooms">
+			SELECT TIME_STAMP AS Time, COUNT(*) AS PublicChatrooms FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND SOURCE_AGENT =  '$SERVICE$'
+			GROUP BY TIME_STAMP;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>ChartMeasure</nodeId>
+			<title>Send Messages</title>
+			<width>500</width>
+			<height>500</height>
+		</visualization>
+	</measure>
+	
+	<measure name="Send Messages over Time (ChatService)">
+		<query name="SendMessages">
+			SELECT TIME_STAMP AS Time, COUNT(*) AS SendMessages FROM MESSAGE
+			WHERE (EVENT =  'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1')
+			AND SOURCE_AGENT =  '$SERVICE$'
+			GROUP BY TIME_STAMP;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>ChartMeasure</nodeId>
+			<title>Send Messages</title>
+			<width>500</width>
+			<height>500</height>
+		</visualization>
+	</measure>
+	
+	<measure name="Received Messages over Time (ChatService)">
+		<query name="ReceivedMessages">
+			SELECT TIME_STAMP AS Time, COUNT(*) AS ReceivedMessages FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_7'
+			AND SOURCE_AGENT =  '$SERVICE$'
+			GROUP BY TIME_STAMP;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>ChartMeasure</nodeId>
+			<title>Send Messages</title>
+			<width>500</width>
+			<height>500</height>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Users per private Chatroom (ChatService)">
+		<query name="StoredPrivateChatrooms">
+			SELECT EVENT AS PrivateChatrooms, COUNT(*) AS Number FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3'
+			AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY PrivateChatrooms;
+		</query>
+		<query name="UniqueAddedPrivateUsers">
+			SELECT COUNT(privateJoins.PrivateJoins) AS UniqueJoins FROM
+			    (SELECT joins.uniqueJoins AS PrivateJoins FROM MESSAGE,
+			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, REMARKS FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, REMARKS) joins)
+			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_3') privateJoins
+		</query>
+		<visualization type="KPI">
+			<operand name="UniqueAddedPrivateUsers" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="StoredPrivateChatrooms" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Users per public Chatroom (ChatService)">
+		<query name="StoredPublicChatrooms">
+			SELECT EVENT AS PublicChatrooms, COUNT(*) AS Number FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4'
+			AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY PublicChatrooms;
+		</query>
+		<query name="UniqueAddedPublicUsers">
+			SELECT COUNT(publicJoins.PublicJoins) AS UniqueJoins FROM
+			    (SELECT joins.uniqueJoins AS PublicJoins FROM MESSAGE,
+			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, REMARKS FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, REMARKS) joins)
+			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_4') publicJoins
+		</query>
+		<visualization type="KPI">
+			<operand name="UniqueAddedPublicUsers" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="StoredPublicChatrooms" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Messages send per User (ChatService)">
+		<query name="TotalUsers">
+			SELECT COUNT(*) AS UserCount FROM
+			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT =  '$SERVICE$'
+			GROUP BY DESTINATION_AGENT) allUsers
+		</query>
+		<query name="TotalMessages">
+			SELECT COUNT(*) FROM MESSAGE WHERE
+			EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2'
+			AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="TotalMessages" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="TotalUsers" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Messages received per User (ChatService)">
+		<query name="TotalUsers">
+			SELECT COUNT(*) AS UserCount FROM
+			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT =  '$SERVICE$'
+			GROUP BY DESTINATION_AGENT) allUsers
+		</query>
+		<query name="TotalMessages">
+			SELECT COUNT(*) FROM MESSAGE WHERE
+			EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="TotalMessages" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="TotalUsers" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Time to fetch Chatroom Information (ChatService)">
+		<query name="AverageTime">
+			SELECT AVG(timeToFetch.difference) AS AverageTime FROM
+			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
+			m.EVENT = 'SERVICE_CUSTOM_MESSAGE_5' AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_6'
+			AND m.REMARKS=m2.REMARKS AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$') timeToFetch
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageTime" index="0"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Time to send Message (ChatService)">
+		<query name="AverageTime">
+			SELECT AVG(timeToSend.difference) AS AverageTime FROM
+			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
+			(m.EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR m.EVENT = 'SERVICE_CUSTOM_MESSAGE_2')
+			AND m2.EVENT = 'MESSAGE_RECEIVED' AND m.REMARKS=m2.REMARKS AND
+			m.SOURCE_AGENT = '$SERVICE$') timeToSend
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageTime" index="0"/>
+		</visualization>
+	</measure>
+	
+		<measure name="Average Time spend online (ChatService)">
+		<query name="AverageTime">
+			SELECT AVG(timeSpendOnline.difference) AS AverageTime FROM
+			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
+			(m.EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR m.EVENT = 'SERVICE_CUSTOM_MESSAGE_2')
+			AND m2.EVENT = 'MESSAGE_RECEIVED' AND m.REMARKS=m2.REMARKS AND
+			m.SOURCE_AGENT = '$SERVICE$') timeSpendOnline
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageTime" index="0"/>
+		</visualization>
+	</measure>
+	<!-- End Chat Service -->
+	
 </Catalog>

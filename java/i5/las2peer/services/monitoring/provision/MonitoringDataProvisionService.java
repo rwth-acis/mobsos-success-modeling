@@ -76,28 +76,23 @@ public class MonitoringDataProvisionService extends Service{
 			this.database.connect();
 			System.out.println("Monitoring: Database connected!");
 		} catch (Exception e) {
-			System.out.println("Monitoring: Could not connect to database!");
-			e.printStackTrace();
+			System.out.println("Monitoring: Could not connect to database! " + e.getMessage());
 		}
 		
 		try {
 			knownMeasures = updateMeasures();
 		} catch (MalformedXMLException e) {
 			System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			e.printStackTrace();
 		} catch (XMLSyntaxException e) {
 			System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			e.printStackTrace();
 		} catch (IOException e) {
 			System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			e.printStackTrace();
 		}
 		
 		try {
 			knownModels = updateModels();
 		} catch (IOException e) {
 			System.out.println("Success Model seems broken: " + e.getMessage());
-			e.printStackTrace();
 		}
 	}
 	
@@ -117,13 +112,10 @@ public class MonitoringDataProvisionService extends Service{
 				knownMeasures = updateMeasures();
 			} catch (MalformedXMLException e) {
 				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				e.printStackTrace();
 			} catch (XMLSyntaxException e) {
 				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				e.printStackTrace();
 			} catch (IOException e) {
 				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				e.printStackTrace();
 			}
 		
 		String[] returnArray = new String[knownMeasures.size()];
@@ -142,20 +134,23 @@ public class MonitoringDataProvisionService extends Service{
 	 *
 	 * @return an array of node id's
 	 *
-	 * @throws Exception SQL problems
-	 *
 	 */
-	public String[] getNodes() throws Exception{
+	public String[] getNodes(){
 		List<String> nodeIds = new ArrayList<String>();
 		
 		ResultSet resultSet;
 		try {
 			resultSet = database.query(NODE_QUERY);
 		} catch (SQLException e) {
-			throw new Exception("The query has lead to an error: " + e);
+			System.out.println("The query has lead to an error: " + e);
+			return null;
 		}
-		while(resultSet.next()){
-			nodeIds.add(resultSet.getString(1));
+		try {
+			while(resultSet.next()){
+				nodeIds.add(resultSet.getString(1));
+			}
+		} catch (SQLException e) {
+			System.out.println("Problems reading result set: " + e);
 		}
 		return nodeIds.toArray(new String[nodeIds.size()]);
 	}
@@ -167,20 +162,23 @@ public class MonitoringDataProvisionService extends Service{
 	 *
 	 * @return an array of service agent id
 	 *
-	 * @throws Exception
-	 *
 	 */
-	public String[] getServices() throws Exception{
+	public String[] getServices(){
 		List<String> serviceAgentIds = new ArrayList<String>();
 		
 		ResultSet resultSet;
 		try {
 			resultSet = database.query(SERVICE_QUERY);
 		} catch (SQLException e) {
-			throw new Exception("The query has lead to an error: " + e);
+			System.out.println("The query has lead to an error: " + e);
+			return null;
 		}
-		while(resultSet.next()){
-			serviceAgentIds.add(resultSet.getString(1));
+		try {
+			while(resultSet.next()){
+				serviceAgentIds.add(resultSet.getString(1));
+			}
+		} catch (SQLException e) {
+			System.out.println("Problems reading result set: " + e);
 		}
 		return serviceAgentIds.toArray(new String[serviceAgentIds.size()]);
 	}
@@ -195,16 +193,13 @@ public class MonitoringDataProvisionService extends Service{
 	 * 
 	 * @return an array of success model names
 	 * 
-	 * @throws Exception if something with the update went wrong
-	 * 
 	 */
-	public String[] getModels(boolean update) throws Exception{
+	public String[] getModels(boolean update){
 		if(update)
 			try {
 				knownModels = updateModels();
 			} catch (IOException e) {
 				System.out.println(e.getMessage());
-				e.printStackTrace();
 			}
 		return knownModels.keySet().toArray(new String[0]);
 	}
@@ -274,13 +269,10 @@ public class MonitoringDataProvisionService extends Service{
 				knownMeasures = updateMeasures();
 			} catch (MalformedXMLException e) {
 				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				e.printStackTrace();
 			} catch (XMLSyntaxException e) {
 				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				e.printStackTrace();
 			} catch (IOException e) {
 				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				e.printStackTrace();
 			}
 			if(measure == null) //still not found
 				return "Measure does not exist!";
@@ -290,12 +282,11 @@ public class MonitoringDataProvisionService extends Service{
 		if(nodeId != null)
 			measure = insertNode(measure, nodeId);
 		if(serviceId != null)
-			measure = insertServiceId(measure, serviceId);
+			measure = insertService(measure, serviceId);
 		
 		try {
 			return measure.visualize(this.database);
 		} catch (Exception e) {
-			e.printStackTrace();
 			return "Exception occured while trying to get the measure: " + e;
 		}
 	}
@@ -451,13 +442,10 @@ public class MonitoringDataProvisionService extends Service{
 				models.put(successModel.getName(), successModel);
 			} catch (XMLSyntaxException e) {
 				System.out.println("Error reading Success Model: " + e);
-				e.printStackTrace();
 			} catch (MalformedXMLException e) {
 				System.out.println("Error reading Success Model: " + e);
-				e.printStackTrace();
 			} catch (IOException e) {
 				System.out.println("Error reading Success Model: " + e);
-				e.printStackTrace();
 			}
 		}
 		return models;
@@ -572,8 +560,8 @@ public class MonitoringDataProvisionService extends Service{
 	 * @return the measure with inserted serviceId
 	 *
 	 */
-	private Measure insertServiceId(Measure measure, String serviceId){
-		Pattern pattern = Pattern.compile("\\$SERVICEID\\$");
+	private Measure insertService(Measure measure, String serviceId){
+		Pattern pattern = Pattern.compile("\\$SERVICE\\$");
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
 			Map.Entry<String, String> entry = queries.next();
