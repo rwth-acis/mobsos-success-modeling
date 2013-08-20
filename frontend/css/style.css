@@ -1,0 +1,20 @@
+body {
+    font-size: 100%;
+    font-family: cursive;
+}
+
+.main {
+    width: 80%;
+    margin: 20px auto;
+    padding: 30px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+table {
+    table-layout:fixed;
+}
+
+td {
+    word-wrap:break-word;
+}
