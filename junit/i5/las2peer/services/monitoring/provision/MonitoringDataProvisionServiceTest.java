@@ -1,6 +1,5 @@
 package i5.las2peer.services.monitoring.provision;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import i5.las2peer.httpConnector.HttpConnector;
@@ -94,14 +93,10 @@ public class MonitoringDataProvisionServiceTest {
 			
 			
 			Object result = c.invoke(testServiceClass, "getMeasureNames", true);
+			assertTrue(result instanceof String[]);
 			String[] resultArray = (String[]) result;
-			assertEquals(4, resultArray.length);
-			//Since they are in an ordered map, this should work
-			assertTrue(resultArray[0].equals("Send Messages over Time (Node)"));
-			assertTrue(resultArray[1].equals("Send Messages over Time (Service)"));
-			assertTrue(resultArray[2].equals("Successful Agent Uploads"));
-			assertTrue(resultArray[3].equals("Type of Agent A"));
-			
+			for(String measureName : resultArray)
+				System.out.println("Result of asking for all measures: " + measureName);
 			
 			result = c.invoke(testServiceClass, "getNodes");
 			assertTrue(result instanceof String[]);
@@ -155,15 +150,15 @@ public class MonitoringDataProvisionServiceTest {
 			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Successful Agent Uploads", knownNode);
 			
 			Double resultDouble = Double.parseDouble((String) result);
-			System.out.println("KPIMeasure Result: " + resultDouble);
+			System.out.println("Successful Agent Uploads (KPI) Result: " + resultDouble);
 			
 			result = c.invoke(testServiceClass, "visualizeMeasure", "Type of Agent A");
 			assertTrue(result instanceof String);
-			System.out.println("ValueMeasure Result: " + result);
+			System.out.println("Type of Agent A (Value) Result: " + result);
 			
 			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Send Messages over Time (Node)", knownNode);
 			assertTrue(result instanceof String);
-			System.out.println("ChartMeasure Result: " + result);
+			System.out.println("Send Messages over Time (Node) (Chart) Result: " + result);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

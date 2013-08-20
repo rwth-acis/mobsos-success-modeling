@@ -2,50 +2,45 @@
 	
 	<dimension name="System Quality">
 		<factor name="Performance">
-			<measure name="Average Time to send Message (Chat Service)"/>
-			<measure name="Average Time to fetch Chatroom Information (Chat Service)"/>
+			<measure name="Average Time to send Message (ChatService)"/>
+			<measure name="Average Time to fetch Chatroom Information (ChatService)"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="Information Quality">
 		<factor name="Quantity">
-			<measure name="Number of public Chatrooms over Time (Chat Service)"/>
-			<measure name="Number of private Chatrooms over Time (Chat Service)"/>
+			<measure name="Number of public Chatrooms over Time (ChatService)"/>
+			<measure name="Number of private Chatrooms over Time (ChatService)"/>
 		</factor>
 		<factor name="Quality">
-			<measure name="Average Users per public Chatroom (Chat Service)"/>
-			<measure name="Average Users per private Chatroom (Chat Service)"/>
+			<measure name="Average Users per public Chatroom (ChatService)"/>
+			<measure name="Average Users per private Chatroom (ChatService)"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="Use">
 		<factor name="Active Use">
-			<measure name="Send Messages over Time (Chat Service)"/>
-			<measure name="Average Messages send per User (Chat Service)"/>
+			<measure name="Send Messages over Time (ChatService)"/>
+			<measure name="Average Messages send per User (ChatService)"/>
 		</factor>
 		<factor name="Passive Use">
-			<measure name="Received Messages over Time (Chat Service)"/>
-			<measure name="Average Messages received per User (Chat Service)"/>
+			<measure name="Received Messages over Time (ChatService)"/>
+			<measure name="Average Messages received per User (ChatService)"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="User Satisfaction">
 		<factor name="Time Spend">
-			<measure name="Average Time spend in Chatroom (Chat Service)"/>
-			<measure name="Average Time spend online (Chat Service)"/>
+			<measure name="Average Time (Seconds) spend in Chatroom (ChatService)"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="Individual Impact">
-		<factor name="">
-			
-		</factor>
+		
 	</dimension>
 	
 	<dimension name="Organizational Impact">
-		<factor name="">
-			
-		</factor>
+		
 	</dimension>
 	
 </SuccessModel>
