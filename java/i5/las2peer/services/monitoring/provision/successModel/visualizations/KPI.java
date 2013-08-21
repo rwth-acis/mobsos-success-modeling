@@ -17,7 +17,7 @@ import net.astesana.javaluator.DoubleEvaluator;
  * @author Peter de Lange
  *
  */
-public class KPI extends Visualization {
+public class KPI implements Visualization {
 	
 	private Map<Integer, String> expression = new TreeMap<Integer, String>();
 	//Using the "javaluator" for evaluating expressions
@@ -38,7 +38,6 @@ public class KPI extends Visualization {
 	}
 	
 	
-	@Override
 	public String visualize(Map<String, String> queries, SQLDatabase database) throws Exception{
 		String expressionWithInsertedValues = "";
 		
@@ -52,7 +51,7 @@ public class KPI extends Visualization {
 					resultSetMetaData = resultSet.getMetaData();
 				} catch (SQLException e) {
 					e.printStackTrace();
-					return("The query has lead to an error: " + e);
+					return("(KPI Visualization) The query has lead to an error: " + e);
 				}
 				
 				if(resultSetMetaData.getColumnCount() != 1){
@@ -73,8 +72,11 @@ public class KPI extends Visualization {
 		}
 		
 		Double returnValue = evaluator.evaluate(expressionWithInsertedValues);
-		
-		return returnValue.toString();
+		String returnString = returnValue.toString();
+		//Probably division by zero (can happen with some (correctly formulated) query results); assuming correct result is mostly 0 then
+		if(returnString.equals("NaN"))
+			returnString = "0"; 
+		return returnString;
 	}
 	
 	

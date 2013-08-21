@@ -42,7 +42,7 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	public final String NODE_QUERY = "SELECT NODE_ID FROM NODE";
-	public final String SERVICE_QUERY = "SELECT AGENT_ID FROM SERVICE";
+	public final String SERVICE_QUERY = "SELECT * FROM SERVICE";
 	
 	/**
 	 * Configuration parameters, values will be set by the configuration file.
@@ -60,6 +60,7 @@ public class MonitoringDataProvisionService extends Service{
 	private SQLDatabase database; //The database instance to write to.
 	private Map<String, Measure> knownMeasures = new TreeMap<String, Measure>();
 	private Map<String, SuccessModel> knownModels = new TreeMap<String, SuccessModel>();
+	
 	
 	/**
 	 *
@@ -92,7 +93,7 @@ public class MonitoringDataProvisionService extends Service{
 		try {
 			knownModels = updateModels();
 		} catch (IOException e) {
-			System.out.println("Success Model seems broken: " + e.getMessage());
+			System.out.println("Problems reading Success Models: " + e.getMessage());
 		}
 	}
 	
@@ -142,7 +143,7 @@ public class MonitoringDataProvisionService extends Service{
 		try {
 			resultSet = database.query(NODE_QUERY);
 		} catch (SQLException e) {
-			System.out.println("The query has lead to an error: " + e);
+			System.out.println("(Get Nodes) The query has lead to an error: " + e);
 			return null;
 		}
 		try {
@@ -163,14 +164,14 @@ public class MonitoringDataProvisionService extends Service{
 	 * @return an array of service agent id
 	 *
 	 */
-	public String[] getServices(){
+	public String[] getServiceIds(){
 		List<String> serviceAgentIds = new ArrayList<String>();
 		
 		ResultSet resultSet;
 		try {
 			resultSet = database.query(SERVICE_QUERY);
 		} catch (SQLException e) {
-			System.out.println("The query has lead to an error: " + e);
+			System.out.println("(Get Service Ids) The query has lead to an error: " + e);
 			return null;
 		}
 		try {
@@ -293,6 +294,98 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
+	 * 
+	 * Visualizes a given service success model.
+	 * 
+	 * @param modelName the name of the success model
+	 * 
+	 * @return a HTML representation of the success model
+	 * 
+	 */
+	public String visualizeServiceSuccessModel(String modelName){
+		return visualizeSuccessModel(modelName, null);
+	}
+
+	
+	/**
+	 * 
+	 * Visualizes a given success model.
+	 * 
+	 * @param modelName the name of the success model
+	 * @param node the name of a node
+	 * necessary if a node success model should be calculated (can be set to null otherwise)
+	 * 
+	 * @return a HTML representation of the success model
+	 * 
+	 */
+	public String visualizeSuccessModel(String modelName, String node){
+		SuccessModel model = knownModels.get(modelName);
+		//Reload models once
+		if(model == null){
+			try {
+				knownModels = updateModels();
+			} catch (IOException e) {
+				System.out.println("Problems reading Success Models: " + e.getMessage());
+				return "Problems reading Success Models!";
+			}
+		}
+		model = knownModels.get(modelName);
+		if(model == null)
+			return "Success Model not known!";
+		//Find the Service Agent
+		String serviceId = null;
+		if(model.getServiceName() != null){
+			ResultSet resultSet;
+			try {
+				resultSet = database.query(SERVICE_QUERY);
+			while(resultSet.next()){
+				if(resultSet.getString(2).equals(model.getServiceName()))
+				serviceId = resultSet.getLong(1) + "";
+			}
+			} catch (SQLException e) {
+				System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
+				return "Problems getting service agent!";
+			}
+		}
+		else if(node == null){
+			return "No node given!";
+		}
+		Dimension[] dimensions = Dimension.getDimensions();
+		List<Factor> factorsOfDimension = new ArrayList<Factor>();
+		List<Measure> measuresOfFactor = new ArrayList<Measure>();
+		String returnStatement = "<div id = '" + modelName + "'>\n";
+		for(int i = 0; i < dimensions.length; i++){
+			returnStatement += "<div id = '" + dimensions[i] + "'>\n";
+			returnStatement += "<h4>" + dimensions[i] + "</h4>\n";
+			factorsOfDimension = model.getFactorsOfDimension(dimensions[i]);
+			for(Factor factor : factorsOfDimension){
+				returnStatement += "<p>\nFactor " + factor.getName() + "\n<br>\n";
+				measuresOfFactor = factor.getMeasures();
+				for(Measure measure : measuresOfFactor){
+					if(serviceId != null){
+						measure = insertService(measure, serviceId);
+					}
+					else if(node != null){
+						measure = insertNode(measure, node);
+					}
+					returnStatement += measure.getName() + "<br>\n";
+					try {
+						returnStatement += measure.visualize(database);
+						returnStatement += "\n<br>\n";
+					} catch (Exception e) {
+						System.out.println("Problems visualizing measure: " + measure.getName() + "Exception: " + e);
+					}
+				}
+				returnStatement += "</p>\n";
+			}
+			returnStatement += "</div>\n";
+		}
+		returnStatement += "</div>\n";
+		return returnStatement;
+	}
+	
+	
+	/**
 	 *
 	 * This method will read the contents of the catalog file and update the available measures.
 	 *
@@ -334,6 +427,9 @@ public class MonitoringDataProvisionService extends Service{
 				if(childType.equals("query")){
 					String queryName = measureChild.getAttribute("name");
 					String query = measureChild.getFirstChild().getText();
+					//Replace escape characters with their correct values (seems like the simple XML Parser does not do that)
+					query = query.replaceAll( "&amp;&", "&" ).replaceAll( "&lt;", "<" )
+							.replaceAll( "&lt;", "<" ).replaceAll( "&gt;", ">" ).replaceAll( "&lt;", "<" );
 					queries.put(queryName, query);
 				}
 				
@@ -391,7 +487,6 @@ public class MonitoringDataProvisionService extends Service{
 			String parameters[] = new String[4];
 
 			type = visualizationElement.getChild(0).getFirstChild().getText();
-			
 			parameters[0] = visualizationElement.getChild(1).getFirstChild().getText();
 			parameters[1] = visualizationElement.getChild(2).getFirstChild().getText();
 			parameters[2] = visualizationElement.getChild(3).getFirstChild().getText();
@@ -480,7 +575,7 @@ public class MonitoringDataProvisionService extends Service{
 				throw new MalformedXMLException(successModelFile.toString() + ": Success model expected!");
 			if (!root.hasAttribute("service"))
 				throw new MalformedXMLException("Service attribute expected!");
-			serviceName = root.getAttribute("name");
+			serviceName = root.getAttribute("service");
 		}
 		if(root.getChildCount() != 6)
 			throw new MalformedXMLException(successModelFile.toString() + ": Six dimensions expected!");

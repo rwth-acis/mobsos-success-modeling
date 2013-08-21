@@ -1,7 +1,7 @@
 <NodeSuccessModel name="Sample Node Success Model">
 	<dimension name="System Quality">
 		<factor name="Stability">
-			<measure name="Successful Agent Uploads"/>
+			<measure name="Successful Agent Uploads Ratio"/>
 		</factor>
 	</dimension>
 	<dimension name="Information Quality">

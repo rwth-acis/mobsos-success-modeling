@@ -21,7 +21,7 @@ import java.util.Map;
  * @author Peter de Lange
  *
  */
-public class Chart extends Visualization {
+public class Chart implements Visualization {
 	
 	
 	/**
@@ -31,7 +31,7 @@ public class Chart extends Visualization {
 	 * @author Peter de Lange
 	 *
 	 */
-	public enum ChartType {
+	public static enum ChartType {
 		BarChart,
 		LineChart,
 		PieChart,
@@ -61,7 +61,6 @@ public class Chart extends Visualization {
 	}
 	
 	
-	@Override
 	public String visualize(Map<String, String> queries, SQLDatabase database) throws Exception{
 		
 		//Please note that no parameter check is done here.
@@ -72,9 +71,11 @@ public class Chart extends Visualization {
 			try {
 				resultSet = database.query(list.get(0));
 			} catch (SQLException e) {
-				throw new Exception("The query has lead to an error: " + e);
+				throw new Exception("(Chart Visualization) The query has lead to an error: " + e);
 			}
 			MethodResult methodResult = new MethodResult(resultSet);
+			if(methodResult.getRowList().isEmpty())
+				return "Correct, but (temporary) empty query result, no visualization possible.";
 			switch(chartType){
 			case BarChart:
 				BarChart barChart = new BarChart(methodResult, parameters);

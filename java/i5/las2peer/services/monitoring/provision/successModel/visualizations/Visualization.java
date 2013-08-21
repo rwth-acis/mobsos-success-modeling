@@ -6,12 +6,12 @@ import java.util.Map;
 
 /**
  *
- * Basic abstract class for visualizations of a measure.
+ * Interface for visualizations of a measure.
  *
  * @author Peter de Lange
  *
  */
-public abstract class Visualization {
+public interface Visualization {
 
 	
 	/**

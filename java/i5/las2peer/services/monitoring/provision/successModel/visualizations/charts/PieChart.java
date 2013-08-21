@@ -31,16 +31,16 @@ public class PieChart {
 		String height = visualizationParameters[2];
 		String width = visualizationParameters[3];
 		
-		resultHTML = "<div id='" + divId + "' style='height: "+ height + "; width: " + width + ";'></div>\n";
+		resultHTML = "<div id='" + divId + "' style='height: " + height + "; width: " + width + ";'></div>\n";
 		resultHTML += "<script>\n";
-		resultHTML += "var qv_script = document.createElement('script');\n";
-		resultHTML += "qv_script.src = 'https://www.google.com/jsapi?callback=qv_loadChart';\n";
-		resultHTML += "qv_script.type = 'text/javascript';\n";
-		resultHTML += "document.getElementsByTagName('head')[0].appendChild(qv_script);\n";
-		resultHTML += "function qv_loadChart(){\n";
-		resultHTML += "google.load('visualization', '1', {packages: ['corechart'], callback: qv_drawChart});\n";
+		resultHTML += "var " + divId + "_script = document.createElement('script');\n";
+		resultHTML += divId + "_script.src = 'https://www.google.com/jsapi?callback=" + divId + "_loadChart';\n";
+		resultHTML += divId + "_script.type = 'text/javascript';\n";
+		resultHTML += "document.getElementsByTagName('head')[0].appendChild(" + divId + "_script);\n";
+		resultHTML += "function " + divId + "_loadChart(){\n";
+		resultHTML += "google.load('visualization', '1', {packages: ['corechart'], callback: drawChart_" + divId + " });\n";
 		resultHTML += "}\n";
-		resultHTML += "function qv_drawChart() {\n";
+		resultHTML += "function drawChart_" + divId + "() {\n";
 		
 		resultHTML += "var data = new google.visualization.DataTable();\n";
 		

@@ -2,36 +2,36 @@
 	
 	<dimension name="System Quality">
 		<factor name="Performance">
-			<measure name="Average Time to send Message (ChatService)"/>
-			<measure name="Average Time to fetch Chatroom Information (ChatService)"/>
+			<measure name="Average Time to send Message in Milliseconds"/>
+			<measure name="Average Time to fetch Chatroom Information in Milliseconds"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="Information Quality">
 		<factor name="Quantity">
-			<measure name="Number of public Chatrooms over Time (ChatService)"/>
-			<measure name="Number of private Chatrooms over Time (ChatService)"/>
+			<measure name="Number of public Chatrooms over Time"/>
+			<measure name="Number of private Chatrooms over Time"/>
 		</factor>
 		<factor name="Quality">
-			<measure name="Average Users per public Chatroom (ChatService)"/>
-			<measure name="Average Users per private Chatroom (ChatService)"/>
+			<measure name="Average Users per public Chatroom"/>
+			<measure name="Average Users per private Chatroom"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="Use">
 		<factor name="Active Use">
-			<measure name="Send Messages over Time (ChatService)"/>
-			<measure name="Average Messages send per User (ChatService)"/>
+			<measure name="Send Messages over Time"/>
+			<measure name="Average Messages send per User"/>
 		</factor>
 		<factor name="Passive Use">
-			<measure name="Received Messages over Time (ChatService)"/>
-			<measure name="Average Messages received per User (ChatService)"/>
+			<measure name="Received Messages over Time"/>
+			<measure name="Average Messages received per User"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="User Satisfaction">
 		<factor name="Time Spend">
-			<measure name="Average Time (Seconds) spend in Chatroom (ChatService)"/>
+			<measure name="Average Time spend in Chatroom in Seconds"/>
 		</factor>
 	</dimension>
 	

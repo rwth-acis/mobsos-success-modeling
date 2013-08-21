@@ -1,6 +1,6 @@
 <Catalog>
 	
-	<measure name="Successful Agent Uploads">
+	<measure name="Successful Agent Uploads Ratio">
 		<query name="AgentUploadStarted">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED' AND SOURCE_NODE = '$NODE$';
 		</query>
@@ -23,105 +23,104 @@
 	
 	<measure name="Send Messages over Time (Node)">
 		<query name="SendedMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(EVENT) AS SendMessages FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
 			WHERE EVENT = 'MESSAGE_SENDING'
 			AND SOURCE_NODE = '$NODE$'
-			GROUP BY Time;
+			GROUP BY TIME_STAMP;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
-			<nodeId>ChartMeasure</nodeId>
+			<nodeId>SendMessagesChart</nodeId>
 			<title>Send Messages</title>
-			<width>500</width>
 			<height>500</height>
+			<width>80%</width>
 		</visualization>
 	</measure>
 	
 	<measure name="Send Messages over Time (Service)">
 		<query name="SendedMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(EVENT) AS SendMessages FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
 			WHERE EVENT =  'MESSAGE_SENDING'
 			AND SOURCE_AGENT =  '$SERVICE$'
 			GROUP BY TIME_STAMP;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
-			<nodeId>ChartMeasure</nodeId>
+			<nodeId>SendMessagesChart</nodeId>
 			<title>Send Messages</title>
-			<width>500</width>
 			<height>500</height>
+			<width>80%</width>
 		</visualization>
 	</measure>
 	
 	
-	<measure name="Number of private Chatrooms over Time (ChatService)">
+	<measure name="Number of private Chatrooms over Time">
 		<query name="PrivateChatrooms">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS PrivateChatrooms FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Private Chatrooms' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT =  '$SERVICE$'
 			GROUP BY TIME_STAMP;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
-			<nodeId>ChartMeasure</nodeId>
-			<title>Send Messages</title>
-			<width>500</width>
+			<nodeId>PrivateChatroomsChart</nodeId>
+			<title>Private Chatrooms over Time</title>
 			<height>500</height>
+			<width>80%</width>
 		</visualization>
 	</measure>
 	
-	<measure name="Number of public Chatrooms over Time (ChatService)">
+	<measure name="Number of public Chatrooms over Time">
 		<query name="PublicChatrooms">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS PublicChatrooms FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Public Chatrooms' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND SOURCE_AGENT =  '$SERVICE$'
 			GROUP BY TIME_STAMP;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
-			<nodeId>ChartMeasure</nodeId>
-			<title>Send Messages</title>
-			<width>500</width>
+			<nodeId>PublicChatroomsChart</nodeId>
+			<title>Public Chatrooms over Time</title>
 			<height>500</height>
+			<width>80%</width>
 		</visualization>
 	</measure>
 	
-	<measure name="Send Messages over Time (ChatService)">
+	<measure name="Send Messages over Time">
 		<query name="SendMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS SendMessages FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Send Messages' FROM MESSAGE
 			WHERE (EVENT =  'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1')
 			AND SOURCE_AGENT =  '$SERVICE$'
 			GROUP BY TIME_STAMP;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
-			<nodeId>ChartMeasure</nodeId>
+			<nodeId>SendMessagesChart</nodeId>
 			<title>Send Messages</title>
-			<width>500</width>
 			<height>500</height>
+			<width>80%</width>
 		</visualization>
 	</measure>
 	
-	<measure name="Received Messages over Time (ChatService)">
+	<measure name="Received Messages over Time">
 		<query name="ReceivedMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS ReceivedMessages FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Received Messages' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_7'
 			AND SOURCE_AGENT =  '$SERVICE$'
 			GROUP BY TIME_STAMP;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
-			<nodeId>ChartMeasure</nodeId>
-			<title>Send Messages</title>
-			<width>500</width>
+			<nodeId>ReceivedMessagesChart</nodeId>
+			<title>Received Messages</title>
 			<height>500</height>
+			<width>80%</width>
 		</visualization>
 	</measure>
 	
-	<measure name="Average Users per private Chatroom (ChatService)">
+	<measure name="Average Users per private Chatroom">
 		<query name="StoredPrivateChatrooms">
-			SELECT EVENT AS PrivateChatrooms, COUNT(*) AS Number FROM MESSAGE
+			SELECT COUNT(*) AS Number FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3'
 			AND SOURCE_AGENT = '$SERVICE$'
-			GROUP BY PrivateChatrooms;
 		</query>
 		<query name="UniqueAddedPrivateUsers">
 			SELECT COUNT(privateJoins.PrivateJoins) AS UniqueJoins FROM
@@ -137,12 +136,11 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Users per public Chatroom (ChatService)">
+	<measure name="Average Users per public Chatroom">
 		<query name="StoredPublicChatrooms">
-			SELECT EVENT AS PublicChatrooms, COUNT(*) AS Number FROM MESSAGE
+			SELECT COUNT(*) AS Number FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4'
 			AND SOURCE_AGENT = '$SERVICE$'
-			GROUP BY PublicChatrooms;
 		</query>
 		<query name="UniqueAddedPublicUsers">
 			SELECT COUNT(publicJoins.PublicJoins) AS UniqueJoins FROM
@@ -158,7 +156,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Messages send per User (ChatService)">
+	<measure name="Average Messages send per User">
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
@@ -177,7 +175,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Messages received per User (ChatService)">
+	<measure name="Average Messages received per User">
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
@@ -195,7 +193,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Time to fetch Chatroom Information (ChatService)">
+	<measure name="Average Time to fetch Chatroom Information in Milliseconds">
 		<query name="AverageTime">
 			SELECT AVG(timeToFetch.difference) AS AverageTime FROM
 			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
@@ -207,7 +205,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Time to send Message (ChatService)">
+	<measure name="Average Time to send Message in Milliseconds">
 		<query name="AverageTime">
 			SELECT AVG(timeToSend.difference) AS AverageTime FROM
 			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
@@ -220,7 +218,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Time (Seconds) spend in Chatroom (ChatService)">
+	<measure name="Average Time spend in Chatroom in Seconds">
 		<query name="AverageTime">
 			SELECT AVG(timeSpend.difference)/1000 AS AverageTime FROM
 				(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference
@@ -235,6 +233,5 @@
 			<operand name="AverageTime" index="0"/>
 		</visualization>
 	</measure>
-	
-	
+		
 </Catalog>

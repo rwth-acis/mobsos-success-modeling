@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * 
- * A SuccessModel bundles {@link Measure}s into factors and dimensions.
+ * A SuccessModel bundles {@link Measure}s into {@link Factor}s and dimensions.
  * This implementation uses the model of Delone & McLean.
  * 
  * @author Peter de Lange
@@ -23,14 +23,34 @@ public class SuccessModel {
 	 * @author Peter de Lange
 	 *
 	 */
-	public enum Dimension {
+	public static enum Dimension {
 		SystemQuality,
 		InformationQuality,
 		Use,
 		UserSatisfaction,
 		IndividualImpact,
-		OrganizationalImpact
+		OrganizationalImpact;
+		
+		/**
+		 * 
+		 * Simply returns all available Dimensions in the "correct" order.
+		 * 
+		 * @return an array of {@link Dimension}s
+		 * 
+		 */
+		public static Dimension[] getDimensions(){
+			Dimension[] dimensions = {
+				SystemQuality,
+				InformationQuality,
+				Use,
+				UserSatisfaction,
+				IndividualImpact,
+				OrganizationalImpact
+			};
+			return dimensions;
+		}
 	}
+	
 	
 	private String name;
 	//Can be null in case of a node success model

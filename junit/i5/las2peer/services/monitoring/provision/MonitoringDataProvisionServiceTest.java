@@ -104,11 +104,11 @@ public class MonitoringDataProvisionServiceTest {
 			for(String node : resultArray)
 				System.out.println("Result of asking for all nodes: " + node);
 			
-			result = c.invoke(testServiceClass, "getServices");
+			result = c.invoke(testServiceClass, "getServiceIds");
 			assertTrue(result instanceof String[]);
 			resultArray = (String[]) result;
 			for(String service : resultArray)
-				System.out.println("Result of asking for all services: " + service);
+				System.out.println("Result of asking for all service ids: " + service);
 			
 			result = c.invoke(testServiceClass, "getModels", true);
 			assertTrue(result instanceof String[]);
@@ -147,7 +147,7 @@ public class MonitoringDataProvisionServiceTest {
 			
 
 			System.out.println("Calling Measure Visualizations with node " + knownNode);
-			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Successful Agent Uploads", knownNode);
+			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Successful Agent Uploads Ratio", knownNode);
 			
 			Double resultDouble = Double.parseDouble((String) result);
 			System.out.println("Successful Agent Uploads (KPI) Result: " + resultDouble);
@@ -158,7 +158,15 @@ public class MonitoringDataProvisionServiceTest {
 			
 			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Send Messages over Time (Node)", knownNode);
 			assertTrue(result instanceof String);
-			System.out.println("Send Messages over Time (Node) (Chart) Result: " + result);
+			System.out.println("Send Messages over Time (Node) (Chart) Result:\n" + result);
+			
+			result = c.invoke(testServiceClass, "visualizeSuccessModel", "Sample Node Success Model", knownNode);
+			assertTrue(result instanceof String);
+			System.out.println("Visualizing Sample Node Success Model Result:\n" + result);
+			
+			result = c.invoke(testServiceClass, "visualizeServiceSuccessModel", "Chat Service Success Model");
+			assertTrue(result instanceof String);
+			System.out.println("Visualizing Chat Service Success Model Result:\n" + result);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -16,10 +16,9 @@ import java.util.Map;
  * @author Peter de Lange
  *
  */
-public class Value extends Visualization {
+public class Value implements Visualization {
 	
 	
-	@Override
 	public String visualize(Map<String, String> queries, SQLDatabase database) throws Exception{
 		String queryResult = "";
 		if(queries.size() == 1){
@@ -30,7 +29,7 @@ public class Value extends Visualization {
 				resultSet = database.query(list.get(0));
 				resultSetMetaData = resultSet.getMetaData();
 			} catch (SQLException e) {
-				throw new Exception("The query has lead to an error: " + e);
+				throw new Exception("(Value Visualization) The query has lead to an error: " + e);
 			}
 			
 			if(resultSetMetaData.getColumnCount() != 1){
