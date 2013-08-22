@@ -23,10 +23,10 @@
 	
 	<measure name="Send Messages over Time (Node)">
 		<query name="SendedMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %h:%i') AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
 			WHERE EVENT = 'MESSAGE_SENDING'
 			AND SOURCE_NODE = '$NODE$'
-			GROUP BY TIME_STAMP;
+			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -39,10 +39,10 @@
 	
 	<measure name="Send Messages over Time (Service)">
 		<query name="SendedMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %h:%i') AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
 			WHERE EVENT =  'MESSAGE_SENDING'
 			AND SOURCE_AGENT =  '$SERVICE$'
-			GROUP BY TIME_STAMP;
+			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -56,9 +56,9 @@
 	
 	<measure name="Number of private Chatrooms over Time">
 		<query name="PrivateChatrooms">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Private Chatrooms' FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %h:%i') AS CHAR) AS Time, COUNT(*) AS 'Private Chatrooms' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT =  '$SERVICE$'
-			GROUP BY TIME_STAMP;
+			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -71,9 +71,9 @@
 	
 	<measure name="Number of public Chatrooms over Time">
 		<query name="PublicChatrooms">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Public Chatrooms' FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %h:%i') AS CHAR) AS Time, COUNT(*) AS 'Public Chatrooms' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND SOURCE_AGENT =  '$SERVICE$'
-			GROUP BY TIME_STAMP;
+			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -86,10 +86,10 @@
 	
 	<measure name="Send Messages over Time">
 		<query name="SendMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Send Messages' FROM MESSAGE
-			WHERE (EVENT =  'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1')
-			AND SOURCE_AGENT =  '$SERVICE$'
-			GROUP BY TIME_STAMP;
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %h:%i') AS CHAR) AS Time, COUNT(*) AS 'Send Messages' FROM MESSAGE
+			WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1')
+			AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -102,10 +102,10 @@
 	
 	<measure name="Received Messages over Time">
 		<query name="ReceivedMessages">
-			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000) AS CHAR) AS Time, COUNT(*) AS 'Received Messages' FROM MESSAGE
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %h:%i') AS CHAR) AS Time, COUNT(*) AS 'Received Messages' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_7'
 			AND SOURCE_AGENT =  '$SERVICE$'
-			GROUP BY TIME_STAMP;
+			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
