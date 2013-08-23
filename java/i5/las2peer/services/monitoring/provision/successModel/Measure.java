@@ -19,6 +19,7 @@ public class Measure {
 	
 	private String name;
 	private Map<String, String> queries = new HashMap<String, String>();
+	private Map<String, String> insertedQueries = new HashMap<String, String>(); //used like a temp value
 	private Visualization visualization;
 	
 	
@@ -47,7 +48,7 @@ public class Measure {
 	 * @throws Exception If something went wrong with the visualization (Database errors, wrong query results..)
 	 */
 	public String visualize(SQLDatabase database) throws Exception{
-		return this.visualization.visualize(queries, database);
+		return this.visualization.visualize(insertedQueries, database);
 	}
 	
 	
@@ -72,5 +73,12 @@ public class Measure {
 		return name;
 	}
 	
-	
+	/**
+	 * This sets the inserted queries of this measure.
+	 * 
+	 * @param insertedQueries
+	 */
+	public void setInsertedQueries(Map<String, String> insertedQueries){
+		this.insertedQueries = insertedQueries;
+	}
 }

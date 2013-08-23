@@ -8,24 +8,15 @@ var psLibrary = new PS.ProvisionService();
 
 
 	//Left
-	nodeNameNode = document.getElementById("ps_nodeName"),
 	nodeSelectNode = document.ps_visualizeNodeModel.NodeSelection,
-	
 	nodeSuccessModelNode = document.getElementById("ps_nodeSuccessModel"),
 	
 	//Right
-	serviceNameNode = document.getElementById("ps_serviceName"),
 	serviceSelectNode = document.ps_visualizeServiceModel.ServiceSelection,
-	
-	successModelNameNode = document.getElementById("ps_successModelName"),
 	successModelSelectNode = document.ps_visualizeServiceModel.SuccessModelName,
+	serviceSuccessModelNode = document.getElementById("ps_serviceSuccessModel");
 	
-	serviceSuccessModelNode = document.getElementById("ps_serviceSuccessModel"),
-
 	
-	//Message Input
-	messageNode = document.getElementById("cs_message");
-
 /**
 * Logs in the anonymous user.
 */
@@ -78,7 +69,34 @@ var get_success_models = function(){
 			}
 		}
 	});
-
+};
+	
+/**
+ * Visualizes a node success model and writes it to the output div.
+ */
+var visualize_node_success_model = function(){
+	var nodeName = nodeSelectNode.options[nodeSelectNode.selectedIndex].text;
+	psLibrary.visualizeNodeSuccessModel(nodeName, function(result){
+		nodeSuccessModelNode.innerHTML = result;
+		var scripts = nodeSuccessModelNode.getElementsByTagName('script');
+		for (var ix = 0; ix < scripts.length; ix++) {
+			 jQuery.globalEval(scripts[ix].text);
+		}
+	});
+};
+	
+/**
+ * Visualizes a service success model and writes it to the output div.
+ */
+var visualize_service_success_model = function(){
+	var modelName = successModelSelectNode.options[successModelSelectNode.selectedIndex].text;
+	psLibrary.visualizeServiceSuccessModel(modelName, function(result){
+		serviceSuccessModelNode.innerHTML = result;
+		var scripts = serviceSuccessModelNode.getElementsByTagName('script');
+		for (var ix = 0; ix < scripts.length; ix++) {
+			 jQuery.globalEval(scripts[ix].text);
+		}
+	});
 };
 
 //Login by default

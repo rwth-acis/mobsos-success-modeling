@@ -1,4 +1,4 @@
-<NodeSuccessModel name="Sample Node Success Model">
+<NodeSuccessModel name="Node Success Model">
 	<dimension name="System Quality">
 		<factor name="Stability">
 			<measure name="Successful Agent Uploads Ratio"/>
@@ -8,7 +8,9 @@
 		
 	</dimension>
 	<dimension name="Use">
-		
+		<factor name="Agent Uploads">
+			<measure name="Agent Uploads"/>
+		</factor>
 	</dimension>
 	<dimension name="User Satisfaction">
 		

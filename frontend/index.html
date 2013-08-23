@@ -6,8 +6,6 @@
     <script type="text/javascript" src="js/lasAjaxClient.js"></script>
     <script type="text/javascript" src="js/provisionServiceLibrary.js"></script>
     <script type="text/javascript" src="js/jquery-1.8.0.min.js"></script>
-
-	
 </head>
 <body>
 <div id="ps_mainView">
@@ -15,7 +13,7 @@
 	  <tbody>
 		<tr style="height: 95%;">
 			<td valign="top" style="width: 50%">
-			    <form name="ps_visualizeNodeModel" action="javascript:visualize_node()">
+			    <form name="ps_visualizeNodeModel" action="javascript:visualize_node_success_model()">
 		    	    <select style = "width:75%" name="NodeSelection" size="1">
 				    </select>
 					<input style = "font-size: 1em;" type="submit" value="Visualize!"/>
@@ -23,7 +21,7 @@
 				<div id = "ps_nodeSuccessModel" style="height:100%; width:100%;"></div>
 			</td>
 			<td valign="top">
-				<form name="ps_visualizeServiceModel" action="javascript:visualize_success_model()">
+				<form name="ps_visualizeServiceModel" action="javascript:visualize_service_success_model()">
 		    	    <select style = "width:43%" name="ServiceSelection" size="1"
 		    	    onclick="javascript:get_success_models()">
 				    </select>

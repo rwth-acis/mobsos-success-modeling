@@ -149,9 +149,9 @@ public class MonitoringDataProvisionServiceTest {
 			
 			System.out.println("Calling Measure Visualizations with node " + knownNode);
 			
-			result = c.invoke(testServiceClass, "visualizeSuccessModel", "Sample Node Success Model", knownNode);
+			result = c.invoke(testServiceClass, "visualizeSuccessModel", "Node Success Model", knownNode);
 			assertTrue(result instanceof String);
-			System.out.println("Visualizing Sample Node Success Model Result:\n" + result);
+			System.out.println("Visualizing Node Success Model Result:\n" + result);
 			
 			result = c.invoke(testServiceClass, "visualizeServiceSuccessModel", "Chat Service Success Model");
 			assertTrue(result instanceof String);

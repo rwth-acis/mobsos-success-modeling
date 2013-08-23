@@ -14,11 +14,12 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Type of Agent A">
-		<query name="GetTypeOfAgentA">
-			SELECT TYPE FROM AGENT WHERE AGENT_ID = -6882384308892167869;
+	<measure name="Agent Uploads">
+		<query name="AgentUploadSuccess">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS' AND SOURCE_NODE = '$NODE$';
 		</query>
-		<visualization type="Value"/>
+		<visualization type="Value">
+		</visualization>
 	</measure>
 	
 	<measure name="Send Messages over Time (Node)">

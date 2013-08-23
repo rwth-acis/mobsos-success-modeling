@@ -83,6 +83,37 @@ var PS = (function(PS){
 			}
 		};
 		
+		/**
+		* Visualizes a success model.
+		* @param modelName the name of the success model
+		* @param nodeName the name of the node (can be null)
+		* @param callback Callback function, called when the result has been retrieved. A String.
+		*/
+		var visualizeSuccessModel = function(modelName, nodeName, callback){
+			if(LAS2peerClient.getStatus() == "loggedIn"){
+				
+				var params = [],
+				paramModelName = {},
+				paramNodeName = {};
+				
+				paramModelName.type = "String";
+				paramModelName.value = modelName;
+				
+				paramNodeName.type = "String";
+				paramNodeName.value = nodeName;
+
+				params.push(paramModelName, paramNodeName);
+				
+				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeSuccessModel", params, function(status, result) {
+					if(status == 200 || status == 204) {
+						callback(result.value);
+					} else {
+						callback("Error! Message: " + result);
+					}
+				});
+			}
+		};
+		
 		//Constructor
 		LAS2peerClient = new LasAjaxClient("MonitoringDataProvisionService", function(statusCode, message) {
 			switch(statusCode) {
@@ -146,10 +177,29 @@ var PS = (function(PS){
 			
 			/**
 			* Retrieves all available success models for a given service name.
+			* @param serviceName the name of the service
 			* @param callback Callback function, called when the result has been retrieved. An array of success model names.
 			*/
 			getSuccessModels: function(serviceName, callback){
 				getSuccessModels(serviceName, callback);
+			},
+			
+			/**
+			* Visualizes the "Node Success Model" for a given node.
+			* @param nodeName the node name
+			* @param callback Callback function, called when the result has been retrieved. A String.
+			*/
+			visualizeNodeSuccessModel: function(nodeName, callback){
+				visualizeSuccessModel("Node Success Model", nodeName, callback);
+			},
+			
+			/**
+			* Visualizes the success model for a given model name.
+			* @param modelName the name of the success model
+			* @param callback Callback function, called when the result has been retrieved. A String.
+			*/
+			visualizeServiceSuccessModel: function(modelName, callback){
+				visualizeSuccessModel(modelName, null, callback);
 			}
 		}
 		

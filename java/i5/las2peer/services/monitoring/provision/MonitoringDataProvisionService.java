@@ -562,11 +562,14 @@ public class MonitoringDataProvisionService extends Service{
 	 */
 	private Measure insertNode(Measure measure, String nodeId){
 		Pattern pattern = Pattern.compile("\\$NODE\\$");
+		Map<String, String> insertedQueries = new HashMap<String, String>();
+		
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
 			Map.Entry<String, String> entry = queries.next();
-			entry.setValue(pattern.matcher(entry.getValue()).replaceAll(nodeId));
+			insertedQueries.put(entry.getKey(),(pattern.matcher(entry.getValue()).replaceAll(nodeId)));
 		}
+		measure.setInsertedQueries(insertedQueries);
 		return measure;
 	}
 	
@@ -583,11 +586,14 @@ public class MonitoringDataProvisionService extends Service{
 	 */
 	private Measure insertService(Measure measure, String serviceId){
 		Pattern pattern = Pattern.compile("\\$SERVICE\\$");
+		Map<String, String> insertedQueries = new HashMap<String, String>();
+		
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
 			Map.Entry<String, String> entry = queries.next();
-			entry.setValue(pattern.matcher(entry.getValue()).replaceAll(serviceId));
+			insertedQueries.put(entry.getKey(),(pattern.matcher(entry.getValue()).replaceAll(serviceId)));
 		}
+		measure.setInsertedQueries(insertedQueries);
 		return measure;
 	}
 	
