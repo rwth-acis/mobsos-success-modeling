@@ -10,8 +10,33 @@
 	
 </head>
 <body>
-<div class="main">
-    <p>placeholder</p>
+<div id="ps_mainView">
+	<table style="text-align: left; width: 100%; height: 100%;" border="1" cellpadding="10" cellspacing="2">
+	  <tbody>
+		<tr style="height: 95%;">
+			<td valign="top" style="width: 50%">
+			    <form name="ps_visualizeNodeModel" action="javascript:visualize_node()">
+		    	    <select style = "width:75%" name="NodeSelection" size="1">
+				    </select>
+					<input style = "font-size: 1em;" type="submit" value="Visualize!"/>
+				</form>
+				<div id = "ps_nodeSuccessModel" style="height:100%; width:100%;"></div>
+			</td>
+			<td valign="top">
+				<form name="ps_visualizeServiceModel" action="javascript:visualize_success_model()">
+		    	    <select style = "width:43%" name="ServiceSelection" size="1"
+		    	    onclick="javascript:get_success_models()">
+				    </select>
+				    <select style = "width:44%" name="SuccessModelName" size="1">
+				      	<option>Select Service First..</option>
+				    </select>
+				    <input style = "font-size: 1em;" type="submit" value="Visualize!"/>
+				</form>
+				<div id = "ps_serviceSuccessModel" style="height:100%; width:100%;"></div>
+			</td>
+		</tr>
+	  </tbody>
+	</table>
 </div>
 
 

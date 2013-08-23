@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -187,22 +188,33 @@ public class MonitoringDataProvisionService extends Service{
 	
 	/**
 	 * 
-	 * Returns the name of all stored success models.
+	 * Returns the name of all stored success models for the given service.
 	 * 
+	 * @param serviceName the name of the service
 	 * @param update updates the available success models with the content
 	 * of the success model folder
 	 * 
 	 * @return an array of success model names
 	 * 
 	 */
-	public String[] getModels(boolean update){
+	public String[] getModels(String serviceName, boolean update){
 		if(update)
 			try {
 				knownModels = updateModels();
 			} catch (IOException e) {
 				System.out.println(e.getMessage());
 			}
-		return knownModels.keySet().toArray(new String[0]);
+		
+		Collection<SuccessModel> models = knownModels.values();
+		List<String> modelNames = new ArrayList<String>();
+		Iterator<SuccessModel> iterator = models.iterator();
+		while(iterator.hasNext()){
+			SuccessModel model = iterator.next();
+			if(model.getServiceName() != null && model.getServiceName().equals(serviceName)){
+				modelNames.add(model.getName());
+			}
+		}
+		return modelNames.toArray(new String[0]);
 	}
 	
 	

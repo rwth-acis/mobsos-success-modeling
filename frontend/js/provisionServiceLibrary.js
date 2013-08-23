@@ -23,7 +23,65 @@ var PS = (function(PS){
 		
 		
 		//Private Methods
+		/**
+		* Retrieves all available nodes.
+		* @param callback Callback function, called when the result has been retrieved. An array of node names.
+		*/
+		var getNodes = function(callback){
+			if(LAS2peerClient.getStatus() == "loggedIn"){
+				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "getNodes", [], function(status, result) {
+					if(status == 200 || status == 204) {
+						callback(result.value);
+					} else {
+						callback("Error! Message: " + result);
+					}
+				});
+			}
+		};
 		
+		/**
+		* Retrieves all available services.
+		* @param callback Callback function, called when the result has been retrieved. An array of service names.
+		*/
+		var getServices = function(callback){
+			if(LAS2peerClient.getStatus() == "loggedIn"){
+				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "getServices", [], function(status, result) {
+					if(status == 200 || status == 204) {
+						callback(result.value);
+					} else {
+						callback("Error! Message: " + result);
+					}
+				});
+			}
+		};
+		
+		/**
+		* Retrieves all available services.
+		* @param callback Callback function, called when the result has been retrieved. An array of service names.
+		*/
+		var getSuccessModels = function(serviceName, callback){
+			if(LAS2peerClient.getStatus() == "loggedIn"){
+			
+				var params = [],
+				paramServiceName = {},
+				paramUpdate = {};
+				
+				paramServiceName.type = "String";
+				paramServiceName.value = serviceName;
+				paramUpdate.type = "boolean";
+				paramUpdate.value = true;
+				
+				params.push(paramServiceName,paramUpdate);
+				
+				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "getModels", params, function(status, result) {
+					if(status == 200 || status == 204) {
+						callback(result.value);
+					} else {
+						callback("Error! Message: " + result);
+					}
+				});
+			}
+		};
 		
 		//Constructor
 		LAS2peerClient = new LasAjaxClient("MonitoringDataProvisionService", function(statusCode, message) {
@@ -68,10 +126,33 @@ var PS = (function(PS){
 				} else {
 					LAS2peerClient.login(LAS2PEERUSER, LAS2PEERUSERPASS, LAS2PEERHOST, "MonitoringDataProvisionService");
 				}
+			},
+			
+			/**
+			* Retrieves all available nodes.
+			* @param callback Callback function, called when the result has been retrieved. An array of node names.
+			*/
+			getNodes: function(callback){
+				getNodes(callback);
+			},
+			
+			/**
+			* Retrieves all available services.
+			* @param callback Callback function, called when the result has been retrieved. An array of service names.
+			*/
+			getServices: function(callback){
+				getServices(callback);
+			},
+			
+			/**
+			* Retrieves all available success models for a given service name.
+			* @param callback Callback function, called when the result has been retrieved. An array of success model names.
+			*/
+			getSuccessModels: function(serviceName, callback){
+				getSuccessModels(serviceName, callback);
 			}
-		
 		}
-	
+		
 	};
 	
 	return PS;

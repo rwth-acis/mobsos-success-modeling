@@ -109,8 +109,10 @@ public class MonitoringDataProvisionServiceTest {
 			resultArray = (String[]) result;
 			for(String service : resultArray)
 				System.out.println("Result of asking for all monitored service names: " + service);
+			String serviceName = resultArray[0];
 			
-			result = c.invoke(testServiceClass, "getModels", true);
+			System.out.println("Calling getModels with service: " + serviceName);
+			result = c.invoke(testServiceClass, "getModels", serviceName, true);
 			assertTrue(result instanceof String[]);
 			resultArray = (String[]) result;
 			for(String service : resultArray)
