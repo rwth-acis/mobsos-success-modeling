@@ -79,6 +79,7 @@ public class LineChart{
 		
 		resultHTML += "var options = {\n";
 		resultHTML += "'title':'" + title + "',\n";
+		resultHTML += "vAxis: {minValue: 0}";
 		resultHTML += "};\n";
 		
 		resultHTML += "var chart = new google.visualization.LineChart(document.getElementById('" + divId + "'));\n";

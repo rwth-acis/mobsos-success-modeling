@@ -164,24 +164,24 @@ public class MonitoringDataProvisionService extends Service{
 	 * @return an array of service agent id
 	 *
 	 */
-	public String[] getServiceIds(){
-		List<String> serviceAgentIds = new ArrayList<String>();
+	public String[] getServices(){
+		List<String> monitoredServices = new ArrayList<String>();
 		
 		ResultSet resultSet;
 		try {
 			resultSet = database.query(SERVICE_QUERY);
 		} catch (SQLException e) {
-			System.out.println("(Get Service Ids) The query has lead to an error: " + e);
+			System.out.println("(getServiceIds) The query has lead to an error: " + e);
 			return null;
 		}
 		try {
 			while(resultSet.next()){
-				serviceAgentIds.add(resultSet.getString(1));
+				monitoredServices.add(resultSet.getString(2));
 			}
 		} catch (SQLException e) {
 			System.out.println("Problems reading result set: " + e);
 		}
-		return serviceAgentIds.toArray(new String[serviceAgentIds.size()]);
+		return monitoredServices.toArray(new String[monitoredServices.size()]);
 	}
 	
 	
@@ -207,93 +207,6 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
-	 *
-	 * Executes a node measure query and returns the result.
-	 *
-	 * @param measureName the name of the measure
-	 * @param node the name of the node this measure is for
-	 *
-	 * @return the result as a string
-	 *
-	 */
-	public String visualizeNodeMeasure(String measureName, String nodeId){
-		return visualizeMeasure(measureName, nodeId, null);
-	}
-	
-	
-	/**
-	 *
-	 * Executes a service measure query and returns the result.
-	 *
-	 * @param measureName the name of the measure
-	 * @param the serviceId this measure should be for (can be null)
-	 *
-	 * @return the result as a string
-	 *
-	 */
-	public String visualizeServiceMeasure(String measureName, String serviceId){
-		return visualizeMeasure(measureName, null, serviceId);
-	}
-	
-	
-	/**
-	 *
-	 * Executes a measure query and returns the result.
-	 *
-	 * @param measureName the name of the measure
-	 *
-	 * @return the result as a string
-	 *
-	 */
-	public String visualizeMeasure(String measureName){
-		return visualizeMeasure(measureName, null, null);
-	}
-	
-	
-	/**
-	 *
-	 * Executes a measure query and returns the result.
-	 *
-	 * @param measureName the name of the measure
-	 * @param node the name of the node this measure is for (can be null)
-	 * @param the serviceId this measure should be for (can be null)
-	 *
-	 * @return the result as a string
-	 *
-	 */
-	public String visualizeMeasure(String measureName, String nodeId, String serviceId){
-		Measure measure = knownMeasures.get(measureName);
-
-		if(measure == null){
-			//Reload the list
-			try {
-				knownMeasures = updateMeasures();
-			} catch (MalformedXMLException e) {
-				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			} catch (XMLSyntaxException e) {
-				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			} catch (IOException e) {
-				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			}
-			if(measure == null) //still not found
-				return "Measure does not exist!";
-		}
-		
-		//Insert parameters, if fields are set
-		if(nodeId != null)
-			measure = insertNode(measure, nodeId);
-		if(serviceId != null)
-			measure = insertService(measure, serviceId);
-		
-		try {
-			return measure.visualize(this.database);
-		} catch (Exception e) {
-			return "Exception occured while trying to get the measure: " + e;
-		}
-	}
-	
-	
-	/**
 	 * 
 	 * Visualizes a given service success model.
 	 * 
@@ -305,7 +218,7 @@ public class MonitoringDataProvisionService extends Service{
 	public String visualizeServiceSuccessModel(String modelName){
 		return visualizeSuccessModel(modelName, null);
 	}
-
+	
 	
 	/**
 	 * 
@@ -351,12 +264,14 @@ public class MonitoringDataProvisionService extends Service{
 			return "No node given!";
 		}
 		Dimension[] dimensions = Dimension.getDimensions();
+		String[] dimensionNames = Dimension.getDimensionNames();
 		List<Factor> factorsOfDimension = new ArrayList<Factor>();
 		List<Measure> measuresOfFactor = new ArrayList<Measure>();
+		
 		String returnStatement = "<div id = '" + modelName + "'>\n";
 		for(int i = 0; i < dimensions.length; i++){
 			returnStatement += "<div id = '" + dimensions[i] + "'>\n";
-			returnStatement += "<h4>" + dimensions[i] + "</h4>\n";
+			returnStatement += "<h4>" + dimensionNames[i] + "</h4>\n";
 			factorsOfDimension = model.getFactorsOfDimension(dimensions[i]);
 			for(Factor factor : factorsOfDimension){
 				returnStatement += "<p>\nFactor " + factor.getName() + "\n<br>\n";

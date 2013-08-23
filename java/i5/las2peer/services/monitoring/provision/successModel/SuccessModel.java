@@ -49,6 +49,26 @@ public class SuccessModel {
 			};
 			return dimensions;
 		}
+		
+		
+		/**
+		 * 
+		 * Returns all dimensions in a "read-friendly" format.
+		 * The dimensions are in the correct order.
+		 * @return an array of Strings
+		 * 
+		 */
+		public static String[] getDimensionNames(){
+			String[] dimensions = {
+				"System Quality",
+				"Information Quality",
+				"Use",
+				"User Satisfaction",
+				"Individual Impact",
+				"Organizational Impact"
+			};
+			return dimensions;
+		}
 	}
 	
 	

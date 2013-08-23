@@ -104,11 +104,11 @@ public class MonitoringDataProvisionServiceTest {
 			for(String node : resultArray)
 				System.out.println("Result of asking for all nodes: " + node);
 			
-			result = c.invoke(testServiceClass, "getServiceIds");
+			result = c.invoke(testServiceClass, "getServices");
 			assertTrue(result instanceof String[]);
 			resultArray = (String[]) result;
 			for(String service : resultArray)
-				System.out.println("Result of asking for all service ids: " + service);
+				System.out.println("Result of asking for all monitored service names: " + service);
 			
 			result = c.invoke(testServiceClass, "getModels", true);
 			assertTrue(result instanceof String[]);
@@ -145,20 +145,7 @@ public class MonitoringDataProvisionServiceTest {
 			Object result = c.invoke(testServiceClass, "getNodes");
 			String knownNode = ((String[]) result)[0];
 			
-
 			System.out.println("Calling Measure Visualizations with node " + knownNode);
-			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Successful Agent Uploads Ratio", knownNode);
-			
-			Double resultDouble = Double.parseDouble((String) result);
-			System.out.println("Successful Agent Uploads (KPI) Result: " + resultDouble);
-			
-			result = c.invoke(testServiceClass, "visualizeMeasure", "Type of Agent A");
-			assertTrue(result instanceof String);
-			System.out.println("Type of Agent A (Value) Result: " + result);
-			
-			result = c.invoke(testServiceClass, "visualizeNodeMeasure", "Send Messages over Time (Node)", knownNode);
-			assertTrue(result instanceof String);
-			System.out.println("Send Messages over Time (Node) (Chart) Result:\n" + result);
 			
 			result = c.invoke(testServiceClass, "visualizeSuccessModel", "Sample Node Success Model", knownNode);
 			assertTrue(result instanceof String);
