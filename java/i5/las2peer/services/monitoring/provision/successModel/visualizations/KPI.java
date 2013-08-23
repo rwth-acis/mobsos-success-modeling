@@ -5,6 +5,7 @@ import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -70,12 +71,16 @@ public class KPI implements Visualization {
 				expressionWithInsertedValues += value;
 			}
 		}
-		
+		String returnString = "";
 		Double returnValue = evaluator.evaluate(expressionWithInsertedValues);
-		String returnString = returnValue.toString();
+		if(!Double.isNaN(returnValue)){
+			DecimalFormat formatter =   new DecimalFormat  ( ".##" );
+			returnString = formatter.format(returnValue).toString();
+		}
 		//Probably division by zero (can happen with some (correctly formulated) query results); assuming correct result is mostly 0 then
-		if(returnString.equals("NaN"))
-			returnString = "0"; 
+		else{
+			returnString = "0";
+		}
 		return returnString;
 	}
 	

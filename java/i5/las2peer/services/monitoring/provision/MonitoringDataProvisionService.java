@@ -271,10 +271,10 @@ public class MonitoringDataProvisionService extends Service{
 		String returnStatement = "<div id = '" + modelName + "'>\n";
 		for(int i = 0; i < dimensions.length; i++){
 			returnStatement += "<div id = '" + dimensions[i] + "'>\n";
-			returnStatement += "<h4>" + dimensionNames[i] + "</h4>\n";
+			returnStatement += "<h3>" + dimensionNames[i] + "</h3>\n";
 			factorsOfDimension = model.getFactorsOfDimension(dimensions[i]);
 			for(Factor factor : factorsOfDimension){
-				returnStatement += "<p>\nFactor " + factor.getName() + "\n<br>\n";
+				returnStatement += "<h4>\nFactor " + factor.getName() + "</h4>\n";
 				measuresOfFactor = factor.getMeasures();
 				for(Measure measure : measuresOfFactor){
 					if(serviceId != null){
@@ -283,7 +283,7 @@ public class MonitoringDataProvisionService extends Service{
 					else if(node != null){
 						measure = insertNode(measure, node);
 					}
-					returnStatement += measure.getName() + "<br>\n";
+					returnStatement += measure.getName() + ": ";
 					try {
 						returnStatement += measure.visualize(database);
 						returnStatement += "\n<br>\n";
@@ -291,7 +291,6 @@ public class MonitoringDataProvisionService extends Service{
 						System.out.println("Problems visualizing measure: " + measure.getName() + "Exception: " + e);
 					}
 				}
-				returnStatement += "</p>\n";
 			}
 			returnStatement += "</div>\n";
 		}
