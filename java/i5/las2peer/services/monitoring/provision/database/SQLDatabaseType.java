@@ -14,7 +14,7 @@ package i5.las2peer.services.monitoring.provision.database;
 public enum SQLDatabaseType {
 	
 	/**
-	 * A DB2 database. Works with the "db2jcc_javax-0.jar" archive.
+	 * A DB2 database. Works with the "db2jcc-0.jar" +  "db2jcc_licence_cu-0.jar" archive.
 	 */
 	DB2 (1),
 	

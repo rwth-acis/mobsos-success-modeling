@@ -57,6 +57,7 @@ public class MonitoringDataProvisionService extends Service{
 	private String databasePassword;
 	private String catalogFileLocation;
 	private String successModelsFolderLocation;
+	private String DB2Schema;
 	
 	private SQLDatabase database; //The database instance to write to.
 	private Map<String, Measure> knownMeasures = new TreeMap<String, Measure>();
