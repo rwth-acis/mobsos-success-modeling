@@ -71,6 +71,12 @@ public class MonitoringDataProvisionService extends Service{
 	 */
 	public MonitoringDataProvisionService(){
 		setFieldValues(); //This sets the values of the configuration file
+		
+		this.databaseType = SQLDatabaseType.getSQLDatabaseType(databaseTypeInt);
+		
+		this.database = new SQLDatabase(this.databaseType, this.databaseUser, this.databasePassword,
+				this.databaseName, this.databaseHost, this.databasePort);
+		
 		if(this.databaseType == SQLDatabaseType.MySQL){
 			this.NODE_QUERY = "SELECT NODE_ID FROM NODE";
 			this.SERVICE_QUERY = "SELECT * FROM SERVICE";
@@ -79,10 +85,7 @@ public class MonitoringDataProvisionService extends Service{
 			this.NODE_QUERY = "SELECT NODE_ID FROM " + DB2Schema + ".NODE";
 			this.SERVICE_QUERY = "SELECT * FROM " + DB2Schema + ".SERVICE";
 		}
-
-		this.databaseType = SQLDatabaseType.getSQLDatabaseType(databaseTypeInt);
-		this.database = new SQLDatabase(this.databaseType, this.databaseUser, this.databasePassword,
-				this.databaseName, this.databaseHost, this.databasePort);
+		
 		try {
 			this.database.connect();
 			System.out.println("Monitoring: Database connected!");

@@ -76,6 +76,8 @@ public class SQLDatabase{
 			}
 		}
 		catch (ClassNotFoundException e){
+			e.printStackTrace();
+
 			throw new Exception("JDBC-Driver for requested database type not found! Make sure the library is defined in the settings and is placed in the library folder!", e);
 		}
 		catch (SQLException e){
