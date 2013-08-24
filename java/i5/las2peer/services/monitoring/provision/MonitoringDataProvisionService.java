@@ -312,7 +312,7 @@ public class MonitoringDataProvisionService extends Service{
 						returnStatement += measure.visualize(database);
 						returnStatement += "\n<br>\n";
 					} catch (Exception e) {
-						System.out.println("Problems visualizing measure: " + measure.getName() + "Exception: " + e);
+						System.out.println("Problems visualizing measure: " + measure.getName() + " Exception: " + e);
 					}
 				}
 			}

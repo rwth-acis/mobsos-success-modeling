@@ -147,7 +147,7 @@ public class MonitoringDataProvisionServiceTest {
 			Object result = c.invoke(testServiceClass, "getNodes");
 			String knownNode = ((String[]) result)[0];
 			
-			System.out.println("Calling Measure Visualizations with node " + knownNode);
+			System.out.println("Calling Node Success Model with node " + knownNode);
 			
 			result = c.invoke(testServiceClass, "visualizeSuccessModel", "Node Success Model", knownNode);
 			assertTrue(result instanceof String);
