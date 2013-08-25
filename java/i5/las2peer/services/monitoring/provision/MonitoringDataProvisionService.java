@@ -238,11 +238,30 @@ public class MonitoringDataProvisionService extends Service{
 	 * Visualizes a given service success model.
 	 * 
 	 * @param modelName the name of the success model
+	 * @param updateMeasures if true, all measures are updated from xml file
+	 * @param updateModel if true, all models are updated from xml file
 	 * 
 	 * @return a HTML representation of the success model
 	 * 
 	 */
-	public String visualizeServiceSuccessModel(String modelName){
+	public String visualizeServiceSuccessModel(String modelName, boolean updateMeasures, boolean updateModels){
+		if(updateMeasures)
+			try {
+				knownMeasures = updateMeasures();
+			} catch (MalformedXMLException e) {
+				System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			} catch (XMLSyntaxException e) {
+				System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			} catch (IOException e) {
+				System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			}
+		if(updateModels)
+			try {
+				knownModels = updateModels();
+			} catch (IOException e) {
+				System.out.println("Problems reading Success Models: " + e.getMessage());
+			}
+		
 		return visualizeSuccessModel(modelName, null);
 	}
 	
@@ -252,11 +271,29 @@ public class MonitoringDataProvisionService extends Service{
 	 * Visualizes a success model for the given node.
 	 * 
 	 * @param nodeName the name of node
+	 * @param updateMeasures if true, all measures are updated from xml file
+	 * @param updateModel if true, all models are updated from xml file
 	 * 
 	 * @return a HTML representation of the success model
 	 * 
 	 */
-	public String visualizeNodeSuccessModel(String nodeName){
+	public String visualizeNodeSuccessModel(String nodeName, boolean updateMeasures, boolean updateModels){
+		if(updateMeasures)
+			try {
+				knownMeasures = updateMeasures();
+			} catch (MalformedXMLException e) {
+				System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			} catch (XMLSyntaxException e) {
+				System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			} catch (IOException e) {
+				System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			}
+		if(updateModels)
+			try {
+				knownModels = updateModels();
+			} catch (IOException e) {
+				System.out.println("Problems reading Success Models: " + e.getMessage());
+			}
 		return visualizeSuccessModel("Node Success Model", nodeName);
 	}
 	

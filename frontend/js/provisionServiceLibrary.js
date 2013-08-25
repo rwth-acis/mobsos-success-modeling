@@ -1,5 +1,6 @@
 /**
 * Provision Service Frontend Library
+* 
 * @author Peter de Lange (lange@dbis.rwth-aachen.de)
 */
 
@@ -25,6 +26,7 @@ var PS = (function(PS){
 		//Private Methods
 		/**
 		* Retrieves all available nodes.
+		* 
 		* @param callback Callback function, called when the result has been retrieved. An array of node names.
 		*/
 		var getNodes = function(callback){
@@ -41,6 +43,7 @@ var PS = (function(PS){
 		
 		/**
 		* Retrieves all available services.
+		* 
 		* @param callback Callback function, called when the result has been retrieved. An array of service names.
 		*/
 		var getServices = function(callback){
@@ -57,9 +60,13 @@ var PS = (function(PS){
 		
 		/**
 		* Retrieves all success models for the given service.
+		* 
+		* @param serviceName the service name
+		* @param update if true, the models are updated via the XML files (service side) before returning results
+		* 
 		* @param callback Callback function, called when the result has been retrieved. An array of success models.
 		*/
-		var getSuccessModels = function(serviceName, callback){
+		var getSuccessModels = function(serviceName, update, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
 			
 				var params = [],
@@ -69,7 +76,7 @@ var PS = (function(PS){
 				paramServiceName.type = "String";
 				paramServiceName.value = serviceName;
 				paramUpdate.type = "boolean";
-				paramUpdate.value = true;
+				paramUpdate.value = update;
 				
 				params.push(paramServiceName,paramUpdate);
 				
@@ -85,19 +92,29 @@ var PS = (function(PS){
 		
 		/**
 		* Visualizes a service success model.
+		* 
 		* @param modelName the name of the success model
+		* @param updateMeasures if true, all measures are updated from XML file
+	 	* @param updateModel if true, all models are updated from XML file
+	 	* 
 		* @param callback Callback function, called when the result has been retrieved. A String.
 		*/
-		var visualizeServiceSuccessModel = function(modelName, callback){
+		var visualizeServiceSuccessModel = function(modelName, updateMeasure, updateModel, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
 				
 				var params = [],
-				paramModelName = {};
+				paramModelName = {},
+				paramMeasureUpdate = {},
+				paramModelUpdate = {};
 				
 				paramModelName.type = "String";
 				paramModelName.value = modelName;
+				paramMeasureUpdate.type = "boolean";
+				paramMeasureUpdate.value = updateMeasure;
+				paramModelUpdate.type = "boolean";
+				paramModelUpdate.value = updateModel;
 				
-				params.push(paramModelName);
+				params.push(paramModelName, paramMeasureUpdate, paramModelUpdate);
 				
 				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeServiceSuccessModel", params, function(status, result) {
 					if(status == 200 || status == 204) {
@@ -111,18 +128,29 @@ var PS = (function(PS){
 		
 		/**
 		* Visualizes a node success model.
+		* 
 		* @param nodeName the name of the node
+		* @param updateMeasures if true, all measures are updated from XML file
+	 	* @param updateModel if true, all models are updated from XML file
+		* 
 		* @param callback Callback function, called when the result has been retrieved. A String.
 		*/
-		var visualizeNodeSuccessModel = function(nodeName, callback){
+		var visualizeNodeSuccessModel = function(nodeName, updateMeasure, updateModel, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
 				
 				var params = [],
-				paramNodeName = {};
+				paramNodeName = {},
+				paramMeasureUpdate = {},
+				paramModelUpdate = {};
+				
 				paramNodeName.type = "String";
 				paramNodeName.value = nodeName;
-
-				params.push(paramNodeName);
+				paramMeasureUpdate.type = "boolean";
+				paramMeasureUpdate.value = updateMeasure;
+				paramModelUpdate.type = "boolean";
+				paramModelUpdate.value = updateModel;
+				
+				params.push(paramNodeName, paramMeasureUpdate, paramModelUpdate);
 				
 				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeNodeSuccessModel", params, function(status, result) {
 					if(status == 200 || status == 204) {
@@ -166,6 +194,7 @@ var PS = (function(PS){
 			
 			/**
 			* Logs in default Provision Service Frontend User.
+			* 
 			* @param callback Callback, called when user has been logged in successfully.
 			*/
 			login: function(callback){
@@ -181,6 +210,7 @@ var PS = (function(PS){
 			
 			/**
 			* Retrieves all available nodes.
+			* 
 			* @param callback Callback function, called when the result has been retrieved. An array of node names.
 			*/
 			getNodes: function(callback){
@@ -189,6 +219,7 @@ var PS = (function(PS){
 			
 			/**
 			* Retrieves all available services.
+			* 
 			* @param callback Callback function, called when the result has been retrieved. An array of service names.
 			*/
 			getServices: function(callback){
@@ -198,10 +229,11 @@ var PS = (function(PS){
 			/**
 			* Retrieves all available success models for a given service name.
 			* @param serviceName the name of the service
+			* 
 			* @param callback Callback function, called when the result has been retrieved. An array of success model names.
 			*/
 			getSuccessModels: function(serviceName, callback){
-				getSuccessModels(serviceName, callback);
+				getSuccessModels(serviceName, true, callback);
 			},
 			
 			/**
@@ -210,16 +242,17 @@ var PS = (function(PS){
 			* @param callback Callback function, called when the result has been retrieved. A String.
 			*/
 			visualizeNodeSuccessModel: function(nodeName, callback){
-				visualizeNodeSuccessModel(nodeName, callback);
+				visualizeNodeSuccessModel(nodeName, true, true, callback);
 			},
 			
 			/**
 			* Visualizes the success model for a given model name.
 			* @param modelName the name of the success model
+			* 
 			* @param callback Callback function, called when the result has been retrieved. A String.
 			*/
 			visualizeServiceSuccessModel: function(modelName, callback){
-				visualizeServiceSuccessModel(modelName, callback);
+				visualizeServiceSuccessModel(modelName, true, true, callback);
 			}
 		}
 		

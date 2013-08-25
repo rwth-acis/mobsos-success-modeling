@@ -24,10 +24,10 @@
 	
 	<measure name="Send Messages over Time (Node)">
 		<query name="SendedMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'MESSAGE_SENDING'
 			AND SOURCE_NODE = '$NODE$'
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -40,9 +40,9 @@
 	
 	<measure name="Send Messages over Time (Service)">
 		<query name="SendedMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT =  'MESSAGE_SENDING' AND SOURCE_AGENT =  $SERVICE$
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -56,9 +56,9 @@
 	
 	<measure name="Number of private Chatrooms over Time">
 		<query name="PrivateChatrooms">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS') AS Time, COUNT(*) AS "Private Chatrooms" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Private Chatrooms" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT =  $SERVICE$
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -71,10 +71,10 @@
 	
 	<measure name="Number of public Chatrooms over Time">
 		<query name="PublicChatrooms">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS') AS Time,
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time,
 			COUNT(*) AS "Public Chatrooms" FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_4' AND
 			SOURCE_AGENT = $SERVICE$
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -87,9 +87,9 @@
 	
 	<measure name="Send Messages over Time">
 		<query name="SendMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS') AS Time, COUNT(*) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1') AND SOURCE_AGENT = $SERVICE$
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -102,9 +102,9 @@
 	
 	<measure name="Received Messages over Time">
 		<query name="ReceivedMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS') AS Time, COUNT(*) AS "Received Messages" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Received Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = $SERVICE$
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI:SS')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>

@@ -154,14 +154,14 @@ public class MonitoringDataProvisionServiceTest {
 				String knownNode = ((String[]) result)[0];
 				System.out.println("Calling Node Success Model with node " + knownNode);
 				
-				result = c.invoke(testServiceClass, "visualizeNodeSuccessModel", knownNode);
+				result = c.invoke(testServiceClass, "visualizeNodeSuccessModel", knownNode, true, true);
 				assertTrue(result instanceof String);
 				System.out.println("Visualizing Node Success Model Result:\n" + result);
 			}
 			else
 				System.out.println("No monitored nodes, no node success model visualization possible!");
 			
-			result = c.invoke(testServiceClass, "visualizeServiceSuccessModel", "Chat Service Success Model");
+			result = c.invoke(testServiceClass, "visualizeServiceSuccessModel", "Chat Service Success Model", true, true);
 			assertTrue(result instanceof String);
 			System.out.println("Visualizing Chat Service Success Model Result:\n" + result);
 			

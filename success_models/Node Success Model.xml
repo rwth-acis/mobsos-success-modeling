@@ -8,8 +8,11 @@
 		
 	</dimension>
 	<dimension name="Use">
-		<factor name="Agent Uploads">
+		<factor name="Uploaded Entities">
 			<measure name="Agent Uploads"/>
+		</factor>
+		<factor name="Messages">
+			<measure name="Send Messages over Time (Node)"/>
 		</factor>
 	</dimension>
 	<dimension name="User Satisfaction">
