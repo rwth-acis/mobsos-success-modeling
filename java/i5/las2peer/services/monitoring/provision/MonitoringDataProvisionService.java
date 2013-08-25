@@ -591,8 +591,8 @@ public class MonitoringDataProvisionService extends Service{
 				dimension = Dimension.UserSatisfaction;
 			else if(dimensionName.equals("Individual Impact"))
 				dimension = Dimension.IndividualImpact;
-			else if(dimensionName.equals("Organizational Impact"))
-				dimension = Dimension.OrganizationalImpact;
+			else if(dimensionName.equals("Community Impact"))
+				dimension = Dimension.CommunityImpact;
 			else
 				throw new MalformedXMLException(successModelFile.toString() + ": Dimension " + dimensionName + " is unknown!");
 			

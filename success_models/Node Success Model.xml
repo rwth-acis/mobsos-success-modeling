@@ -5,23 +5,30 @@
 		</factor>
 	</dimension>
 	<dimension name="Information Quality">
-		
+		<factor name="Activity">
+			<measure name="Service Registrations"/>
+			<measure name="User Registrations"/>
+			<measure name="User Registrations over Time"/>
+		</factor>
 	</dimension>
 	<dimension name="Use">
 		<factor name="Uploaded Entities">
 			<measure name="Agent Uploads"/>
+			<measure name="Added Artifacts"/>
 		</factor>
 		<factor name="Messages">
-			<measure name="Send Messages over Time (Node)"/>
+			<measure name="Send LAS2peer Messages over Time"/>
 		</factor>
 	</dimension>
 	<dimension name="User Satisfaction">
-		
+		<factor name="Time spend Online">
+			<measure name="Average Log-In Duration of Users in Seconds"/>
+		</factor>
 	</dimension>
 	<dimension name="Individual Impact">
 		
 	</dimension>
-	<dimension name="Organizational Impact">
+	<dimension name="Community Impact">
 		
 	</dimension>
 </NodeSuccessModel>

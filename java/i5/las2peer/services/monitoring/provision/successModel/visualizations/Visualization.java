@@ -26,7 +26,7 @@ public interface Visualization {
 	 * @throws Exception
 	 *
 	 */
-	public abstract String visualize(Map<String, String> queries, SQLDatabase database) throws Exception;
+	public String visualize(Map<String, String> queries, SQLDatabase database) throws Exception;
 	
 	
 }

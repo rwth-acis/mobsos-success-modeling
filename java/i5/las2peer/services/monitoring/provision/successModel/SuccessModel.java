@@ -29,7 +29,7 @@ public class SuccessModel {
 		Use,
 		UserSatisfaction,
 		IndividualImpact,
-		OrganizationalImpact;
+		CommunityImpact;
 		
 		/**
 		 * 
@@ -45,7 +45,7 @@ public class SuccessModel {
 				Use,
 				UserSatisfaction,
 				IndividualImpact,
-				OrganizationalImpact
+				CommunityImpact
 			};
 			return dimensions;
 		}
@@ -65,7 +65,7 @@ public class SuccessModel {
 				"Use",
 				"User Satisfaction",
 				"Individual Impact",
-				"Organizational Impact"
+				"Community Impact"
 			};
 			return dimensions;
 		}

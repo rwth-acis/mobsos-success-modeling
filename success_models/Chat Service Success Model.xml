@@ -30,7 +30,7 @@
 	</dimension>
 	
 	<dimension name="User Satisfaction">
-		<factor name="Time Spend">
+		<factor name="Time">
 			<measure name="Average Time spend in Chatroom in Seconds"/>
 		</factor>
 	</dimension>
@@ -39,7 +39,7 @@
 		
 	</dimension>
 	
-	<dimension name="Organizational Impact">
+	<dimension name="Community Impact">
 		
 	</dimension>
 	

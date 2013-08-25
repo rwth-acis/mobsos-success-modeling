@@ -22,7 +22,59 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Send Messages over Time (Node)">
+	<measure name="Added Artifacts">
+		<query name="AddedArtifacts">
+			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'ARTIFACT_ADDED' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value">
+		</visualization>
+	</measure>
+	
+	<measure name="Service Registrations">
+		<query name="RegisteredServices">
+			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND REMARKS='ServiceAgent' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value">
+		</visualization>
+	</measure>
+	
+	<measure name="User Registrations">
+		<query name="RegisteredUsers">
+			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='USerAgent' OR REMARKS='Mediator') AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value">
+		</visualization>
+	</measure>
+	
+	<measure name="Average Log-In Duration of Users in Seconds">
+		<query name="AverageUserOnlineTime">
+			SELECT AVG(timestampdiff (2, char(r.UNREGISTRATION_DATE - r.REGISTRATION_DATE)))
+			FROM LAS2PEERMON.REGISTERED_AT r, LAS2PEERMON.AGENT a
+			WHERE r.AGENT_ID = a.AGENT_ID AND (a.TYPE='MEDIATOR' OR a.TYPE='USER')
+			AND r.RUNNING_AT = '$NODE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageUserOnlineTime" index="0"/>
+		</visualization>
+	</measure>
+	
+	<measure name="User Registrations over Time">
+		<query name="RegisteredUsers">
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Registrations" FROM LAS2PEERMON.MESSAGE
+			WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='USerAgent' OR REMARKS='Mediator')
+			AND SOURCE_NODE = '$NODE$'
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>RegisteredUsersNodeChart</nodeId>
+			<title>Registered Users</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	<measure name="Send LAS2peer Messages over Time">
 		<query name="SendedMessages">
 			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'MESSAGE_SENDING'
@@ -31,25 +83,10 @@
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
-			<nodeId>SendMessagesChart</nodeId>
+			<nodeId>SendMessagesNodeChart</nodeId>
 			<title>Send Messages</title>
-			<height>500</height>
-			<width>80%</width>
-		</visualization>
-	</measure>
-	
-	<measure name="Send Messages over Time (Service)">
-		<query name="SendedMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
-			WHERE EVENT =  'MESSAGE_SENDING' AND SOURCE_AGENT =  $SERVICE$
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
-		</query>
-		<visualization type="Chart">
-			<chartType>LineChart</chartType>
-			<nodeId>SendMessagesChart</nodeId>
-			<title>Send Messages</title>
-			<height>500</height>
-			<width>80%</width>
+			<height>300</height>
+			<width>100%</width>
 		</visualization>
 	</measure>
 	
@@ -64,8 +101,8 @@
 			<chartType>LineChart</chartType>
 			<nodeId>PrivateChatroomsChart</nodeId>
 			<title>Private Chatrooms over Time</title>
-			<height>500</height>
-			<width>80%</width>
+			<height>300</height>
+			<width>100%</width>
 		</visualization>
 	</measure>
 	
@@ -80,8 +117,8 @@
 			<chartType>LineChart</chartType>
 			<nodeId>PublicChatroomsChart</nodeId>
 			<title>Public Chatrooms over Time</title>
-			<height>500</height>
-			<width>80%</width>
+			<height>300</height>
+			<width>100%</width>
 		</visualization>
 	</measure>
 	
@@ -95,8 +132,8 @@
 			<chartType>LineChart</chartType>
 			<nodeId>SendMessagesChart</nodeId>
 			<title>Send Messages</title>
-			<height>500</height>
-			<width>80%</width>
+			<height>300</height>
+			<width>100%</width>
 		</visualization>
 	</measure>
 	
@@ -110,8 +147,8 @@
 			<chartType>LineChart</chartType>
 			<nodeId>ReceivedMessagesChart</nodeId>
 			<title>Received Messages</title>
-			<height>500</height>
-			<width>80%</width>
+			<height>300</height>
+			<width>100%</width>
 		</visualization>
 	</measure>
 	
