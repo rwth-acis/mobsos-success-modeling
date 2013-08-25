@@ -56,8 +56,8 @@ var PS = (function(PS){
 		};
 		
 		/**
-		* Retrieves all available services.
-		* @param callback Callback function, called when the result has been retrieved. An array of service names.
+		* Retrieves all success models for the given service.
+		* @param callback Callback function, called when the result has been retrieved. An array of success models.
 		*/
 		var getSuccessModels = function(serviceName, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
@@ -84,27 +84,47 @@ var PS = (function(PS){
 		};
 		
 		/**
-		* Visualizes a success model.
+		* Visualizes a service success model.
 		* @param modelName the name of the success model
-		* @param nodeName the name of the node (can be null)
 		* @param callback Callback function, called when the result has been retrieved. A String.
 		*/
-		var visualizeSuccessModel = function(modelName, nodeName, callback){
+		var visualizeServiceSuccessModel = function(modelName, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
 				
 				var params = [],
-				paramModelName = {},
-				paramNodeName = {};
+				paramModelName = {};
 				
 				paramModelName.type = "String";
 				paramModelName.value = modelName;
 				
+				params.push(paramModelName);
+				
+				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeServiceSuccessModel", params, function(status, result) {
+					if(status == 200 || status == 204) {
+						callback(result.value);
+					} else {
+						callback("Error! Message: " + result);
+					}
+				});
+			}
+		};
+		
+		/**
+		* Visualizes a node success model.
+		* @param nodeName the name of the node
+		* @param callback Callback function, called when the result has been retrieved. A String.
+		*/
+		var visualizeNodeSuccessModel = function(nodeName, callback){
+			if(LAS2peerClient.getStatus() == "loggedIn"){
+				
+				var params = [],
+				paramNodeName = {};
 				paramNodeName.type = "String";
 				paramNodeName.value = nodeName;
 
-				params.push(paramModelName, paramNodeName);
+				params.push(paramNodeName);
 				
-				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeSuccessModel", params, function(status, result) {
+				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeNodeSuccessModel", params, function(status, result) {
 					if(status == 200 || status == 204) {
 						callback(result.value);
 					} else {
@@ -190,7 +210,7 @@ var PS = (function(PS){
 			* @param callback Callback function, called when the result has been retrieved. A String.
 			*/
 			visualizeNodeSuccessModel: function(nodeName, callback){
-				visualizeSuccessModel("Node Success Model", nodeName, callback);
+				visualizeNodeSuccessModel(nodeName, callback);
 			},
 			
 			/**
@@ -199,7 +219,7 @@ var PS = (function(PS){
 			* @param callback Callback function, called when the result has been retrieved. A String.
 			*/
 			visualizeServiceSuccessModel: function(modelName, callback){
-				visualizeSuccessModel(modelName, null, callback);
+				visualizeServiceSuccessModel(modelName, callback);
 			}
 		}
 		

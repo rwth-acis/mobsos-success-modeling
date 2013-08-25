@@ -114,6 +114,9 @@ public class MonitoringDataProvisionService extends Service{
 	/**
 	 *
 	 * Gets the names of all known measures.
+	 * Currently not used by the frontend but can be used
+	 * in later implementations to make success model creation
+	 * possible directly through the frontend.
 	 *
 	 * @param update if true, the list is read again
 	 *
@@ -246,16 +249,30 @@ public class MonitoringDataProvisionService extends Service{
 	
 	/**
 	 * 
+	 * Visualizes a success model for the given node.
+	 * 
+	 * @param nodeName the name of node
+	 * 
+	 * @return a HTML representation of the success model
+	 * 
+	 */
+	public String visualizeNodeSuccessModel(String nodeName){
+		return visualizeSuccessModel("Node Success Model", nodeName);
+	}
+	
+	
+	/**
+	 * 
 	 * Visualizes a given success model.
 	 * 
 	 * @param modelName the name of the success model
-	 * @param node the name of a node
+	 * @param nodeName the name of a node
 	 * necessary if a node success model should be calculated (can be set to null otherwise)
 	 * 
 	 * @return a HTML representation of the success model
 	 * 
 	 */
-	public String visualizeSuccessModel(String modelName, String node){
+	private String visualizeSuccessModel(String modelName, String nodeName){
 		SuccessModel model = knownModels.get(modelName);
 		//Reload models once
 		if(model == null){
@@ -283,8 +300,10 @@ public class MonitoringDataProvisionService extends Service{
 				System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
 				return "Problems getting service agent!";
 			}
+			if(serviceId == null)
+				return "Requested Service: " + model.getServiceName() + " is not monitored!";
 		}
-		else if(node == null){
+		else if(nodeName == null){
 			return "No node given!";
 		}
 		Dimension[] dimensions = Dimension.getDimensions();
@@ -304,8 +323,8 @@ public class MonitoringDataProvisionService extends Service{
 					if(serviceId != null){
 						measure = insertService(measure, serviceId);
 					}
-					else if(node != null){
-						measure = insertNode(measure, node);
+					else if(nodeName != null){
+						measure = insertNode(measure, nodeName);
 					}
 					returnStatement += measure.getName() + ": ";
 					try {

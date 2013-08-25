@@ -19,8 +19,9 @@ import org.junit.Test;
 /**
  * 
  * Tests for the Monitoring Data Provision Service.
- * Please note, that this tests will only work with a valid database entry
- * that contains some data. At least one node has to be stored in the database.
+ * Mostly just prints out results of method invocations, since
+ * it is not predictable which data is stored at the time these
+ * tests are run.
  * 
  * @author Peter de Lange
  *
@@ -109,14 +110,17 @@ public class MonitoringDataProvisionServiceTest {
 			resultArray = (String[]) result;
 			for(String service : resultArray)
 				System.out.println("Result of asking for all monitored service names: " + service);
-			String serviceName = resultArray[0];
-			
-			System.out.println("Calling getModels with service: " + serviceName);
-			result = c.invoke(testServiceClass, "getModels", serviceName, true);
-			assertTrue(result instanceof String[]);
-			resultArray = (String[]) result;
-			for(String service : resultArray)
-				System.out.println("Result of asking for all models: " + service);
+			if(resultArray.length != 0){
+				String serviceName = resultArray[0];
+				System.out.println("Calling getModels with service: " + serviceName);
+				result = c.invoke(testServiceClass, "getModels", serviceName, true);
+				assertTrue(result instanceof String[]);
+				resultArray = (String[]) result;
+				for(String service : resultArray)
+					System.out.println("Result of asking for all models: " + service);
+			}
+			else
+				System.out.println("Result of asking for all monitored service names: none!");
 			
 			
 		} catch (Exception e) {
@@ -145,13 +149,17 @@ public class MonitoringDataProvisionServiceTest {
 			//Login
 			c.connect();
 			Object result = c.invoke(testServiceClass, "getNodes");
-			String knownNode = ((String[]) result)[0];
-			
-			System.out.println("Calling Node Success Model with node " + knownNode);
-			
-			result = c.invoke(testServiceClass, "visualizeSuccessModel", "Node Success Model", knownNode);
-			assertTrue(result instanceof String);
-			System.out.println("Visualizing Node Success Model Result:\n" + result);
+			String[] resultArray = (String[]) result;
+			if(resultArray.length != 0){
+				String knownNode = ((String[]) result)[0];
+				System.out.println("Calling Node Success Model with node " + knownNode);
+				
+				result = c.invoke(testServiceClass, "visualizeNodeSuccessModel", knownNode);
+				assertTrue(result instanceof String);
+				System.out.println("Visualizing Node Success Model Result:\n" + result);
+			}
+			else
+				System.out.println("No monitored nodes, no node success model visualization possible!");
 			
 			result = c.invoke(testServiceClass, "visualizeServiceSuccessModel", "Chat Service Success Model");
 			assertTrue(result instanceof String);
