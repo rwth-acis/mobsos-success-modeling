@@ -331,7 +331,7 @@ public class MonitoringDataProvisionService extends Service{
 				resultSet = database.query(SERVICE_QUERY);
 			while(resultSet.next()){
 				if(resultSet.getString(2).equals(model.getServiceName()))
-				serviceId = resultSet.getLong(1) + "";
+				serviceId = resultSet.getString(1);
 			}
 			} catch (SQLException e) {
 				System.out.println("(Visualize Success Model) The query has lead to an error: " + e);

@@ -22,7 +22,59 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Send Messages over Time (Node)">
+	<measure name="Added Artifacts">
+		<query name="AddedArtifacts">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'ARTIFACT_ADDED' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value">
+		</visualization>
+	</measure>
+	
+	<measure name="Service Registrations">
+		<query name="RegisteredServices">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND REMARKS='ServiceAgent' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value">
+		</visualization>
+	</measure>
+	
+	<measure name="User Registrations">
+		<query name="RegisteredUsers">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='USerAgent' OR REMARKS='Mediator') AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value">
+		</visualization>
+	</measure>
+	
+	<measure name="Average Log-In Duration of Users in Seconds">
+		<query name="AverageUserOnlineTime">
+			SELECT AVG(TIMESTAMPDIFF (SECOND, r.UNREGISTRATION_DATE AS CHAR, r.REGISTRATION_DATE AS CHAR))
+			FROM LAS2PEERMON.REGISTERED_AT r, AGENT a
+			WHERE r.AGENT_ID = a.AGENT_ID AND (a.TYPE='MEDIATOR' OR a.TYPE='USER')
+			AND r.RUNNING_AT = '$NODE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageUserOnlineTime" index="0"/>
+		</visualization>
+	</measure>
+	
+	<measure name="User Registrations over Time">
+		<query name="RegisteredUsers">
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(EVENT) AS "Registrations" FROM MESSAGE
+			WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='UserAgent' OR REMARKS='Mediator')
+			AND SOURCE_NODE = '$NODE$'
+			GROUP BY Time
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>RegisteredUsersNodeChart</nodeId>
+			<title>Registered Users</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	<measure name="Send LAS2peer Messages over Time">
 		<query name="SendedMessages">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
 			WHERE EVENT = 'MESSAGE_SENDING'
@@ -58,7 +110,7 @@
 	<measure name="Number of private Chatrooms over Time">
 		<query name="PrivateChatrooms">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Private Chatrooms' FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT =  '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
@@ -73,7 +125,7 @@
 	<measure name="Number of public Chatrooms over Time">
 		<query name="PublicChatrooms">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Public Chatrooms' FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND SOURCE_AGENT =  '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
@@ -105,7 +157,7 @@
 		<query name="ReceivedMessages">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Received Messages' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_7'
-			AND SOURCE_AGENT =  '$SERVICE$'
+			AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
@@ -161,7 +213,7 @@
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT =  '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY DESTINATION_AGENT) allUsers
 		</query>
 		<query name="TotalMessages">
@@ -180,7 +232,7 @@
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT =  '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY DESTINATION_AGENT) allUsers
 		</query>
 		<query name="TotalMessages">
@@ -211,7 +263,7 @@
 			SELECT AVG(timeToSend.difference) AS AverageTime FROM
 			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
 			(m.EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR m.EVENT = 'SERVICE_CUSTOM_MESSAGE_2')
-			AND m2.EVENT = 'MESSAGE_RECEIVED_ANSWER' AND m.REMARKS=m2.REMARKS AND
+			AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_10' AND m.REMARKS=m2.REMARKS AND
 			m.SOURCE_AGENT = '$SERVICE$') timeToSend
 		</query>
 		<visualization type="KPI">

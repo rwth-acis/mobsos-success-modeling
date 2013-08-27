@@ -61,7 +61,7 @@
 	<measure name="User Registrations over Time">
 		<query name="RegisteredUsers">
 			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Registrations" FROM LAS2PEERMON.MESSAGE
-			WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='USerAgent' OR REMARKS='Mediator')
+			WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='UserAgent' OR REMARKS='Mediator')
 			AND SOURCE_NODE = '$NODE$'
 			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
@@ -94,7 +94,7 @@
 	<measure name="Number of private Chatrooms over Time">
 		<query name="PrivateChatrooms">
 			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Private Chatrooms" FROM LAS2PEERMON.MESSAGE
-			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT =  $SERVICE$
+			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
@@ -110,7 +110,7 @@
 		<query name="PublicChatrooms">
 			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time,
 			COUNT(*) AS "Public Chatrooms" FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_4' AND
-			SOURCE_AGENT = $SERVICE$
+			SOURCE_AGENT = '$SERVICE$'
 			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
@@ -125,7 +125,7 @@
 	<measure name="Send Messages over Time">
 		<query name="SendMessages">
 			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
-			WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1') AND SOURCE_AGENT = $SERVICE$
+			WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1') AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
@@ -140,7 +140,7 @@
 	<measure name="Received Messages over Time">
 		<query name="ReceivedMessages">
 			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Received Messages" FROM LAS2PEERMON.MESSAGE
-			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = $SERVICE$
+			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
@@ -156,13 +156,13 @@
 		<query name="StoredPrivateChatrooms">
 			SELECT COUNT(*) AS Number FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_3'
-			AND SOURCE_AGENT = $SERVICE$
+			AND SOURCE_AGENT = '$SERVICE$'
 		</query>
 		<query name="UniqueAddedPrivateUsers">
 			SELECT COUNT(privateJoins.PrivateJoins) AS UniqueJoins FROM
 			    (SELECT joins.uniqueJoins AS PrivateJoins FROM LAS2PEERMON.MESSAGE,
 			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, REMARKS FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
-			        AND SOURCE_AGENT = $SERVICE$ GROUP BY DESTINATION_AGENT, REMARKS)) joins
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, REMARKS)) joins
 			     	WHERE joins.REMARKS = LAS2PEERMON.MESSAGE.REMARKS AND LAS2PEERMON.MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_3') privateJoins
 		</query>
 		<visualization type="KPI">
@@ -176,13 +176,13 @@
 		<query name="StoredPublicChatrooms">
 			SELECT COUNT(*) AS Number FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4'
-			AND SOURCE_AGENT = $SERVICE$
+			AND SOURCE_AGENT = '$SERVICE$'
 		</query>
 		<query name="UniqueAddedPublicUsers">
 			SELECT COUNT(publicJoins.PublicJoins) AS UniqueJoins FROM
 			    (SELECT joins.uniqueJoins AS PublicJoins FROM LAS2PEERMON.MESSAGE,
 			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, REMARKS FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
-			        AND SOURCE_AGENT = $SERVICE$ GROUP BY DESTINATION_AGENT, REMARKS)) joins
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, REMARKS)) joins
 			     	WHERE joins.REMARKS = LAS2PEERMON.MESSAGE.REMARKS AND LAS2PEERMON.MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_4') publicJoins
 		</query>
 		<visualization type="KPI">
@@ -196,13 +196,13 @@
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM LAS2PEERMON.MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = $SERVICE$
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY DESTINATION_AGENT) allUsers
 		</query>
 		<query name="TotalMessages">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE
 			EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2'
-			AND SOURCE_AGENT = $SERVICE$
+			AND SOURCE_AGENT = '$SERVICE$'
 		</query>
 		<visualization type="KPI">
 			<operand name="TotalMessages" index="0"/>
@@ -215,12 +215,12 @@
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM LAS2PEERMON.MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT =  $SERVICE$
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
 			GROUP BY DESTINATION_AGENT) allUsers
 		</query>
 		<query name="TotalMessages">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE
-			EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = $SERVICE$
+			EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = '$SERVICE$'
 		</query>
 		<visualization type="KPI">
 			<operand name="TotalMessages" index="0"/>
@@ -234,7 +234,7 @@
 			SELECT AVG(timeToFetch.difference) AS AverageTime FROM
 			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM LAS2PEERMON.MESSAGE m, LAS2PEERMON.MESSAGE m2 WHERE
 			m.EVENT = 'SERVICE_CUSTOM_MESSAGE_5' AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_6'
-			AND m.REMARKS=m2.REMARKS AND m.SOURCE_AGENT = $SERVICE$ AND m2.SOURCE_AGENT = $SERVICE$) timeToFetch
+			AND m.REMARKS=m2.REMARKS AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$') timeToFetch
 		</query>
 		<visualization type="KPI">
 			<operand name="AverageTime" index="0"/>
@@ -246,8 +246,8 @@
 			SELECT AVG(timeToSend.difference) AS AverageTime FROM
 			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM LAS2PEERMON.MESSAGE m, LAS2PEERMON.MESSAGE m2 WHERE
 			(m.EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR m.EVENT = 'SERVICE_CUSTOM_MESSAGE_2')
-			AND m2.EVENT = 'MESSAGE_RECEIVED_ANSWER' AND m.REMARKS=m2.REMARKS AND
-			m.SOURCE_AGENT = $SERVICE$) timeToSend
+			AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_10' AND m.REMARKS=m2.REMARKS AND
+			m.SOURCE_AGENT = '$SERVICE$') timeToSend
 		</query>
 		<visualization type="KPI">
 			<operand name="AverageTime" index="0"/>
@@ -262,7 +262,7 @@
 				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
 				AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_9'
 				AND m.REMARKS = m2.REMARKS AND m.ID &lt; m2.ID
-				AND m.SOURCE_AGENT = $SERVICE$ AND m2.SOURCE_AGENT = $SERVICE$
+				AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$'
 				GROUP BY m.ID) AS timeSpend
 		</query>
 		<visualization type="KPI">
