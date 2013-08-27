@@ -36,11 +36,17 @@
 	</dimension>
 	
 	<dimension name="Individual Impact">
-		
+		<factor name="No Factors or Measures yet">
+		</factor>
 	</dimension>
 	
 	<dimension name="Community Impact">
-		
+		<factor name="Total Information Shared">
+			<measure name="Total Messages Shared"/>
+		</factor>
+		<factor name="Total Time Spend">
+			<measure name="Total Time spend in Chatroom in Seconds"/>
+		</factor>
 	</dimension>
 	
 </SuccessModel>

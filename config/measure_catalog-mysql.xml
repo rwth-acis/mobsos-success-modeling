@@ -18,32 +18,28 @@
 		<query name="AgentUploadSuccess">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS' AND SOURCE_NODE = '$NODE$';
 		</query>
-		<visualization type="Value">
-		</visualization>
+		<visualization type="Value"/>
 	</measure>
 	
 	<measure name="Added Artifacts">
 		<query name="AddedArtifacts">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'ARTIFACT_ADDED' AND SOURCE_NODE = '$NODE$'
 		</query>
-		<visualization type="Value">
-		</visualization>
+		<visualization type="Value"/>
 	</measure>
 	
 	<measure name="Service Registrations">
 		<query name="RegisteredServices">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND REMARKS='ServiceAgent' AND SOURCE_NODE = '$NODE$'
 		</query>
-		<visualization type="Value">
-		</visualization>
+		<visualization type="Value"/>
 	</measure>
 	
 	<measure name="User Registrations">
 		<query name="RegisteredUsers">
 			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='USerAgent' OR REMARKS='Mediator') AND SOURCE_NODE = '$NODE$'
 		</query>
-		<visualization type="Value">
-		</visualization>
+		<visualization type="Value"/>
 	</measure>
 	
 	<measure name="Average Log-In Duration of Users in Seconds">
@@ -286,5 +282,27 @@
 			<operand name="AverageTime" index="0"/>
 		</visualization>
 	</measure>
-		
+	
+	<measure name="Total Messages Shared">
+		<query name="AllSendMessages">
+			SELECT COUNT(*) FROM MESSAGE WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2') AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Total Time spend in Chatroom in Seconds">
+		<query name="TotalTime">
+			SELECT SUM(timeSpend.difference)/1000 AS TotalTime FROM
+				(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference
+				FROM MESSAGE m, MESSAGE m2
+				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+				AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_9'
+				AND m.REMARKS = m2.REMARKS AND m.ID &lt; m2.ID
+				AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$'
+				GROUP BY m.ID) timeSpend
+		</query>
+		<visualization type="KPI">
+			<operand name="TotalTime" index="0"/>
+		</visualization>
+	</measure>
 </Catalog>

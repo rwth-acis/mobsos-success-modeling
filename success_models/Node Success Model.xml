@@ -22,13 +22,15 @@
 	</dimension>
 	<dimension name="User Satisfaction">
 		<factor name="Time spend Online">
-			<measure name="Average Log-In Duration of Users in Seconds"/>
+			<measure name="Average Time Users Logged-In in Seconds"/>
 		</factor>
 	</dimension>
 	<dimension name="Individual Impact">
-		
+		<factor name="No Factors or Measures yet">
+		</factor>
 	</dimension>
 	<dimension name="Community Impact">
-		
+		<factor name="No Factors or Measures yet">
+		</factor>
 	</dimension>
 </NodeSuccessModel>

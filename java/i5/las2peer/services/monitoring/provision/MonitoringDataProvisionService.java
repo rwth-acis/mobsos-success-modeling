@@ -354,7 +354,7 @@ public class MonitoringDataProvisionService extends Service{
 			returnStatement += "<h3>" + dimensionNames[i] + "</h3>\n";
 			factorsOfDimension = model.getFactorsOfDimension(dimensions[i]);
 			for(Factor factor : factorsOfDimension){
-				returnStatement += "<h4>\nFactor " + factor.getName() + "</h4>\n";
+				returnStatement += "<h4>" + factor.getName() + "</h4>\n";
 				measuresOfFactor = factor.getMeasures();
 				for(Measure measure : measuresOfFactor){
 					if(serviceId != null){
