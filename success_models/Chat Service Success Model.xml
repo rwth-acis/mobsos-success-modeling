@@ -45,7 +45,7 @@
 			<measure name="Total Messages Shared"/>
 		</factor>
 		<factor name="Total Time Spend">
-			<measure name="Total Time spend in Chatroom in Seconds"/>
+			<measure name="Total Time spend in Chatroom in Minutes"/>
 		</factor>
 	</dimension>
 	

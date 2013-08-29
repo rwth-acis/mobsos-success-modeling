@@ -252,7 +252,7 @@
 	
 	<measure name="Average Time spend in Chatroom in Seconds">
 		<query name="AverageTime">
-			SELECT CAST(AVG(timeSpend.difference) AS DECIMAL)/1000 AS AverageTime FROM
+			SELECT AVG(timeSpend.difference)/1000 AS AverageTime FROM
 				(SELECT AVG(m2.TIME_STAMP - m.TIME_STAMP) AS difference
 				FROM LAS2PEERMON.MESSAGE m, LAS2PEERMON.MESSAGE m2
 				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
@@ -273,9 +273,9 @@
 		<visualization type="Value"/>
 	</measure>
 	
-	<measure name="Total Time spend in Chatroom in Seconds">
+	<measure name="Total Time spend in Chatroom in Minutes">
 		<query name="TotalTime">
-			SELECT CAST(SUM(timeSpend.difference) AS DECIMAL)/1000 AS TotalTime FROM
+			SELECT SUM(timeSpend.difference)/1000/60 AS TotalTime FROM
 				(SELECT AVG(m2.TIME_STAMP - m.TIME_STAMP) AS difference
 				FROM LAS2PEERMON.MESSAGE m, LAS2PEERMON.MESSAGE m2
 				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
