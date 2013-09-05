@@ -204,7 +204,7 @@ var PS = (function(PS){
 				if(LAS2peerClient.getStatus() == "loggedIn"){
 					loginCallback();
 				} else {
-					LAS2peerClient.login(LAS2PEERUSER, LAS2PEERUSERPASS, LAS2PEERHOST, "MonitoringDataProvisionService");
+					LAS2peerClient.login(LAS2PEERUSER, LAS2PEERUSERPASS, LAS2PEERHOST, "ProvisionServiceFrontend");
 				}
 			},
 			

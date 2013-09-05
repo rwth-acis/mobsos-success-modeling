@@ -19,7 +19,7 @@ if (!window.console) {
  * 							removes the sessionId/connection of the same group only in case of a logout). This 
  * 							is important when more than one instance/groups of instances are running.
  * @param {function} feedbackHandler 	Optional, if set then the provided feedbackHandler is called whenever the login/
- * 							connection/invokation status of the client changes or if an error occurs. Take a 
+ * 							connection/invocation status of the client changes or if an error occurs. Take a 
  * 							look on the included default implementation for more details.
  * @param {string} defaultUser	optional, if set then this login information is used to login automatically 
  * @param {string} defaultPassword optional, if set then this login information is used to login automatically
@@ -219,7 +219,7 @@ function LasAjaxClient(groupName, feedbackHandler, defaultUsername, defaultPassw
 			
 			
 			
-			// check the paramaters...
+			// check the parameters...
 			if(typeof(username) == "undefined" || username == null) {
 				throw "Must provide a username for login!";
 			}
@@ -230,7 +230,7 @@ function LasAjaxClient(groupName, feedbackHandler, defaultUsername, defaultPassw
 				throw "Must provide a server url for login!";
 			}
 			if(typeof(applicationCode) == "undefined" || applicationCode == null) {
-				throw "Must provide an  application code for login!";
+				throw "Must provide an application code for login!";
 			}
 			
 			// store them, if they seem ok...
@@ -286,7 +286,7 @@ function LasAjaxClient(groupName, feedbackHandler, defaultUsername, defaultPassw
 			};
 			
 			// send the request...
-			var xhr = getXMLHttpRequest("get", server + 'createsession?user=' + user + '&passwd=' + password + '&timeout=' + timeout, onLoadHandler, onErrorHandler, "appcode", appCode);
+			var xhr = getXMLHttpRequest("get", server + 'createsession?user=' + user + '&passwd=' + password + '&timeout=' + timeout + '&appcode=' + appCode, onLoadHandler, onErrorHandler);
 			xhr.send();
 			
 		}
@@ -349,7 +349,7 @@ function LasAjaxClient(groupName, feedbackHandler, defaultUsername, defaultPassw
 				sessionId = null;
 			};
 			
-			var xhr = getXMLHttpRequest("GET", server + 'closesession?SESSION=' + sessionId, onLoadHandler, onErrorHandler, "appcode", appCode);
+			var xhr = getXMLHttpRequest("GET", server + 'closesession?SESSION=' + sessionId + '&appcode=' + appCode, onLoadHandler, onErrorHandler);
 			xhr.send();
 		}
 		catch(error) {
