@@ -14,28 +14,28 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Agent Uploads">
+	<measure name="Number of Agent Uploads">
 		<query name="AgentUploadSuccess">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS' AND SOURCE_NODE = '$NODE$'
 		</query>
 		<visualization type="Value"/>
 	</measure>
 	
-	<measure name="Added Artifacts">
+	<measure name="Number of added or changed Artifacts">
 		<query name="AddedArtifacts">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'ARTIFACT_ADDED' AND SOURCE_NODE = '$NODE$'
 		</query>
 		<visualization type="Value"/>
 	</measure>
 	
-	<measure name="Service Registrations">
+	<measure name="Number of Service Registrations">
 		<query name="RegisteredServices">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND REMARKS='ServiceAgent' AND SOURCE_NODE = '$NODE$'
 		</query>
 		<visualization type="Value"/>
 	</measure>
 	
-	<measure name="User Registrations">
+	<measure name="Number of User Registrations">
 		<query name="RegisteredUsers">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='USerAgent' OR REMARKS='Mediator') AND SOURCE_NODE = '$NODE$'
 		</query>
@@ -54,12 +54,12 @@
 		</visualization>
 	</measure>
 	
-	<measure name="User Registrations over Time">
+	<measure name="Number of User Registrations over Time">
 		<query name="RegisteredUsers">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Registrations" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Registrations" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='UserAgent' OR REMARKS='Mediator')
 			AND SOURCE_NODE = '$NODE$'
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -70,12 +70,12 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Send LAS2peer Messages over Time">
+	<measure name="Number of send LAS2peer Messages over Time">
 		<query name="SendedMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(EVENT) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'MESSAGE_SENDING'
 			AND SOURCE_NODE = '$NODE$'
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -89,9 +89,9 @@
 	
 	<measure name="Number of private Chatrooms over Time">
 		<query name="PrivateChatrooms">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Private Chatrooms" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Private Chatrooms" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT = '$SERVICE$'
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -104,10 +104,10 @@
 	
 	<measure name="Number of public Chatrooms over Time">
 		<query name="PublicChatrooms">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time,
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI') AS Time,
 			COUNT(*) AS "Public Chatrooms" FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_4' AND
 			SOURCE_AGENT = '$SERVICE$'
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -118,11 +118,11 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Send Messages over Time">
+	<measure name="Number of send Messages over Time">
 		<query name="SendMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Send Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1') AND SOURCE_AGENT = '$SERVICE$'
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -133,11 +133,11 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Received Messages over Time">
+	<measure name="Number of Received Messages over Time">
 		<query name="ReceivedMessages">
-			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Received Messages" FROM LAS2PEERMON.MESSAGE
+			SELECT varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI') AS Time, COUNT(*) AS "Received Messages" FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = '$SERVICE$'
-			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds), 'YYYY-MM-DD HH24:MI')
+			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
 			<chartType>LineChart</chartType>
@@ -148,7 +148,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Users per private Chatroom">
+	<measure name="Average Number of Users per private Chatroom">
 		<query name="StoredPrivateChatrooms">
 			SELECT COUNT(*) AS Number FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_3'
@@ -168,7 +168,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Users per public Chatroom">
+	<measure name="Average Number of Users per public Chatroom">
 		<query name="StoredPublicChatrooms">
 			SELECT COUNT(*) AS Number FROM LAS2PEERMON.MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4'
@@ -188,7 +188,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Messages send per User">
+	<measure name="Average Number of Messages send per User">
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM LAS2PEERMON.MESSAGE
@@ -207,7 +207,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Average Messages received per User">
+	<measure name="Average Number of Messages received per User">
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM LAS2PEERMON.MESSAGE
@@ -266,7 +266,7 @@
 		</visualization>
 	</measure>
 	
-	<measure name="Total Messages Shared">
+	<measure name="Total Number of Messages shared">
 		<query name="AllSendMessages">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2') AND SOURCE_AGENT = '$SERVICE$'
 		</query>
@@ -284,10 +284,26 @@
 				AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$'
 				GROUP BY m.ID) AS timeSpend
 		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Average Number of created Chatrooms per User">
+		<query name="TotalUsers">
+			SELECT COUNT(*) AS UserCount FROM
+			(SELECT DESTINATION_AGENT AS AllUsers FROM LAS2PEERMON.MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY DESTINATION_AGENT) allUsers
+		</query>
+		<query name="TotalCreatedChatrooms">
+			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE
+			(EVENT = 'SERVICE_CUSTOM_MESSAGE_3' or EVENT = 'SERVICE_CUSTOM_MESSAGE_4')
+			 AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT
+		</query>
 		<visualization type="KPI">
-			<operand name="TotalTime" index="0"/>
+			<operand name="TotalCreatedChatrooms" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="TotalUsers" index="2"/>
 		</visualization>
-
 	</measure>
 	
 </Catalog>

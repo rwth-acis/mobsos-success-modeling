@@ -6,18 +6,18 @@
 	</dimension>
 	<dimension name="Information Quality">
 		<factor name="Activity">
-			<measure name="Service Registrations"/>
-			<measure name="User Registrations"/>
-			<measure name="User Registrations over Time"/>
+			<measure name="Number of Service Registrations"/>
+			<measure name="Number of User Registrations"/>
+			<measure name="Number of User Registrations over Time"/>
 		</factor>
 	</dimension>
 	<dimension name="Use">
 		<factor name="Uploaded Entities">
-			<measure name="Agent Uploads"/>
-			<measure name="Added Artifacts"/>
+			<measure name="Number of Agent Uploads"/>
+			<measure name="Number of added or changed Artifacts"/>
 		</factor>
 		<factor name="Messages">
-			<measure name="Send LAS2peer Messages over Time"/>
+			<measure name="Number of send LAS2peer Messages over Time"/>
 		</factor>
 	</dimension>
 	<dimension name="User Satisfaction">

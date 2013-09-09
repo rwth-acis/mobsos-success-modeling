@@ -13,19 +13,20 @@
 			<measure name="Number of private Chatrooms over Time"/>
 		</factor>
 		<factor name="Quality">
-			<measure name="Average Users per public Chatroom"/>
-			<measure name="Average Users per private Chatroom"/>
+			<measure name="Average Number of Users per public Chatroom"/>
+			<measure name="Average Number of Users per private Chatroom"/>
 		</factor>
 	</dimension>
 	
 	<dimension name="Use">
 		<factor name="Active Use">
-			<measure name="Send Messages over Time"/>
-			<measure name="Average Messages send per User"/>
+			<measure name="Number of send Messages over Time"/>
+			<measure name="Average Number of Messages send per User"/>
+			<measure name="Average Number of created Chatrooms per User"/>
 		</factor>
 		<factor name="Passive Use">
-			<measure name="Received Messages over Time"/>
-			<measure name="Average Messages received per User"/>
+			<measure name="Number of Received Messages over Time"/>
+			<measure name="Average Number of Messages received per User"/>
 		</factor>
 	</dimension>
 	
@@ -42,7 +43,7 @@
 	
 	<dimension name="Community Impact">
 		<factor name="Total Information Shared">
-			<measure name="Total Messages Shared"/>
+			<measure name="Total Number of Messages shared"/>
 		</factor>
 		<factor name="Total Time Spend">
 			<measure name="Total Time spend in Chatroom in Minutes"/>
