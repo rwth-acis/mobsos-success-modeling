@@ -297,7 +297,7 @@
 		<query name="TotalCreatedChatrooms">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE
 			(EVENT = 'SERVICE_CUSTOM_MESSAGE_3' or EVENT = 'SERVICE_CUSTOM_MESSAGE_4')
-			 AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT
+			 AND SOURCE_AGENT = '$SERVICE$'
 		</query>
 		<visualization type="KPI">
 			<operand name="TotalCreatedChatrooms" index="0"/>
