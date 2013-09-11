@@ -34,9 +34,11 @@ var login = function(){
 var get_nodes = function(){
 	psLibrary.getNodes(function(result){
 		if(result != null){
-			nodeSelectNode.options.length=0
-			for (var i = 0; i < result.length; i++) {
-				nodeSelectNode[i]=new Option(result[i]);
+			if($.isArray(result)){ //Ensure no (Ajax Client) error message is processed
+				nodeSelectNode.options.length=0
+				for (var i = 0; i < result.length; i++) {
+					nodeSelectNode[i]=new Option(result[i]);
+				}
 			}
 		}
 	});
@@ -48,9 +50,11 @@ var get_nodes = function(){
 var get_services = function(){
 	psLibrary.getServices(function(result){
 		if(result != null){
-			serviceSelectNode.options.length=0
-			for (var i = 0; i < result.length; i++) {
-				serviceSelectNode.options[i]=new Option(result[i]);
+			if($.isArray(result)){ //Ensure no (Ajax Client) error message is processed
+				serviceSelectNode.options.length=0
+				for (var i = 0; i < result.length; i++) {
+					serviceSelectNode.options[i]=new Option(result[i]);
+				}
 			}
 		}
 	});
@@ -64,9 +68,11 @@ var get_success_models = function(){
 	var serviceName = serviceSelectNode.options[serviceSelectNode.selectedIndex].text;
 	psLibrary.getSuccessModels(serviceName, function(result){
 		if(result != null){
-			successModelSelectNode.options.length=0
-			for (var i = 0; i < result.length; i++) {
-				successModelSelectNode.options[i]=new Option(result[i]);
+			if($.isArray(result)){ //Ensure no (Ajax Client) error message is processed
+				successModelSelectNode.options.length=0
+				for (var i = 0; i < result.length; i++) {
+					successModelSelectNode.options[i]=new Option(result[i]);
+				}
 			}
 		}
 	});
@@ -78,10 +84,15 @@ var get_success_models = function(){
 var visualize_node_success_model = function(){
 	var nodeName = nodeSelectNode.options[nodeSelectNode.selectedIndex].text;
 	psLibrary.visualizeNodeSuccessModel(nodeName, function(result){
-		nodeSuccessModelNode.innerHTML = result;
-		var scripts = nodeSuccessModelNode.getElementsByTagName('script');
-		for (var ix = 0; ix < scripts.length; ix++) {
-			 jQuery.globalEval(scripts[ix].text);
+		if(result.substr(0, 16) != "Error! Message: "){ //Ensure no (Ajax Client) error message is processed
+			nodeSuccessModelNode.innerHTML = result;
+			var scripts = nodeSuccessModelNode.getElementsByTagName('script');
+			for (var ix = 0; ix < scripts.length; ix++) {
+				 jQuery.globalEval(scripts[ix].text);
+			}
+		}
+		else{
+			nodeSuccessModelNode.innerHTML = "Sorry, something went wrong while visualizing the model (try again?)";
 		}
 	});
 };
@@ -92,10 +103,15 @@ var visualize_node_success_model = function(){
 var visualize_service_success_model = function(){
 	var modelName = successModelSelectNode.options[successModelSelectNode.selectedIndex].text;
 	psLibrary.visualizeServiceSuccessModel(modelName, function(result){
-		serviceSuccessModelNode.innerHTML = result;
-		var scripts = serviceSuccessModelNode.getElementsByTagName('script');
-		for (var ix = 0; ix < scripts.length; ix++) {
-			 jQuery.globalEval(scripts[ix].text);
+		if(result.substr(0, 16) != "Error! Message: "){ //Ensure no (Ajax Client) error message is processed
+			serviceSuccessModelNode.innerHTML = result;
+			var scripts = serviceSuccessModelNode.getElementsByTagName('script');
+			for (var ix = 0; ix < scripts.length; ix++) {
+				 jQuery.globalEval(scripts[ix].text);
+			}
+		}
+		else{
+			serviceSuccessModelNode.innerHTML = "Sorry, something went wrong while visualizing the model (try again?)";
 		}
 	});
 };
