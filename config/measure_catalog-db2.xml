@@ -14,6 +14,27 @@
 		</visualization>
 	</measure>
 	
+	<measure name="Successful Remote Method Invocation Ratio">
+		<query name="MethodInvocations">
+			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'RMI_SENT' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<query name="SuccessfulMethodInvocations">
+			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'RMI_SUCCESSFUL' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="SuccessfulMethodInvocations" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="MethodInvocations" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of Method Invocations">
+		<query name="AgentUploadSuccess">
+			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'RMI_SENT' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
 	<measure name="Number of Agent Uploads">
 		<query name="AgentUploadSuccess">
 			SELECT COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS' AND SOURCE_NODE = '$NODE$'
@@ -78,13 +99,14 @@
 			GROUP BY varchar_format((timestamp('1970-01-01-00.00.00') + (TIME_STAMP/1000) seconds + CURRENT TIMEZONE), 'YYYY-MM-DD HH24:MI')
 		</query>
 		<visualization type="Chart">
-			<chartType>LineChart</chartType>
+			<chartType>PieChart</chartType>
 			<nodeId>SendMessagesNodeChart</nodeId>
 			<title>Send Messages</title>
 			<height>300</height>
 			<width>100%</width>
 		</visualization>
 	</measure>
+	
 	
 	
 	<measure name="Number of private Chatrooms over Time">

@@ -112,6 +112,23 @@ public class MonitoringDataProvisionService extends Service{
 	
 	
 	/**
+	 * 
+	 * Reconnect to the database (can be called in case of an error).
+	 * 
+	 */
+	public void reconnect(){
+		this.database.disconnect();
+		try {
+			this.database.connect();
+			System.out.println("Monitoring: Database reconnected!");
+		} catch (Exception e) {
+			System.out.println("Monitoring: Could not connect to database!");
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
 	 *
 	 * Gets the names of all known measures.
 	 * Currently not used by the frontend but can be used

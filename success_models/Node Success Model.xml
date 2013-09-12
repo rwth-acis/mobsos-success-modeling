@@ -2,10 +2,12 @@
 	<dimension name="System Quality">
 		<factor name="Stability">
 			<measure name="Successful Agent Uploads Ratio"/>
+			<measure name="Successful Remote Method Invocation Ratio"/>
 		</factor>
 	</dimension>
 	<dimension name="Information Quality">
 		<factor name="Activity">
+			<measure name="Number of Method Invocations"/>
 			<measure name="Number of Service Registrations"/>
 			<measure name="Number of User Registrations"/>
 			<measure name="Number of User Registrations over Time"/>
