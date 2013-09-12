@@ -78,11 +78,11 @@ public class MonitoringDataProvisionService extends Service{
 				this.databaseName, this.databaseHost, this.databasePort);
 		
 		if(this.databaseType == SQLDatabaseType.MySQL){
-			this.NODE_QUERY = "SELECT NODE_ID FROM NODE";
+			this.NODE_QUERY = "SELECT * FROM NODE";
 			this.SERVICE_QUERY = "SELECT * FROM SERVICE";
 		}
 		else {
-			this.NODE_QUERY = "SELECT NODE_ID FROM " + DB2Schema + ".NODE";
+			this.NODE_QUERY = "SELECT * FROM " + DB2Schema + ".NODE";
 			this.SERVICE_QUERY = "SELECT * FROM " + DB2Schema + ".SERVICE";
 		}
 		
@@ -181,7 +181,7 @@ public class MonitoringDataProvisionService extends Service{
 		}
 		try {
 			while(resultSet.next()){
-				nodeIds.add(resultSet.getString(1));
+				nodeIds.add(resultSet.getString(1) + " Location: " + resultSet.getString(2));
 			}
 		} catch (SQLException e) {
 			System.out.println("Problems reading result set: " + e);

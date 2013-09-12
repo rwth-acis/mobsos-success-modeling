@@ -242,6 +242,7 @@ var PS = (function(PS){
 			* @param callback Callback function, called when the result has been retrieved. A String.
 			*/
 			visualizeNodeSuccessModel: function(nodeName, callback){
+				nodeName = nodeName.substring(0,12); //Only the id is passed
 				visualizeNodeSuccessModel(nodeName, true, true, callback);
 			},
 			
