@@ -22,7 +22,7 @@
 	
 	<property name="lib" location="lib" />
 	<property name="lib.cp" 
-		location="${lib}/las2peer.jar:${lib}/i5-simpleXML-0.1.jar:${lib}/commons-codec-1.7.jar:${lib}/FreePastry-2.1.jar:${lib}/i5-httpServer-0.2.jar:${lib}/junit-4.11.jar:${lib}/xpp3-1.1.4c.jar:${lib}/junit-4.11.jar:${lib}/mysqlConnectorJava-5.1.16.jar:${lib}/junit-4.11.jar:${lib}/db2jcc-0.jar:${lib}/db2jcc_license_cu-0.jar:${lib}/Javaluator.jar" />
+		location="${lib}/las2peer.jar:${lib}/i5-simpleXML-0.2.jar:${lib}/commons-codec-1.7.jar:${lib}/FreePastry-2.1.jar:${lib}/i5-httpServer-0.3.jar:${lib}/junit-4.11.jar:${lib}/xpp3-1.1.4c.jar:${lib}/junit-4.11.jar:${lib}/mysqlConnectorJava-5.1.16.jar:${lib}/junit-4.11.jar:${lib}/db2jcc-0.jar:${lib}/db2jcc_license_cu-0.jar:${lib}/Javaluator.jar" />
 	<property name="lib.junit" location="${lib}/junit-4.11.jar" />
 	
 	<target name="init_general">
