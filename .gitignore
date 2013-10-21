@@ -5,3 +5,5 @@
 /config/i5.las2peer.services.monitoring.provision.MonitoringDataProvisionService.properties
 /config/i5.las2peer.services.monitoring.provision.MonitoringDataProvisionService - mysql.properties
 /output
+/lib
+/ivy/ivy.jar

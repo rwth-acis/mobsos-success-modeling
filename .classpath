@@ -3,16 +3,12 @@
 	<classpathentry kind="src" path="java"/>
 	<classpathentry kind="src" path="junit"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/commons-codec-1.7.jar"/>
-	<classpathentry kind="lib" path="lib/FreePastry-2.1.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.11.jar"/>
-	<classpathentry kind="lib" path="lib/las2peer.jar" sourcepath="/LAS2peer"/>
-	<classpathentry kind="lib" path="lib/xpp3-1.1.4c.jar"/>
-	<classpathentry kind="lib" path="lib/mysqlConnectorJava-5.1.16.jar"/>
-	<classpathentry kind="lib" path="lib/Javaluator.jar"/>
-	<classpathentry kind="lib" path="lib/db2jcc_license_cu-0.jar"/>
 	<classpathentry kind="lib" path="lib/db2jcc-0.jar"/>
-	<classpathentry kind="lib" path="lib/i5-httpServer-0.3.jar"/>
-	<classpathentry kind="lib" path="lib/i5-simpleXML-0.2.jar"/>
+	<classpathentry kind="lib" path="lib/las2peer-0.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/db2jcc_Licence-0.jar"/>
+	<classpathentry kind="lib" path="lib/Javaluator-1.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.16.jar"/>
+	<classpathentry kind="lib" path="lib/hamcrest-core-1.3.jar"/>
 	<classpathentry kind="output" path="output"/>
 </classpath>
