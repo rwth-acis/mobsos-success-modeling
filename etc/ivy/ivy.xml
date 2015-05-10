@@ -1,7 +1,8 @@
 <ivy-module version="2.0">
     <info organisation="i5" module="las2peer-provisionService"/>
     <dependencies>
-        <dependency org="i5" name="las2peer" rev="0.0.2" />
+        <dependency org="i5" name="las2peer" rev="0.3-SNAPSHOT" />
+        <dependency org="i5" name="las2peer-http-connector" rev="0.1-SNAPSHOT" />
 		<dependency org="mysql" name="mysql-connector-java" rev="5.1.16"/>
 		<dependency org="IBMJDBC" name="db2jcc" rev="0"/>
 		<dependency org="IBMJDBC" name="db2jcc_Licence" rev="0"/>
