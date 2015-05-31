@@ -80,7 +80,7 @@
 
 	<!-- compilation -->
 	<target name="compile_main" depends="init_compile">
-		<javac srcdir="${src.main}" destdir="${tmp.classes}" classpathref="libraries" source="1.7" target="1.7" debug="on" encoding="UTF-8" />
+		<javac srcdir="${src.main}" destdir="${tmp.classes}" classpathref="libraries" debug="on" encoding="UTF-8" />
 		<copy todir="${tmp.classes}">
 			<fileset dir="${src.main}">
 				<include name="**/*.xml" />
@@ -89,7 +89,7 @@
 	</target>
 
 	<target name="compile_junit" depends="init_compile">
-		<javac srcdir="${src.junit}" destdir="${tmp.junit}" classpath="${tmp.classes}:${lib.junit}" classpathref="libraries" source="1.7" target="1.7" debug="on" encoding="UTF-8" />
+		<javac srcdir="${src.junit}" destdir="${tmp.junit}" classpath="${tmp.classes}:${lib.junit}" classpathref="libraries" debug="on" encoding="UTF-8" />
 		<copy todir="${tmp.junit}">
 			<fileset dir="${src.junit}">
 				<include name="**/*.xml" />
