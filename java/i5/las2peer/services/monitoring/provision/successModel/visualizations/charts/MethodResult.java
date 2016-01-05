@@ -108,7 +108,7 @@ public class MethodResult {
 					default:
 						currentRow[i-1] = resultSet.getObject(i).toString();
 						break;
-				};
+				}
 				//In case the transformation fails we just construct an empty entry..
 				if(currentRow[i-1] == null) {
 					currentRow[i-1] = "";

@@ -75,7 +75,7 @@ public class TimelineChart {
 			default:
 				// do nothing, just treat it as string
 				break;
-			};
+			}
 			resultHTML += "data.addColumn('" + columnTypeString + "', '" + columnNames[i] + "');\n";
 		}
 		resultHTML += "data.addRows([\n";
@@ -111,7 +111,7 @@ public class TimelineChart {
 						String value = (String) currentRow[i];
 						resultHTML += "\"" + value + "\"";
 						break;
-				};
+				}
 			}
 			if(iterator.hasNext()){
 				resultHTML += "],\n";
