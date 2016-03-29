@@ -256,7 +256,7 @@ public class MonitoringDataProvisionService extends Service{
 	 * 
 	 * @param modelName the name of the success model
 	 * @param updateMeasures if true, all measures are updated from xml file
-	 * @param updateModel if true, all models are updated from xml file
+	 * @param updateModels if true, all models are updated from xml file
 	 * 
 	 * @return a HTML representation of the success model
 	 * 
@@ -289,7 +289,7 @@ public class MonitoringDataProvisionService extends Service{
 	 * 
 	 * @param nodeName the name of node
 	 * @param updateMeasures if true, all measures are updated from xml file
-	 * @param updateModel if true, all models are updated from xml file
+	 * @param updateModels if true, all models are updated from xml file
 	 * 
 	 * @return a HTML representation of the success model
 	 * 

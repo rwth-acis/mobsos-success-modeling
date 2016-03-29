@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 
  * A SuccessModel bundles {@link Measure}s into {@link Factor}s and dimensions.
- * This implementation uses the model of Delone & McLean.
+ * This implementation uses the model of Delone and McLean.
  * 
  * @author Peter de Lange
  *
@@ -125,7 +125,7 @@ public class SuccessModel {
 	 * 
 	 * @param dimension a {@link Dimension}
 	 * 
-	 * @return a list of {@Factor}s
+	 * @return a list of {@link Factor}s
 	 * 
 	 */
 	public List<Factor> getFactorsOfDimension(Dimension dimension){
