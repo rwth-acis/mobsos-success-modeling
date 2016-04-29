@@ -117,10 +117,11 @@ public class MonitoringDataProvisionService extends Service{
 	 * 
 	 */
 	public void reconnect(){
-		this.database.disconnect();
 		try {
-			this.database.connect();
-			System.out.println("Monitoring: Database reconnected!");
+			if(!database.isConnected()){
+				this.database.connect();
+				System.out.println("Monitoring: Database reconnected!");
+			}
 		} catch (Exception e) {
 			System.out.println("Monitoring: Could not connect to database!");
 			e.printStackTrace();
@@ -174,6 +175,7 @@ public class MonitoringDataProvisionService extends Service{
 		
 		ResultSet resultSet;
 		try {
+			reconnect();
 			resultSet = database.query(NODE_QUERY);
 		} catch (SQLException e) {
 			System.out.println("(Get Nodes) The query has lead to an error: " + e);
@@ -202,6 +204,7 @@ public class MonitoringDataProvisionService extends Service{
 		
 		ResultSet resultSet;
 		try {
+			reconnect();
 			resultSet = database.query(SERVICE_QUERY);
 		} catch (SQLException e) {
 			System.out.println("(getServiceIds) The query has lead to an error: " + e);
@@ -345,6 +348,7 @@ public class MonitoringDataProvisionService extends Service{
 		if(model.getServiceName() != null){
 			ResultSet resultSet;
 			try {
+				reconnect();
 				resultSet = database.query(SERVICE_QUERY);
 			while(resultSet.next()){
 				if(resultSet.getString(2).equals(model.getServiceName()))
