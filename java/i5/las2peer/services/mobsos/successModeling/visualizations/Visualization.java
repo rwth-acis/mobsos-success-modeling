@@ -1,8 +1,8 @@
-package i5.las2peer.services.monitoring.provision.successModel.visualizations;
-
-import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
+package i5.las2peer.services.mobsos.successModeling.visualizations;
 
 import java.util.Map;
+
+import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
 
 /**
  *

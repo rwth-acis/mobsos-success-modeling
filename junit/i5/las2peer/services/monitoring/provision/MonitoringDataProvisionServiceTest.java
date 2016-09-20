@@ -8,6 +8,7 @@ import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.p2p.ServiceNameVersion;
 import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
+import i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService;
 import i5.las2peer.testing.MockAgentFactory;
 
 import java.io.ByteArrayOutputStream;

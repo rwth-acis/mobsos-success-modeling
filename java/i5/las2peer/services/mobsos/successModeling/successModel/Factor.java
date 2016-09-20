@@ -1,8 +1,8 @@
-package i5.las2peer.services.monitoring.provision.successModel;
-
-import i5.las2peer.services.monitoring.provision.successModel.SuccessModel.Dimension;
+package i5.las2peer.services.mobsos.successModeling.successModel;
 
 import java.util.List;
+
+import i5.las2peer.services.mobsos.successModeling.successModel.SuccessModel.Dimension;
 
 /**
  * 

@@ -1,7 +1,7 @@
-package i5.las2peer.services.monitoring.provision.successModel;
+package i5.las2peer.services.mobsos.successModeling.successModel;
 
-import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
-import i5.las2peer.services.monitoring.provision.successModel.visualizations.Visualization;
+import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
+import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
 
 import java.util.HashMap;
 import java.util.Map;

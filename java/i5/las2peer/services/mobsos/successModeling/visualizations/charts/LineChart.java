@@ -1,4 +1,4 @@
-package i5.las2peer.services.monitoring.provision.successModel.visualizations.charts;
+package i5.las2peer.services.mobsos.successModeling.visualizations.charts;
 
 import java.util.Iterator;
 

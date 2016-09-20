@@ -1,12 +1,12 @@
-package i5.las2peer.services.monitoring.provision.successModel.visualizations;
+package i5.las2peer.services.mobsos.successModeling.visualizations;
 
-import i5.las2peer.services.monitoring.provision.database.SQLDatabase;
-import i5.las2peer.services.monitoring.provision.successModel.visualizations.charts.BarChart;
-import i5.las2peer.services.monitoring.provision.successModel.visualizations.charts.LineChart;
-import i5.las2peer.services.monitoring.provision.successModel.visualizations.charts.MethodResult;
-import i5.las2peer.services.monitoring.provision.successModel.visualizations.charts.PieChart;
-import i5.las2peer.services.monitoring.provision.successModel.visualizations.charts.RadarChart;
-import i5.las2peer.services.monitoring.provision.successModel.visualizations.charts.TimelineChart;
+import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
+import i5.las2peer.services.mobsos.successModeling.visualizations.charts.BarChart;
+import i5.las2peer.services.mobsos.successModeling.visualizations.charts.LineChart;
+import i5.las2peer.services.mobsos.successModeling.visualizations.charts.MethodResult;
+import i5.las2peer.services.mobsos.successModeling.visualizations.charts.PieChart;
+import i5.las2peer.services.mobsos.successModeling.visualizations.charts.RadarChart;
+import i5.las2peer.services.mobsos.successModeling.visualizations.charts.TimelineChart;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
