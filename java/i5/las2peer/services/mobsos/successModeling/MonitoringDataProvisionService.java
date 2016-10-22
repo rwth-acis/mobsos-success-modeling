@@ -2,6 +2,7 @@ package i5.las2peer.services.mobsos.successModeling;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +19,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import i5.las2peer.api.Service;
+import i5.las2peer.logging.L2pLogger;
+import i5.las2peer.logging.NodeObserver.Event;
 import i5.las2peer.persistency.MalformedXMLException;
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabaseType;
@@ -93,7 +96,7 @@ public class MonitoringDataProvisionService extends Service {
 		} catch (Exception e) {
 			System.out.println("Monitoring: Could not connect to database! " + e.getMessage());
 		}
-
+		/*
 		try {
 			List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
 					.map(Path::toFile).collect(Collectors.toList());
@@ -111,12 +114,13 @@ public class MonitoringDataProvisionService extends Service {
 		} catch (IOException e) {
 			System.out.println("Measure Catalog seems broken: " + e.getMessage());
 		}
-
+		
 		try {
 			knownModels = updateModels(measureCatalogs.firstKey());
 		} catch (IOException e) {
 			System.out.println("Problems reading Success Models: " + e.getMessage());
 		}
+		*/
 	}
 
 	/**
@@ -153,7 +157,7 @@ public class MonitoringDataProvisionService extends Service {
 						.map(Path::toFile).collect(Collectors.toList());
 				for (File f : filesInFolder) {
 					try {
-						updateMeasures(f);
+						updateMeasures(f, catalog);
 					} catch (MalformedXMLException e) {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
 					} catch (XMLSyntaxException e) {
@@ -276,17 +280,32 @@ public class MonitoringDataProvisionService extends Service {
 			String catalog) {
 		if (updateMeasures)
 			try {
-				List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-						.map(Path::toFile).collect(Collectors.toList());
-				for (File f : filesInFolder) {
-					try {
-						updateMeasures(f);
-					} catch (MalformedXMLException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					} catch (XMLSyntaxException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					} catch (IOException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
+				if (useFileService) {
+					ArrayList<String> measureFiles = getMeasureCatalogList();
+					for (String s : measureFiles) {
+						try {
+							updateMeasures(new File(""), s);
+						} catch (MalformedXMLException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						} catch (XMLSyntaxException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						} catch (IOException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						}
+					}
+				} else {
+					List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
+							.map(Path::toFile).collect(Collectors.toList());
+					for (File f : filesInFolder) {
+						try {
+							updateMeasures(f, catalog);
+						} catch (MalformedXMLException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						} catch (XMLSyntaxException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						} catch (IOException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						}
 					}
 				}
 			} catch (IOException e) {
@@ -316,12 +335,11 @@ public class MonitoringDataProvisionService extends Service {
 	public String visualizeNodeSuccessModel(String nodeName, boolean updateMeasures, boolean updateModels,
 			String catalog) {
 		if (updateMeasures)
-			try {
-				List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-						.map(Path::toFile).collect(Collectors.toList());
-				for (File f : filesInFolder) {
+			if (useFileService) {
+				ArrayList<String> measureFiles = getMeasureCatalogList();
+				for (String s : measureFiles) {
 					try {
-						updateMeasures(f);
+						updateMeasures(new File(""), s);
 					} catch (MalformedXMLException e) {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
 					} catch (XMLSyntaxException e) {
@@ -330,8 +348,24 @@ public class MonitoringDataProvisionService extends Service {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
 					}
 				}
-			} catch (IOException e) {
-				System.out.println("Measure Catalog seems broken: " + e.getMessage());
+			} else {
+				try {
+					List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
+							.map(Path::toFile).collect(Collectors.toList());
+					for (File f : filesInFolder) {
+						try {
+							updateMeasures(f, catalog);
+						} catch (MalformedXMLException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						} catch (XMLSyntaxException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						} catch (IOException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						}
+					}
+				} catch (IOException e) {
+					System.out.println("Measure Catalog seems broken: " + e.getMessage());
+				}
 			}
 		if (updateModels)
 			try {
@@ -432,14 +466,18 @@ public class MonitoringDataProvisionService extends Service {
 	 * @throws IOException if the catalog file does not exist
 	 *
 	 */
-	private Map<String, Measure> updateMeasures(File catalog)
+	private Map<String, Measure> updateMeasures(File catalog, String measureFile)
 			throws MalformedXMLException, XMLSyntaxException, IOException {
 
 		Map<String, Measure> measures = new TreeMap<String, Measure>();
 
 		Element root;
-		root = Parser.parse(catalog, false);
-
+		if (useFileService) {
+			String measureXML = getFile(measureFile);
+			root = Parser.parse(measureXML, false);
+		} else {
+			root = Parser.parse(catalog, false);
+		}
 		if (!root.getName().equals("Catalog"))
 			throw new MalformedXMLException("Catalog expeced!");
 
@@ -562,20 +600,44 @@ public class MonitoringDataProvisionService extends Service {
 	 */
 	private Map<String, SuccessModel> updateModels(String measureCatalog) throws IOException {
 		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
-		File sucessModelsFolder = new File(successModelsFolderLocation);
-		if (!sucessModelsFolder.isDirectory())
-			throw new IOException("The given path for the success model folder is not a directory!");
-		for (File file : sucessModelsFolder.listFiles()) {
-			SuccessModel successModel;
-			try {
-				successModel = readSuccessModelFile(file, measureCatalog);
-				models.put(successModel.getName(), successModel);
-			} catch (XMLSyntaxException e) {
-				System.out.println("Error reading Success Model: " + e);
-			} catch (MalformedXMLException e) {
-				System.out.println("Error reading Success Model: " + e);
-			} catch (IOException e) {
-				System.out.println("Error reading Success Model: " + e);
+		if (useFileService) {
+			ArrayList<String> sModels = getSuccessModels();
+			for (String sm : sModels) {
+				System.out.println("Model: " + sm);
+				String smc = getFile(sm);
+				try {
+					System.out.println(smc);
+					SuccessModel successModel;
+					try {
+						successModel = readSuccessModelFile(new File(""), smc, measureCatalog);
+						models.put(successModel.getName(), successModel);
+					} catch (XMLSyntaxException e) {
+						System.out.println("Error reading Success Model: " + e);
+					} catch (MalformedXMLException e) {
+						System.out.println("Error reading Success Model: " + e);
+					} catch (IOException e) {
+						System.out.println("Error reading Success Model: " + e);
+					}
+				} catch (Exception x) {
+					x.printStackTrace();
+				}
+			}
+		} else {
+			File sucessModelsFolder = new File(successModelsFolderLocation);
+			if (!sucessModelsFolder.isDirectory())
+				throw new IOException("The given path for the success model folder is not a directory!");
+			for (File file : sucessModelsFolder.listFiles()) {
+				SuccessModel successModel;
+				try {
+					successModel = readSuccessModelFile(file, "", measureCatalog);
+					models.put(successModel.getName(), successModel);
+				} catch (XMLSyntaxException e) {
+					System.out.println("Error reading Success Model: " + e);
+				} catch (MalformedXMLException e) {
+					System.out.println("Error reading Success Model: " + e);
+				} catch (IOException e) {
+					System.out.println("Error reading Success Model: " + e);
+				}
 			}
 		}
 		return models;
@@ -593,13 +655,16 @@ public class MonitoringDataProvisionService extends Service {
 	 * @throws IOException
 	 * 
 	 */
-	private SuccessModel readSuccessModelFile(File successModelFile, String measureFile)
+	private SuccessModel readSuccessModelFile(File successModelFile, String successModelFileContent, String measureFile)
 			throws MalformedXMLException, XMLSyntaxException, IOException {
 		Element root;
-		root = Parser.parse(successModelFile, false);
+		if (useFileService)
+			root = Parser.parse(successModelFileContent, false);
+		else
+			root = Parser.parse(successModelFile, false);
 		boolean nodeSuccessModel = false;
 		String modelName = root.getAttribute("name");
-
+		System.out.println("SucModel: " + modelName);
 		if (root.getName().equals("NodeSuccessModel"))
 			nodeSuccessModel = true;
 
@@ -646,9 +711,16 @@ public class MonitoringDataProvisionService extends Service {
 				for (int measureNumber = 0; measureNumber < factorElement.getChildCount(); measureNumber++) {
 					Element measureElement = factorElement.getChild(measureNumber);
 					String measureName = measureElement.getAttribute("name");
-					File catalog = new File(measureFile);
+					File catalog;
+					if (useFileService) {
+						catalog = new File("");
+					} else {
+						catalog = new File(measureFile);
+					}
+					if (measureCatalogs.get(measureFile) == null)
+						measureCatalogs.put(measureFile, new HashMap<String, Measure>());
 					if (!measureCatalogs.get(measureFile).containsKey(measureName))
-						measureCatalogs.put(measureFile, updateMeasures(catalog));
+						measureCatalogs.put(measureFile, updateMeasures(catalog, measureFile));
 					if (!measureCatalogs.get(measureFile).containsKey(measureName))
 						throw new MalformedXMLException(
 								successModelFile.toString() + ": Measure name " + measureName + " is unknown!");
@@ -705,6 +777,115 @@ public class MonitoringDataProvisionService extends Service {
 		}
 		measure.setInsertedQueries(insertedQueries);
 		return measure;
+	}
+
+	public String getMeasureCatalogs() {
+		try {
+			// RMI call
+
+			Object result = this.invokeServiceMethod("i5.las2peer.services.fileService.FileService@1.0", "getFileIndex",
+					new Serializable[] {});
+			if (result != null) {
+				@SuppressWarnings("unchecked")
+				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
+				// Filter results
+				ArrayList<String> resultList = new ArrayList<String>();
+				for (Map<String, Object> k : response) {
+					if (((String) k.get("identifier")).contains(catalogFileLocation)) {
+						resultList.add((String) k.get("identifier"));
+					}
+				}
+				return resultList.toString();
+
+			} else {
+				System.out.println("Fehler");
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+		}
+		return "[]";
+	}
+
+	public ArrayList<String> getMeasureCatalogList() {
+		try {
+			// RMI call
+
+			Object result = this.invokeServiceMethod("i5.las2peer.services.fileService.FileService@1.0", "getFileIndex",
+					new Serializable[] {});
+			if (result != null) {
+				@SuppressWarnings("unchecked")
+				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
+				// Filter results
+				ArrayList<String> resultList = new ArrayList<String>();
+				for (Map<String, Object> k : response) {
+					if (((String) k.get("identifier")).contains(catalogFileLocation)) {
+						resultList.add((String) k.get("identifier"));
+					}
+				}
+				return resultList;
+
+			} else {
+				System.out.println("Fehler");
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+		}
+		return new ArrayList<String>();
+	}
+
+	public ArrayList<String> getSuccessModels() {
+		try {
+			// RMI call
+
+			Object result = this.invokeServiceMethod("i5.las2peer.services.fileService.FileService@1.0", "getFileIndex",
+					new Serializable[] {});
+			if (result != null) {
+				@SuppressWarnings("unchecked")
+				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
+				// Filter results
+				ArrayList<String> resultList = new ArrayList<String>();
+				for (Map<String, Object> k : response) {
+					if (((String) k.get("identifier")).contains(successModelsFolderLocation)) {
+						resultList.add((String) k.get("identifier"));
+					}
+				}
+				return resultList;
+
+			} else {
+				System.out.println("Fehler");
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+		}
+		return new ArrayList<String>();
+	}
+
+	public String getFile(String file) {
+		try {
+			// RMI call
+
+			Object result = this.invokeServiceMethod("i5.las2peer.services.fileService.FileService@1.0", "fetchFile",
+					new Serializable[] { file });
+			if (result != null) {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> response = (Map<String, Object>) result;
+				return new String((byte[]) response.get("content"));
+
+			} else {
+				System.out.println("Fehler");
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+		}
+		return "";
 	}
 
 }
