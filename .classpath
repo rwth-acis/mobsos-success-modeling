@@ -11,7 +11,7 @@
 	<classpathentry kind="lib" path="lib/commons-codec-1.10.jar"/>
 	<classpathentry kind="lib" path="lib/i5-httpServer-0.4.jar"/>
 	<classpathentry kind="lib" path="lib/Javaluator-1.jar"/>
-	<classpathentry kind="lib" path="lib/las2peer-0.6.1.jar"/>
-	<classpathentry kind="lib" path="lib/las2peer-http-connector-0.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/las2peer-0.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/las2peer-http-connector-0.6.2.jar"/>
 	<classpathentry kind="output" path="output"/>
 </classpath>
