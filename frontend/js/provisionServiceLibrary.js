@@ -4,6 +4,24 @@
 * @author Peter de Lange (lange@dbis.rwth-aachen.de)
 */
 
+function showUserInformation(){
+		$('#user-information')[0].innerHTML = ""
+		$("<las2peer-user-widget login-oidc-provider='https://api.learning-layers.eu/o/oauth2' login-oidc-token='"+window.localStorage["access_token"]+"'></las2peer-user-widget>").appendTo('#user-information');
+	
+}
+
+function updateFileUpload(){
+		$("#uploadButton").css("margin-left", "5px").css("display","inline").css("font-size","1em");
+		$('#fu')[0].innerHTML = ""
+		$(" <las2peer-file-upload-widget id='uploadwidget' upload-success-callback='uploadSuccess' base-url='http://localhost:8080/' login-oidc-provider='https://api.learning-layers.eu/o/oauth2' login-oidc-token='"+window.localStorage["access_token"]+"'></las2peer-file-upload-widget>").appendTo('#fu');
+}
+
+function uploadSuccess(){
+	var dialog = document.getElementById("fileUpload");
+	dialog.close();
+	uploadToast.show({text: 'Model successfully uploaded.', duration: 2500});
+}
+
 var PS = (function(PS){
 	
 	
@@ -15,7 +33,7 @@ var PS = (function(PS){
 	
 		//Private Properties
 		var LAS2PEERHOST = "http://localhost:8080/";
-		var LAS2PEERSERVICENAME = "i5.las2peer.services.monitoring.provision.MonitoringDataProvisionService";
+		var LAS2PEERSERVICENAME = "i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService";
 		var LAS2PEERUSER = "PROVISION_SERVICE_FRONTEND";
 		var LAS2PEERUSERPASS = "PSFP";
 		
@@ -24,6 +42,23 @@ var PS = (function(PS){
 		
 		
 		//Private Methods
+		/**
+		* Retrieves all available nodes.
+		* 
+		* @param callback Callback function, called when the result has been retrieved. An array of node names.
+		*/
+		var getCatalogs = function(callback){
+			if(LAS2peerClient.getStatus() == "loggedIn"){
+				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "getMeasureCatalogs", [], function(status, result) {
+					if(status == 200 || status == 204) {
+						callback(result.value);
+					} else {
+						callback("Error! Message: " + result);
+					}
+				});
+			}
+		};
+
 		/**
 		* Retrieves all available nodes.
 		* 
@@ -66,19 +101,22 @@ var PS = (function(PS){
 		* 
 		* @param callback Callback function, called when the result has been retrieved. An array of success models.
 		*/
-		var getSuccessModels = function(serviceName, update, callback){
+		var getSuccessModels = function(serviceName, update, catalog, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
 			
 				var params = [],
 				paramServiceName = {},
-				paramUpdate = {};
+				paramUpdate = {},
+				paramCatalog = {};
 				
 				paramServiceName.type = "String";
 				paramServiceName.value = serviceName;
 				paramUpdate.type = "boolean";
 				paramUpdate.value = update;
+				paramCatalog.type = "String";
+				paramCatalog.value = catalog;
 				
-				params.push(paramServiceName,paramUpdate);
+				params.push(paramServiceName,paramUpdate, paramCatalog);
 				
 				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "getModels", params, function(status, result) {
 					if(status == 200 || status == 204) {
@@ -99,13 +137,14 @@ var PS = (function(PS){
 	 	* 
 		* @param callback Callback function, called when the result has been retrieved. A String.
 		*/
-		var visualizeServiceSuccessModel = function(modelName, updateMeasure, updateModel, callback){
+		var visualizeServiceSuccessModel = function(modelName, updateMeasure, updateModel, catalog, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
 				
 				var params = [],
 				paramModelName = {},
 				paramMeasureUpdate = {},
 				paramModelUpdate = {};
+				paramCatalogName = {};
 				
 				paramModelName.type = "String";
 				paramModelName.value = modelName;
@@ -113,8 +152,10 @@ var PS = (function(PS){
 				paramMeasureUpdate.value = updateMeasure;
 				paramModelUpdate.type = "boolean";
 				paramModelUpdate.value = updateModel;
+				paramCatalogName.type = "String";
+				paramCatalogName.value = catalog;
 				
-				params.push(paramModelName, paramMeasureUpdate, paramModelUpdate);
+				params.push(paramModelName, paramMeasureUpdate, paramModelUpdate, paramCatalogName);
 				
 				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeServiceSuccessModel", params, function(status, result) {
 					if(status == 200 || status == 204) {
@@ -135,13 +176,14 @@ var PS = (function(PS){
 		* 
 		* @param callback Callback function, called when the result has been retrieved. A String.
 		*/
-		var visualizeNodeSuccessModel = function(nodeName, updateMeasure, updateModel, callback){
+		var visualizeNodeSuccessModel = function(nodeName, updateMeasure, updateModel,  catalog, callback){
 			if(LAS2peerClient.getStatus() == "loggedIn"){
 				
 				var params = [],
 				paramNodeName = {},
 				paramMeasureUpdate = {},
 				paramModelUpdate = {};
+				paramCatalogName = {};
 				
 				paramNodeName.type = "String";
 				paramNodeName.value = nodeName;
@@ -149,8 +191,10 @@ var PS = (function(PS){
 				paramMeasureUpdate.value = updateMeasure;
 				paramModelUpdate.type = "boolean";
 				paramModelUpdate.value = updateModel;
+				paramCatalogName.type = "String";
+				paramCatalogName.value = catalog;
 				
-				params.push(paramNodeName, paramMeasureUpdate, paramModelUpdate);
+				params.push(paramNodeName, paramMeasureUpdate, paramModelUpdate, paramCatalogName);
 				
 				LAS2peerClient.invoke(LAS2PEERSERVICENAME, "visualizeNodeSuccessModel", params, function(status, result) {
 					if(status == 200 || status == 204) {
@@ -207,6 +251,15 @@ var PS = (function(PS){
 					LAS2peerClient.login(LAS2PEERUSER, LAS2PEERUSERPASS, LAS2PEERHOST, "ProvisionServiceFrontend");
 				}
 			},
+
+			/**
+			* Retrieves all available nodes.
+			* 
+			* @param callback Callback function, called when the result has been retrieved. An array of node names.
+			*/
+			getCatalogs: function(callback){
+				getCatalogs(callback);
+			},
 			
 			/**
 			* Retrieves all available nodes.
@@ -232,8 +285,8 @@ var PS = (function(PS){
 			* 
 			* @param callback Callback function, called when the result has been retrieved. An array of success model names.
 			*/
-			getSuccessModels: function(serviceName, callback){
-				getSuccessModels(serviceName, true, callback);
+			getSuccessModels: function(serviceName, catalogName, callback){
+				getSuccessModels(serviceName, true, catalogName, callback);
 			},
 			
 			/**
@@ -241,9 +294,9 @@ var PS = (function(PS){
 			* @param nodeName the node name
 			* @param callback Callback function, called when the result has been retrieved. A String.
 			*/
-			visualizeNodeSuccessModel: function(nodeName, callback){
+			visualizeNodeSuccessModel: function(nodeName, catalog, callback){
 				nodeName = nodeName.substring(0,12); //Only the id is passed
-				visualizeNodeSuccessModel(nodeName, true, true, callback);
+				visualizeNodeSuccessModel(nodeName, true, true, catalog, callback);
 			},
 			
 			/**
@@ -252,8 +305,8 @@ var PS = (function(PS){
 			* 
 			* @param callback Callback function, called when the result has been retrieved. A String.
 			*/
-			visualizeServiceSuccessModel: function(modelName, callback){
-				visualizeServiceSuccessModel(modelName, true, true, callback);
+			visualizeServiceSuccessModel: function(modelName, catalog, callback){
+				visualizeServiceSuccessModel(modelName, true, true, catalog, callback);
 			}
 		}
 		
