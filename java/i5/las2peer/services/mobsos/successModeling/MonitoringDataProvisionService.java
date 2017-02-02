@@ -33,9 +33,11 @@ import i5.las2peer.services.mobsos.successModeling.visualizations.Chart.ChartTyp
 import i5.las2peer.services.mobsos.successModeling.visualizations.KPI;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Value;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
-import i5.simpleXML.Element;
-import i5.simpleXML.Parser;
-import i5.simpleXML.XMLSyntaxException;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import i5.las2peer.tools.XmlTools;
 
 /**
  *
@@ -157,10 +159,9 @@ public class MonitoringDataProvisionService extends Service {
 						.map(Path::toFile).collect(Collectors.toList());
 				for (File f : filesInFolder) {
 					try {
-						updateMeasures(f, catalog);
+						System.out.println(f);
+						measureCatalogs.put(catalog,updateMeasures(f, catalog));
 					} catch (MalformedXMLException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					} catch (XMLSyntaxException e) {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
 					} catch (IOException e) {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
@@ -169,7 +170,6 @@ public class MonitoringDataProvisionService extends Service {
 			} catch (IOException e) {
 				System.out.println("Measure Catalog seems broken: " + e.getMessage());
 			}
-
 		String[] returnArray = new String[measureCatalogs.get(catalog).size()];
 		int counter = 0;
 		for (String key : measureCatalogs.get(catalog).keySet()) {
@@ -287,8 +287,6 @@ public class MonitoringDataProvisionService extends Service {
 							updateMeasures(new File(""), s);
 						} catch (MalformedXMLException e) {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						} catch (XMLSyntaxException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
 						} catch (IOException e) {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
 						}
@@ -301,9 +299,6 @@ public class MonitoringDataProvisionService extends Service {
 							updateMeasures(f, catalog);
 						} catch (MalformedXMLException e) {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						} catch (XMLSyntaxException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						} catch (IOException e) {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
 						}
 					}
@@ -342,8 +337,6 @@ public class MonitoringDataProvisionService extends Service {
 						updateMeasures(new File(""), s);
 					} catch (MalformedXMLException e) {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					} catch (XMLSyntaxException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
 					} catch (IOException e) {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
 					}
@@ -356,8 +349,6 @@ public class MonitoringDataProvisionService extends Service {
 						try {
 							updateMeasures(f, catalog);
 						} catch (MalformedXMLException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						} catch (XMLSyntaxException e) {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
 						} catch (IOException e) {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
@@ -467,67 +458,71 @@ public class MonitoringDataProvisionService extends Service {
 	 *
 	 */
 	private Map<String, Measure> updateMeasures(File catalog, String measureFile)
-			throws MalformedXMLException, XMLSyntaxException, IOException {
+			throws MalformedXMLException, IOException {
 
 		Map<String, Measure> measures = new TreeMap<String, Measure>();
-
 		Element root;
 		if (useFileService) {
 			String measureXML = getFile(measureFile);
-			root = Parser.parse(measureXML, false);
+			root = XmlTools.getRootElement(measureXML, "Catalog");
 		} else {
-			root = Parser.parse(catalog, false);
-		}
-		if (!root.getName().equals("Catalog"))
-			throw new MalformedXMLException("Catalog expeced!");
-
-		for (int measureNumber = 0; measureNumber < root.getChildCount(); measureNumber++) {
-			Element measureElement = root.getChild(measureNumber);
-
-			Map<String, String> queries = new HashMap<String, String>();
-			Visualization visualization = null;
-
-			if (!measureElement.hasAttribute("name"))
-				throw new MalformedXMLException("Catalog contains a measure without a name!");
-			String measureName = measureElement.getAttribute("name");
-			if (measures.containsKey("measureName"))
-				throw new MalformedXMLException("Catalog already contains a measure " + measureName + "!");
-
-			for (int measureChildCount = 0; measureChildCount < measureElement.getChildCount(); measureChildCount++) {
-
-				Element measureChild = measureElement.getChild(measureChildCount);
-				String childType = measureChild.getName();
-
-				if (childType.equals("query")) {
-					String queryName = measureChild.getAttribute("name");
-					String query = measureChild.getFirstChild().getText();
-					// Replace escape characters with their correct values (seems like the simple XML Parser does not do
-					// that)
-					query = query.replaceAll("&amp;&", "&").replaceAll("&lt;", "<").replaceAll("&lt;", "<")
-							.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
-					queries.put(queryName, query);
-				}
-
-				else if (childType.equals("visualization")) {
-					if (visualization != null)
-						throw new MalformedXMLException(
-								"Measure " + measureName + " is broken, duplicate 'Visualization' entry!");
-					visualization = readVisualization(measureChild);
-				}
-
-				else {
-					throw new MalformedXMLException(
-							"Measure " + measureName + " is broken, illegal node " + childType + "!");
-				}
-
+			try{
+			root = XmlTools.getRootElement(catalog, "Catalog");
+			}catch(MalformedXMLException e){
+				e.printStackTrace();
+				return measures;
 			}
-
-			if (visualization == null)
-				throw new MalformedXMLException("Measure " + measureName + " is broken, no visualization element!");
-			if (queries.isEmpty())
-				throw new MalformedXMLException("Measure " + measureName + " is broken, no query element!");
-
-			measures.put(measureName, new Measure(measureName, queries, visualization));
+		}
+		NodeList children = root.getChildNodes();
+		for (int measureNumber = 0; measureNumber < children.getLength(); measureNumber++) {
+			if(children.item(measureNumber).getNodeType() == Node.ELEMENT_NODE){
+				Element measureElement = (Element)children.item(measureNumber);
+	
+				Map<String, String> queries = new HashMap<String, String>();
+				Visualization visualization = null;
+	
+				if (!measureElement.hasAttribute("name"))
+					throw new MalformedXMLException("Catalog contains a measure without a name!");
+				String measureName = measureElement.getAttribute("name");
+				if (measures.containsKey("measureName"))
+					throw new MalformedXMLException("Catalog already contains a measure " + measureName + "!");
+				NodeList mChildren = measureElement.getChildNodes();
+				for (int measureChildCount = 0; measureChildCount < mChildren.getLength(); measureChildCount++) {
+					if(mChildren.item(measureChildCount).getNodeType() == Node.ELEMENT_NODE){
+						Element measureChild = (Element)mChildren.item(measureChildCount);
+						String childType = measureChild.getNodeName();
+		
+						if (childType.equals("query")) {
+							String queryName = measureChild.getAttribute("name");
+							String query = measureChild.getFirstChild().getTextContent();
+							// Replace escape characters with their correct values (seems like the simple XML Parser does not do
+							// that)
+							query = query.replaceAll("&amp;&", "&").replaceAll("&lt;", "<").replaceAll("&lt;", "<")
+									.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+							queries.put(queryName, query);
+						}
+		
+						else if (childType.equals("visualization")) {
+							if (visualization != null)
+								throw new MalformedXMLException(
+										"Measure " + measureName + " is broken, duplicate 'Visualization' entry!");
+							visualization = readVisualization(measureChild);
+						}
+		
+						else {
+							throw new MalformedXMLException(
+									"Measure " + measureName + " is broken, illegal node " + childType + "!");
+						}
+					}
+				}
+	
+				if (visualization == null)
+					throw new MalformedXMLException("Measure " + measureName + " is broken, no visualization element!");
+				if (queries.isEmpty())
+					throw new MalformedXMLException("Measure " + measureName + " is broken, no query element!");
+	
+				measures.put(measureName, new Measure(measureName, queries, visualization));
+			}
 		}
 
 		return measures;
@@ -544,28 +539,39 @@ public class MonitoringDataProvisionService extends Service {
 	 *
 	 */
 	private Visualization readVisualization(Element visualizationElement)
-			throws XMLSyntaxException, MalformedXMLException {
+			throws MalformedXMLException {
 		String visualizationType = visualizationElement.getAttribute("type");
 		if (visualizationType.equals("Value")) {
 			return new Value();
 		} else if (visualizationType.equals("KPI")) {
 			Map<Integer, String> expression = new TreeMap<Integer, String>();
-			for (int i = 0; i < visualizationElement.getChildCount(); i++) {
-				int index = Integer.valueOf(visualizationElement.getChild(i).getAttribute("index"));
-				String name = visualizationElement.getChild(i).getAttribute("name");
-				expression.put(index, name);
+			NodeList children = visualizationElement.getChildNodes();
+			for (int i = 0; i < children.getLength(); i++) {
+				if(children.item(i).getNodeType() == Node.ELEMENT_NODE){
+					int index = Integer.valueOf(((Element)children.item(i)).getAttribute("index"));
+					String name = ((Element)children.item(i)).getAttribute("name");
+					expression.put(index, name);
+				}
 			}
 			return new KPI(expression);
 		} else if (visualizationType.equals("Chart")) {
 			String type;
 			ChartType chartType = null;
 			String parameters[] = new String[4];
-
-			type = visualizationElement.getChild(0).getFirstChild().getText();
-			parameters[0] = visualizationElement.getChild(1).getFirstChild().getText();
-			parameters[1] = visualizationElement.getChild(2).getFirstChild().getText();
-			parameters[2] = visualizationElement.getChild(3).getFirstChild().getText();
-			parameters[3] = visualizationElement.getChild(4).getFirstChild().getText();
+			NodeList children = visualizationElement.getChildNodes();
+			Element elements[] = new Element[5];
+			int j = 0;
+			for(int i=0;i<children.getLength();++i){
+				if(children.item(i).getNodeType() == Node.ELEMENT_NODE){
+					elements[j] =(Element)children.item(i);
+					j++;
+				}
+				if(j>=5)break;
+			}
+			type = elements[0].getFirstChild().getTextContent();
+			for(int i=0;i<4;++i){
+				parameters[i] = elements[i+1].getFirstChild().getTextContent();
+			}
 
 			if (type.equals("BarChart"))
 				chartType = ChartType.BarChart;
@@ -583,6 +589,7 @@ public class MonitoringDataProvisionService extends Service {
 			} catch (Exception e) {
 				throw new MalformedXMLException("Could not create chart: " + e);
 			}
+			
 		}
 		throw new MalformedXMLException("Unknown visualization type: " + visualizationType);
 	}
@@ -611,8 +618,6 @@ public class MonitoringDataProvisionService extends Service {
 					try {
 						successModel = readSuccessModelFile(new File(""), smc, measureCatalog);
 						models.put(successModel.getName(), successModel);
-					} catch (XMLSyntaxException e) {
-						System.out.println("Error reading Success Model: " + e);
 					} catch (MalformedXMLException e) {
 						System.out.println("Error reading Success Model: " + e);
 					} catch (IOException e) {
@@ -629,10 +634,8 @@ public class MonitoringDataProvisionService extends Service {
 			for (File file : sucessModelsFolder.listFiles()) {
 				SuccessModel successModel;
 				try {
-					successModel = readSuccessModelFile(file, "", measureCatalog);
+					successModel = readSuccessModelFile(file, "", catalogFileLocation+measureCatalog);
 					models.put(successModel.getName(), successModel);
-				} catch (XMLSyntaxException e) {
-					System.out.println("Error reading Success Model: " + e);
 				} catch (MalformedXMLException e) {
 					System.out.println("Error reading Success Model: " + e);
 				} catch (IOException e) {
@@ -656,34 +659,48 @@ public class MonitoringDataProvisionService extends Service {
 	 * 
 	 */
 	private SuccessModel readSuccessModelFile(File successModelFile, String successModelFileContent, String measureFile)
-			throws MalformedXMLException, XMLSyntaxException, IOException {
+			throws MalformedXMLException, IOException {
 		Element root;
-		if (useFileService)
-			root = Parser.parse(successModelFileContent, false);
-		else
-			root = Parser.parse(successModelFile, false);
+		if (useFileService){
+			try{
+				root = XmlTools.getRootElement(successModelFileContent, "SuccessModel");
+			} catch(MalformedXMLException e){
+				root = XmlTools.getRootElement(successModelFileContent, "NodeSuccessModel");	
+			}
+		}
+		else{
+			try{
+				root = XmlTools.getRootElement(successModelFile, "SuccessModel");
+			}catch(MalformedXMLException e){
+				root = XmlTools.getRootElement(successModelFile, "NodeSuccessModel");	
+			}
+		}
 		boolean nodeSuccessModel = false;
 		String modelName = root.getAttribute("name");
-		System.out.println("SucModel: " + modelName);
-		if (root.getName().equals("NodeSuccessModel"))
+		if (root.getNodeName().equals("NodeSuccessModel"))
 			nodeSuccessModel = true;
 
 		// If not a node success model, get the service name
 		String serviceName = null;
 		if (!nodeSuccessModel) {
-			if (!root.getName().equals("SuccessModel"))
+			if (!root.getNodeName().equals("SuccessModel"))
 				throw new MalformedXMLException(successModelFile.toString() + ": Success model expected!");
 			if (!root.hasAttribute("service"))
 				throw new MalformedXMLException("Service attribute expected!");
 			serviceName = root.getAttribute("service");
 		}
-		if (root.getChildCount() != 6)
+		NodeList children = root.getChildNodes();
+		ArrayList<Element> elements = new ArrayList<>();
+		for (int dimensionNumber = 0; dimensionNumber < children.getLength(); dimensionNumber++) {
+			if(children.item(dimensionNumber).getNodeType() == Node.ELEMENT_NODE){
+				elements.add((Element)children.item(dimensionNumber));
+			}
+		}
+		if (elements.size() != 6)
 			throw new MalformedXMLException(successModelFile.toString() + ": Six dimensions expected!");
-
 		List<Factor> factors = new ArrayList<Factor>();
 
-		for (int dimensionNumber = 0; dimensionNumber < root.getChildCount(); dimensionNumber++) {
-			Element dimensionElement = root.getChild(dimensionNumber);
+		for (Element dimensionElement:elements) {
 
 			String dimensionName = dimensionElement.getAttribute("name");
 			Dimension dimension;
@@ -702,32 +719,40 @@ public class MonitoringDataProvisionService extends Service {
 			else
 				throw new MalformedXMLException(
 						successModelFile.toString() + ": Dimension " + dimensionName + " is unknown!");
-
-			for (int factorNumber = 0; factorNumber < dimensionElement.getChildCount(); factorNumber++) {
-				Element factorElement = dimensionElement.getChild(factorNumber);
-				String factorName = factorElement.getAttribute("name");
-
-				List<Measure> factorMeasures = new ArrayList<Measure>();
-				for (int measureNumber = 0; measureNumber < factorElement.getChildCount(); measureNumber++) {
-					Element measureElement = factorElement.getChild(measureNumber);
-					String measureName = measureElement.getAttribute("name");
-					File catalog;
-					if (useFileService) {
-						catalog = new File("");
-					} else {
-						catalog = new File(measureFile);
+			NodeList dChildren = dimensionElement.getChildNodes();
+			for (int factorNumber = 0; factorNumber < dChildren.getLength(); factorNumber++) {
+				if(dChildren.item(factorNumber).getNodeType() == Node.ELEMENT_NODE){
+					Element factorElement = (Element)dChildren.item(factorNumber);
+					String factorName = factorElement.getAttribute("name");
+	
+					List<Measure> factorMeasures = new ArrayList<Measure>();
+					NodeList fChildren = factorElement.getChildNodes();
+					for (int measureNumber = 0; measureNumber < fChildren.getLength(); measureNumber++) {
+						if(fChildren.item(measureNumber).getNodeType() == Node.ELEMENT_NODE){
+							Element measureElement = (Element)fChildren.item(measureNumber);
+							String measureName = measureElement.getAttribute("name");
+							File catalog;
+							if (useFileService) {
+								catalog = new File("");
+							} else {
+								catalog = new File(measureFile);
+							}
+							if (measureCatalogs.get(measureFile) == null){
+								measureCatalogs.put(measureFile, new HashMap<String, Measure>());
+							}
+							if (!measureCatalogs.get(measureFile).containsKey(measureName)){
+								measureCatalogs.put(measureFile, updateMeasures(catalog, measureFile));
+							}
+							if (!measureCatalogs.get(measureFile).containsKey(measureName)){
+								throw new MalformedXMLException(
+										successModelFile.toString() + ": Measure name " + measureName + " is unknown!");
+							}
+							factorMeasures.add(measureCatalogs.get(measureFile).get(measureName));
+						}
 					}
-					if (measureCatalogs.get(measureFile) == null)
-						measureCatalogs.put(measureFile, new HashMap<String, Measure>());
-					if (!measureCatalogs.get(measureFile).containsKey(measureName))
-						measureCatalogs.put(measureFile, updateMeasures(catalog, measureFile));
-					if (!measureCatalogs.get(measureFile).containsKey(measureName))
-						throw new MalformedXMLException(
-								successModelFile.toString() + ": Measure name " + measureName + " is unknown!");
-					factorMeasures.add(measureCatalogs.get(measureFile).get(measureName));
+					Factor factor = new Factor(factorName, dimension, factorMeasures);
+					factors.add(factor);
 				}
-				Factor factor = new Factor(factorName, dimension, factorMeasures);
-				factors.add(factor);
 			}
 		}
 		return new SuccessModel(modelName, serviceName, factors);

@@ -90,7 +90,7 @@ public class MonitoringDataProvisionServiceTest {
 			// Login
 			c.connect();
 
-			Object result = c.invoke(testServiceClass.getName(), "getMeasureNames", "measure_catalog-mysql.xml", true);
+			Object result = c.invoke(testServiceClass.getName(), "getMeasureNames", "measure_catalog/measure_catalog-mysql.xml", true);
 			assertTrue(result instanceof String[]);
 			String[] resultArray = (String[]) result;
 			for (String measureName : resultArray)

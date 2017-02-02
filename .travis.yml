@@ -1,0 +1,12 @@
+language: java
+jdk:
+  - oraclejdk8
+services:
+  - mysql
+script: "ant all"
+sudo: false
+before_script:
+  - mysql -u root -e 'CREATE DATABASE LAS2PEERMON;'
+  - mysql -u root LAS2PEERMON < bin/db.sql
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
