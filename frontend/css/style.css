@@ -5,16 +5,18 @@ body {
 
 .main {
     width: 80%;
-    margin: 20px auto;
+    margin : 20px;
     padding: 30px;
     border: 1px solid #ccc;
     border-radius: 10px;
 }
 
-table {
-    table-layout:fixed;
-}
 
-td {
+#ps_mainView table {  table-layout:fixed; border: none; border-collapse: collapse; }
+#ps_mainView table td { border-left: 1px solid #000; }
+#ps_mainView table td:first-child { border-left: none; }
+
+#ps_mainView td {
     word-wrap:break-word;
+    margin-left: 10px;
 }

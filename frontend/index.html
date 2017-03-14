@@ -1,44 +1,161 @@
 <html>
 <head>
-    <title>LAS2peer Monitoring Data Provision Service</title>
+    <title>las2peer Monitoring Data Provision Service</title>
     <link rel="stylesheet" type="text/css" href="css/style.css" media="all">
+      <script src="../bower_components/webcomponentsjs/webcomponents-lite.min.js">
+    </script>
     <script type="text/javascript" src="js/storage.js"></script>
     <script type="text/javascript" src="js/lasAjaxClient.js"></script>
     <script type="text/javascript" src="js/provisionServiceLibrary.js"></script>
-    <script type="text/javascript" src="js/jquery-1.8.0.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/css/bootstrap-select.min.css">
+
+
+     <link rel="import" href="bower_components/polymer/polymer.html">
+  <link rel="import" href="bower_components/las2peer-frontend-user-widget/las2peer-frontend-user-widget.html">
+  <link rel="import" href="bower_components/las2peer-file-upload-widget/las2peer-file-upload-widget.html">
+
+  <style is="custom-style">
+  #uploadToast {
+    --paper-toast-background-color: green;
+    --paper-toast-color: white;
+  }
+  iron-dropdown{
+    z-index: 2;
+  }
+</style>
+
 </head>
 <body>
-<div id="ps_mainView">
-<h1 style="text-align: center;">LAS2<sup>peer</sup> Monitoring Results</h1>
-	<table style="text-align: left; width: 100%; height: 85%;" border="1" cellpadding="10" cellspacing="2">
+
+<!-- Fixed navbar -->
+  <div class="navbar navbar-default " role="navigation">
+  <div class="container">
+  <div class="navbar-header">
+        <center><h2>MobSOS Monitoring</h2></center>
+        </div>
+        <!-- OpenID Connect Button: add HTML element representing button -->
+        <span class="navbar-right"> <div id="user-information" style="width:76px;height:55px"><las2peer-user-widget></las2peer-user-widget></div></span>
+        <span id="signinButton">
+          <span class="oidc-signin navbar-btn navbar-right btn-default"
+                data-callback="signinCallback"
+                data-name="OpenID Connect"
+                data-logo="logo.png"
+                data-size="sm"
+                data-server="https://api.learning-layers.eu/o/oauth2"
+                data-clientid="7fa2f68c-1038-4d7d-9e2c-d4e6a9b97fac"
+                data-scope="openid email profile"> <!--  8faf3dc2-fe60-4b77-8e34-7bd34496f3ca   2022a312-913f-407a-bad1-7061f358d7f4-->
+          </span>
+        </span>
+      </div><!--/.nav-collapse -->
+      </div>
+  </div>
+<div id="ps_mainView" >
+<center>
+<paper-toast id="uploadToast" class="fit-bottom" text=""></paper-toast>
+	<table style="text-align: left; width: 95%; height: 85%;" border="0" cellpadding="10" cellspacing="10">
 	  <tbody>
 		<tr style="height: 95%;">
 			<td valign="top" style="width: 50%">
+				<div style="margin-left: 10px">
+				<h4>Monitored Nodes</h4>
 			    <form name="ps_visualizeNodeModel" action="javascript:visualize_node_success_model()">
-		    	    <select style = "width:75%" name="NodeSelection" size="1">
+		    	    <select class="selectpicker" data-width="75%" name="NodeSelection" size="1">
 				    </select>
 					<input style = "font-size: 1em;" type="submit" value="Visualize!"/>
 				</form>
 				<div id = "ps_nodeSuccessModel" style="height:100%; width:100%;"></div>
+				</div>
 			</td>
-			<td valign="top">
+			<td id="rightCell" valign="top">
+				<div style="margin-left: 10px">
+				<h4>Monitored Services</h4>
 				<form name="ps_visualizeServiceModel" action="javascript:visualize_service_success_model()">
-		    	    <select style = "width:43%" name="ServiceSelection" size="1"
-		    	    onclick="javascript:get_success_models()">
+         Catalog: <select class="selectpicker" data-width="width:43%" name="CatalogSelection" size="1">&emsp; <input id="uploadButton"  style = "margin-left:5px;font-size: 1em; display:none" type="button" onClick="openDialog();" value="Upload Catalog/SuccessModel"/>
+            </select><br>
+		    	    Service: <select class="selectpicker" data-width="width:43%" name="ServiceSelection" size="1"
+		    	    onchange="javascript:get_success_models()">
 				    </select>
-				    <select style = "width:44%" name="SuccessModelName" size="1">
+				    Success Model:<select class="selectpicker" data-width="width:44%" name="SuccessModelName" size="1">
 				      	<option>Select Service First..</option>
 				    </select>
 				    <input style = "font-size: 1em;" type="submit" value="Visualize!"/>
 				</form>
 				<div id = "ps_serviceSuccessModel" style="height:100%; width:100%;"></div>
+				</div>
 			</td>
 		</tr>
 	  </tbody>
 	</table>
+</center>
 </div>
 
+<paper-dialog id="fileUpload" modal style="width:400px" >
+        <p>
+        <h4>Upload Catalog or SuccessModel:</h4>
+        <p>
 
+        <br>
+
+        <p>
+        <paper-dialog-scrollable>
+        <div id="fu">
+         
+        </div>
+        </paper-dialog-scrollable>
+          </p>
+
+        </p>
+        </p>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Close</paper-button>
+      </div>
+    </paper-dialog>
+
+<script>
+var openDialog = function(){
+    var dialog = document.getElementById("fileUpload");
+          if (dialog) {
+            dialog.open();
+          }
+  }
+</script>
+  
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/js/bootstrap-select.min.js"></script>
+<script>
+	(function() {
+      var po = document.createElement('script');
+      po.type = 'text/javascript';
+      po.async = true;
+      po.src = 'js/oidc-button.js';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(po, s);
+    })();
+
+    // OpenID Connect Button: implement a callback function
+    function signinCallback(result) {
+      if(result === "success"){
+        // authenticated
+
+        // OpenID Connect user info
+        console.log(oidc_userinfo);
+        showUserInformation();
+        updateFileUpload();
+		//alert(oidc_userinfo.name);
+       
+      } else {
+        // anonymous
+    	// OpenID Connect user info
+          console.log(oidc_userinfo);
+      }
+    }
+
+</script>
+<script type="text/javascript" src="js/service.config.js"></script>
 <script type="text/javascript" src="js/provisionService.js"></script>
 </body>
 </html>
