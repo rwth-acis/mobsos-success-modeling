@@ -810,23 +810,32 @@ public class MonitoringDataProvisionService extends Service {
 		try {
 			// RMI call
 
-			Object result = this.invokeServiceMethod(
-					"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "getFileIndex",
-					new Serializable[] {});
-			if (result != null) {
-				@SuppressWarnings("unchecked")
-				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
-				// Filter results
-				ArrayList<String> resultList = new ArrayList<String>();
-				for (Map<String, Object> k : response) {
-					if (((String) k.get("identifier")).contains(catalogFileLocation)) {
-						resultList.add((String) k.get("identifier"));
+			ArrayList<String> resultList = new ArrayList<String>();
+			if (useFileService) {
+				Object result = this.invokeServiceMethod(
+						"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "getFileIndex",
+						new Serializable[] {});
+				if (result != null) {
+					@SuppressWarnings("unchecked")
+					ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
+					// Filter results
+					for (Map<String, Object> k : response) {
+						if (((String) k.get("identifier")).contains(catalogFileLocation)) {
+							resultList.add((String) k.get("identifier"));
+						}
 					}
+					return resultList.toString();
+
+				} else {
+					System.out.println("Fehler");
+				}
+			} else {
+				List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
+						.map(Path::toFile).collect(Collectors.toList());
+				for (File f : filesInFolder) {
+					resultList.add(f.getName());
 				}
 				return resultList.toString();
-
-			} else {
-				System.out.println("Fehler");
 			}
 		} catch (Exception e) {
 			// one may want to handle some exceptions differently
