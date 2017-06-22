@@ -637,7 +637,7 @@ public class MonitoringDataProvisionService extends Service {
 			for (File file : sucessModelsFolder.listFiles()) {
 				SuccessModel successModel;
 				try {
-					successModel = readSuccessModelFile(file, "", catalogFileLocation + measureCatalog);
+					successModel = readSuccessModelFile(file, "", measureCatalog);
 					models.put(successModel.getName(), successModel);
 				} catch (MalformedXMLException e) {
 					System.out.println("Error reading Success Model: " + e);
