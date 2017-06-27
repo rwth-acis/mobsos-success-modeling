@@ -3,7 +3,7 @@
 	<presetdef name="javac">
 		<javac includeantruntime="false" />
 	</presetdef>
-	<property name="core.version" value="0.6.7" />
+	<property name="core.version" value="0.6.9" />
 
 	<property name="src.main" location="java" />
 	<property name="src.junit" location="junit" />
@@ -155,7 +155,7 @@
 </target>
 
 <target name="junit_tests" depends="init_junit, compile_all">
-	<junit fork="yes" haltonerror="yes" haltonfailure="yes" printsummary="yes">
+	<junit haltonerror="yes" haltonfailure="yes" printsummary="yes">
 		<classpath>
 			<pathelement path="${tmp.classes}" />
 			<pathelement path="${tmp.junit}" />
@@ -163,7 +163,7 @@
 			<path refid="libraries" />
 		</classpath>
 		<formatter type="plain" />
-		<batchtest fork="yes" todir="${junit.report}">
+		<batchtest todir="${junit.report}">
 			<fileset dir="${tmp.junit}">
 				<include name="**/*Test.class" />
 			</fileset>
