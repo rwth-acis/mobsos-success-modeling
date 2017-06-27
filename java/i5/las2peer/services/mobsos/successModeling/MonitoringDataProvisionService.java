@@ -22,6 +22,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -136,110 +137,6 @@ public class MonitoringDataProvisionService extends RESTService {
 			System.out.println("Monitoring: Could not connect to database!");
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 *
-	 * Gets the names of all known measures. Currently not used by the frontend but can be used in later implementations
-	 * to make success model creation possible directly through the frontend.
-	 *
-	 * @param update if true, the list is read again
-	 *
-	 * @return an array of names
-	 *
-	 */
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/measures")
-	public String[] getMeasureNames(String catalog, boolean update) {
-		if (update)
-			try {
-				List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-						.map(java.nio.file.Path::toFile).collect(Collectors.toList());
-				for (File f : filesInFolder) {
-					try {
-						System.out.println(f);
-						measureCatalogs.put(catalog, updateMeasures(f, catalog));
-					} catch (MalformedXMLException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					} catch (IOException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					}
-				}
-			} catch (IOException e) {
-				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			}
-		String[] returnArray = new String[measureCatalogs.get(catalog).size()];
-		int counter = 0;
-		for (String key : measureCatalogs.get(catalog).keySet()) {
-			returnArray[counter] = key;
-			counter++;
-		}
-		return returnArray;
-	}
-
-	/**
-	 *
-	 * Returns all stored ( = monitored) services.
-	 *
-	 * @return an array of service agent id
-	 *
-	 */
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/services")
-	public String[] getServices() {
-		List<String> monitoredServices = new ArrayList<String>();
-
-		ResultSet resultSet;
-		try {
-			reconnect();
-			resultSet = database.query(SERVICE_QUERY);
-		} catch (SQLException e) {
-			System.out.println("(getServiceIds) The query has lead to an error: " + e);
-			return null;
-		}
-		try {
-			while (resultSet.next()) {
-				monitoredServices.add(resultSet.getString(2));
-			}
-		} catch (SQLException e) {
-			System.out.println("Problems reading result set: " + e);
-		}
-		return monitoredServices.toArray(new String[monitoredServices.size()]);
-	}
-
-	/**
-	 * 
-	 * Returns the name of all stored success models for the given service.
-	 * 
-	 * @param serviceName the name of the service
-	 * @param update updates the available success models with the content of the success model folder
-	 * 
-	 * @return an array of success model names
-	 * 
-	 */
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/models")
-	public String[] getModels(String serviceName, boolean update, String catalog) {
-		if (update)
-			try {
-				knownModels = updateModels(catalog);
-			} catch (IOException e) {
-				System.out.println(e.getMessage());
-			}
-
-		Collection<SuccessModel> models = knownModels.values();
-		List<String> modelNames = new ArrayList<String>();
-		Iterator<SuccessModel> iterator = models.iterator();
-		while (iterator.hasNext()) {
-			SuccessModel model = iterator.next();
-			if (model.getServiceName() != null && model.getServiceName().equals(serviceName)) {
-				modelNames.add(model.getName());
-			}
-		}
-		return modelNames.toArray(new String[0]);
 	}
 
 	/**
@@ -1001,6 +898,112 @@ public class MonitoringDataProvisionService extends RESTService {
 				e1.printStackTrace();
 			}
 			return Response.status(Status.BAD_REQUEST).entity("Error").build();
+		}
+
+		/**
+		 *
+		 * Gets the names of all known measures. Currently not used by the frontend but can be used in later
+		 * implementations to make success model creation possible directly through the frontend.
+		 *
+		 * @param update if true, the list is read again
+		 *
+		 * @return an array of names
+		 *
+		 */
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/measures")
+		public Response getMeasureNames(@QueryParam("catalog") String catalog, @QueryParam("update") boolean update) {
+			if (update)
+				try {
+					List<File> filesInFolder = Files.walk(Paths.get(service.catalogFileLocation))
+							.filter(Files::isRegularFile).map(java.nio.file.Path::toFile).collect(Collectors.toList());
+					for (File f : filesInFolder) {
+						try {
+							System.out.println(f);
+							service.measureCatalogs.put(catalog, service.updateMeasures(f, catalog));
+						} catch (MalformedXMLException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						} catch (IOException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						}
+					}
+				} catch (IOException e) {
+					System.out.println("Measure Catalog seems broken: " + e.getMessage());
+				}
+			String[] returnArray = new String[service.measureCatalogs.get(catalog).size()];
+			int counter = 0;
+			for (String key : service.measureCatalogs.get(catalog).keySet()) {
+				returnArray[counter] = key;
+				counter++;
+			}
+			return Response.status(Status.OK).entity(returnArray).build();
+		}
+
+		/**
+		 *
+		 * Returns all stored ( = monitored) services.
+		 *
+		 * @return an array of service agent id
+		 *
+		 */
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/services")
+		public Response getServices() {
+			List<String> monitoredServices = new ArrayList<String>();
+
+			ResultSet resultSet;
+			try {
+				service.reconnect();
+				resultSet = service.database.query(service.SERVICE_QUERY);
+			} catch (SQLException e) {
+				System.out.println("(getServiceIds) The query has lead to an error: " + e);
+				return null;
+			}
+			try {
+				while (resultSet.next()) {
+					monitoredServices.add(resultSet.getString(2));
+				}
+			} catch (SQLException e) {
+				System.out.println("Problems reading result set: " + e);
+			}
+			return Response.status(Status.OK).entity(monitoredServices.toArray(new String[monitoredServices.size()]))
+					.build();
+		}
+
+		/**
+		 * 
+		 * Returns the name of all stored success models for the given service.
+		 * 
+		 * @param serviceName the name of the service
+		 * @param update updates the available success models with the content of the success model folder
+		 * 
+		 * @return an array of success model names
+		 * 
+		 */
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/models")
+		public Response getModels(@QueryParam("service") String serviceName, @QueryParam("update") boolean update,
+				@QueryParam("catalog") String catalog) {
+			if (update)
+				try {
+					service.knownModels = service.updateModels(catalog);
+				} catch (IOException e) {
+					System.out.println(e.getMessage());
+				}
+
+			Collection<SuccessModel> models = service.knownModels.values();
+			List<String> modelNames = new ArrayList<String>();
+			Iterator<SuccessModel> iterator = models.iterator();
+			while (iterator.hasNext()) {
+				SuccessModel model = iterator.next();
+				if (model.getServiceName() != null && model.getServiceName().equals(serviceName)) {
+					modelNames.add(model.getName());
+				}
+			}
+			return Response.status(Status.OK).entity(modelNames.toArray(new String[0])).build();
 		}
 
 	}

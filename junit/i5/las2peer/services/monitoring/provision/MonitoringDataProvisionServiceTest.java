@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.After;
@@ -98,57 +99,51 @@ public class MonitoringDataProvisionServiceTest {
 
 	@Test
 	public void getNames() {
-		/*
-		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
-		
+
 		try {
 			// Login
-			c.connect();
-		
-			Object result = c.invoke(testServiceClass.getName(), "getMeasureNames", "measure_catalog/measure_catalog-mysql.xml", true);
-			assertTrue(result instanceof String[]);
-			String[] resultArray = (String[]) result;
-			for (String measureName : resultArray)
-				System.out.println("Result of asking for all measures: " + measureName);
-		
-			result = c.invoke(testServiceClass.getName(), "getNodes");
-			assertTrue(result instanceof String[]);
-			resultArray = (String[]) result;
-			for (String node : resultArray)
-				System.out.println("Result of asking for all nodes: " + node);
-		
-			result = c.invoke(testServiceClass.getName(), "getServices");
-			assertTrue(result instanceof String[]);
-			resultArray = (String[]) result;
-			for (String service : resultArray)
-				System.out.println("Result of asking for all monitored service names: " + service);
-			if (resultArray.length != 0) {
-				String serviceName = resultArray[0];
+			ClientResponse result = c1.sendRequest("GET",
+					"mobsos-success-modeling/measures?catalog=measure_catalog/measure_catalog-mysql.xml&update=true",
+					"", "*/*", "application/json", new HashMap<String, String>());
+
+			assertTrue(result.getHttpCode() == 200);
+			JSONParser parser = new JSONParser();
+			JSONArray resultObject = (JSONArray) parser.parse(result.getResponse());
+			for (Object measureName : resultObject)
+				System.out.println("Result of asking for all measures: " + (String) measureName);
+			ClientResponse result2 = c1.sendRequest("GET", "mobsos-success-modeling/nodes", "", "*/*",
+					"application/json", new HashMap<String, String>());
+			assertTrue(result2.getHttpCode() == 200);
+			JSONObject resultObject2 = (JSONObject) parser.parse(result2.getResponse());
+
+			for (Object node : resultObject2.keySet())
+				System.out.println("Result of asking for all nodes: " + (String) node);
+
+			ClientResponse result3 = c1.sendRequest("GET", "mobsos-success-modeling/services", "", "*/*",
+					"application/json", new HashMap<String, String>());
+			assertTrue(result3.getHttpCode() == 200);
+			JSONArray resultObject3 = (JSONArray) parser.parse(result3.getResponse());
+			for (Object service : resultObject3)
+				System.out.println("Result of asking for all monitored service names: " + (String) service);
+
+			if (resultObject3.size() != 0) {
+				String serviceName = (String) resultObject3.get(0);
 				System.out.println("Calling getModels with service: " + serviceName);
-				result = c.invoke(testServiceClass.getName(), "getModels", serviceName, true,
-						"measure_catalog-mysql.xml");
-				assertTrue(result instanceof String[]);
-				resultArray = (String[]) result;
-				for (String service : resultArray)
-					System.out.println("Result of asking for all models: " + service);
+				ClientResponse result4 = c1.sendRequest("GET",
+						"mobsos-success-modeling/models?service=" + serviceName
+								+ "&update=true&catalog=measure_catalog/measure_catalog-mysql.xml",
+						"", "*/*", "application/json", new HashMap<String, String>());
+
+				assertTrue(result4.getHttpCode() == 200);
+				JSONArray resultObject4 = (JSONArray) parser.parse(result4.getResponse());
+				for (Object service : resultObject4)
+					System.out.println("Result of asking for all models: " + (String) service);
 			} else
 				System.out.println("Result of asking for all monitored service names: none!");
-		
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Exception: " + e);
 		}
-		
-		try {
-		
-			// Logout
-			c.disconnect();
-		
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Exception: " + e);
-		}
-		*/
 	}
 
 	@Test
