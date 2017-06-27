@@ -3,6 +3,7 @@
 	<presetdef name="javac">
 		<javac includeantruntime="false" />
 	</presetdef>
+	<property name="core.version" value="0.6.7" />
 
 	<property name="src.main" location="java" />
 	<property name="src.junit" location="junit" />

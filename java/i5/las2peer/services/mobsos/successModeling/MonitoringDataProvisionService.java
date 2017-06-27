@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,14 +17,28 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import i5.las2peer.api.Service;
+import i5.las2peer.api.Context;
 import i5.las2peer.logging.L2pLogger;
 import i5.las2peer.logging.NodeObserver.Event;
 import i5.las2peer.persistency.MalformedXMLException;
+import i5.las2peer.restMapper.RESTService;
+import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabaseType;
 import i5.las2peer.services.mobsos.successModeling.successModel.Factor;
@@ -38,6 +51,11 @@ import i5.las2peer.services.mobsos.successModeling.visualizations.KPI;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Value;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
 import i5.las2peer.tools.XmlTools;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.Contact;
+import io.swagger.annotations.Info;
+import io.swagger.annotations.License;
+import io.swagger.annotations.SwaggerDefinition;
 
 /**
  *
@@ -47,7 +65,8 @@ import i5.las2peer.tools.XmlTools;
  * @author Peter de Lange
  *
  */
-public class MonitoringDataProvisionService extends Service {
+@ServicePath("mobsos-success-modeling")
+public class MonitoringDataProvisionService extends RESTService {
 
 	public final String NODE_QUERY;
 	public final String SERVICE_QUERY;
@@ -100,31 +119,6 @@ public class MonitoringDataProvisionService extends Service {
 		} catch (Exception e) {
 			System.out.println("Monitoring: Could not connect to database! " + e.getMessage());
 		}
-		/*
-		try {
-			List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-					.map(Path::toFile).collect(Collectors.toList());
-			for (File f : filesInFolder) {
-				try {
-					measureCatalogs.put(f.getName(), updateMeasures(f));
-				} catch (MalformedXMLException e) {
-					System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				} catch (XMLSyntaxException e) {
-					System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				} catch (IOException e) {
-					System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				}
-			}
-		} catch (IOException e) {
-			System.out.println("Measure Catalog seems broken: " + e.getMessage());
-		}
-		
-		try {
-			knownModels = updateModels(measureCatalogs.firstKey());
-		} catch (IOException e) {
-			System.out.println("Problems reading Success Models: " + e.getMessage());
-		}
-		*/
 	}
 
 	/**
@@ -154,11 +148,14 @@ public class MonitoringDataProvisionService extends Service {
 	 * @return an array of names
 	 *
 	 */
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/measures")
 	public String[] getMeasureNames(String catalog, boolean update) {
 		if (update)
 			try {
 				List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-						.map(Path::toFile).collect(Collectors.toList());
+						.map(java.nio.file.Path::toFile).collect(Collectors.toList());
 				for (File f : filesInFolder) {
 					try {
 						System.out.println(f);
@@ -183,39 +180,14 @@ public class MonitoringDataProvisionService extends Service {
 
 	/**
 	 *
-	 * Returns all stored ( = monitored) nodes.
-	 *
-	 * @return an array of node id's
-	 *
-	 */
-	public String[] getNodes() {
-		List<String> nodeIds = new ArrayList<String>();
-
-		ResultSet resultSet;
-		try {
-			reconnect();
-			resultSet = database.query(NODE_QUERY);
-		} catch (SQLException e) {
-			System.out.println("(Get Nodes) The query has lead to an error: " + e);
-			return null;
-		}
-		try {
-			while (resultSet.next()) {
-				nodeIds.add(resultSet.getString(1) + " Location: " + resultSet.getString(2));
-			}
-		} catch (SQLException e) {
-			System.out.println("Problems reading result set: " + e);
-		}
-		return nodeIds.toArray(new String[nodeIds.size()]);
-	}
-
-	/**
-	 *
 	 * Returns all stored ( = monitored) services.
 	 *
 	 * @return an array of service agent id
 	 *
 	 */
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/services")
 	public String[] getServices() {
 		List<String> monitoredServices = new ArrayList<String>();
 
@@ -247,6 +219,9 @@ public class MonitoringDataProvisionService extends Service {
 	 * @return an array of success model names
 	 * 
 	 */
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/models")
 	public String[] getModels(String serviceName, boolean update, String catalog) {
 		if (update)
 			try {
@@ -265,108 +240,6 @@ public class MonitoringDataProvisionService extends Service {
 			}
 		}
 		return modelNames.toArray(new String[0]);
-	}
-
-	/**
-	 * 
-	 * Visualizes a given service success model.
-	 * 
-	 * @param modelName the name of the success model
-	 * @param updateMeasures if true, all measures are updated from xml file
-	 * @param updateModels if true, all models are updated from xml file
-	 * 
-	 * @return a HTML representation of the success model
-	 * 
-	 */
-	public String visualizeServiceSuccessModel(String modelName, boolean updateMeasures, boolean updateModels,
-			String catalog) {
-		if (updateMeasures)
-			try {
-				if (useFileService) {
-					ArrayList<String> measureFiles = getMeasureCatalogList();
-					for (String s : measureFiles) {
-						try {
-							updateMeasures(new File(""), s);
-						} catch (MalformedXMLException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						} catch (IOException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						}
-					}
-				} else {
-					List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-							.map(Path::toFile).collect(Collectors.toList());
-					for (File f : filesInFolder) {
-						try {
-							updateMeasures(f, catalog);
-						} catch (MalformedXMLException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						}
-					}
-				}
-			} catch (IOException e) {
-				System.out.println("Measure Catalog seems broken: " + e.getMessage());
-			}
-		if (updateModels)
-			try {
-				knownModels = updateModels(catalog);
-			} catch (IOException e) {
-				System.out.println("Problems reading Success Models: " + e.getMessage());
-			}
-
-		return visualizeSuccessModel(modelName, null, catalog);
-	}
-
-	/**
-	 * 
-	 * Visualizes a success model for the given node.
-	 * 
-	 * @param nodeName the name of node
-	 * @param updateMeasures if true, all measures are updated from xml file
-	 * @param updateModels if true, all models are updated from xml file
-	 * 
-	 * @return a HTML representation of the success model
-	 * 
-	 */
-	public String visualizeNodeSuccessModel(String nodeName, boolean updateMeasures, boolean updateModels,
-			String catalog) {
-		if (updateMeasures)
-			if (useFileService) {
-				ArrayList<String> measureFiles = getMeasureCatalogList();
-				for (String s : measureFiles) {
-					try {
-						updateMeasures(new File(""), s);
-					} catch (MalformedXMLException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					} catch (IOException e) {
-						System.out.println("Measure Catalog seems broken: " + e.getMessage());
-					}
-				}
-			} else {
-				try {
-					List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-							.map(Path::toFile).collect(Collectors.toList());
-					for (File f : filesInFolder) {
-						try {
-							updateMeasures(f, catalog);
-						} catch (MalformedXMLException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						} catch (IOException e) {
-							System.out.println("Measure Catalog seems broken: " + e.getMessage());
-						}
-					}
-				} catch (IOException e) {
-					System.out.println("Measure Catalog seems broken: " + e.getMessage());
-				}
-			}
-		if (updateModels)
-			try {
-				knownModels = updateModels(catalog);
-			} catch (IOException e) {
-				System.out.println("Problems reading Success Models: " + e.getMessage());
-			}
-		return visualizeSuccessModel("Node Success Model", nodeName, catalog);
 	}
 
 	/**
@@ -640,7 +513,7 @@ public class MonitoringDataProvisionService extends Service {
 					successModel = readSuccessModelFile(file, "", measureCatalog);
 					models.put(successModel.getName(), successModel);
 				} catch (MalformedXMLException e) {
-					System.out.println("Error reading Success Model: " + e);
+					System.out.println("Error reading Success Model " + file.getName() + ": " + e);
 				} catch (IOException e) {
 					System.out.println("Error reading Success Model: " + e);
 				}
@@ -831,7 +704,7 @@ public class MonitoringDataProvisionService extends Service {
 				}
 			} else {
 				List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-						.map(Path::toFile).collect(Collectors.toList());
+						.map(java.nio.file.Path::toFile).collect(Collectors.toList());
 				for (File f : filesInFolder) {
 					resultList.add(f.getName());
 				}
@@ -928,4 +801,207 @@ public class MonitoringDataProvisionService extends Service {
 		return "";
 	}
 
+	@Override
+	protected void initResources() {
+		getResourceConfig().register(Resource.class);
+	}
+
+	@Path("/")
+	@Api
+	@SwaggerDefinition(
+			info = @Info(
+					title = "MobSOS Success Modeling",
+					version = "0.1",
+					description = "<p>This service is part of the MobSOS monitoring concept and provides visualization functionality of the monitored data to the web-frontend.</p>",
+					termsOfService = "",
+					contact = @Contact(
+							name = "Alexander Neumann",
+							url = "",
+							email = "neumann@dbis.rwth-aachen.de"),
+					license = @License(
+							name = "MIT",
+							url = "https://github.com/rwth-acis/mobsos-success-modeling/blob/master/LICENSE")))
+	public static class Resource {
+		private MonitoringDataProvisionService service = (MonitoringDataProvisionService) Context.getCurrent()
+				.getService();
+
+		/**
+		 *
+		 * Returns all stored ( = monitored) nodes.
+		 *
+		 * @return an array of node id's
+		 *
+		 */
+		@SuppressWarnings("unchecked")
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/nodes")
+		public Response getNodes() {
+			JSONObject nodeIds = new JSONObject();
+
+			ResultSet resultSet;
+			try {
+				service.reconnect();
+				resultSet = service.database.query(service.NODE_QUERY);
+			} catch (SQLException e) {
+				System.out.println("(Get Nodes) The query has lead to an error: " + e);
+				return null;
+			}
+			try {
+				while (resultSet.next()) {
+					nodeIds.put(resultSet.getString(1), "Location: " + resultSet.getString(2));
+
+				}
+			} catch (SQLException e) {
+				System.out.println("Problems reading result set: " + e);
+			}
+			return Response.status(Status.OK).entity(nodeIds.toJSONString()).build();
+		}
+
+		/**
+		 * 
+		 * Visualizes a success model for the given node.
+		 * 
+		 * @param content JSON String containing:
+		 *            <ul>
+		 *            <li>nodeName the name of the node</li>
+		 *            <li>updateMeasures if true, all measures are updated from xml file</li>
+		 *            <li>updateModels if true, all models are updated from xml file</li>
+		 *            </ul>
+		 * 
+		 * @return a HTML representation of the success model
+		 * 
+		 */
+		@POST
+		@Consumes(MediaType.APPLICATION_JSON)
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/visualize/nodeSuccessModel")
+		public Response visualizeNodeSuccessModel(String content) {
+			try {
+				JSONParser parser = new JSONParser();
+				JSONObject params = (JSONObject) parser.parse(content);
+
+				String nodeName = (String) params.get("nodeName");
+				boolean updateMeasures = Boolean.parseBoolean((String) params.get("updateMeasures"));
+				boolean updateModels = Boolean.parseBoolean((String) params.get("updateModels"));
+				String catalog = (String) params.get("catalog");
+				if (updateMeasures)
+					if (service.useFileService) {
+						ArrayList<String> measureFiles = service.getMeasureCatalogList();
+						for (String s : measureFiles) {
+							try {
+								service.updateMeasures(new File(""), s);
+							} catch (MalformedXMLException e) {
+								System.out.println("Measure Catalog seems broken: " + e.getMessage());
+							} catch (IOException e) {
+								System.out.println("Measure Catalog seems broken: " + e.getMessage());
+							}
+						}
+					} else {
+						try {
+							List<File> filesInFolder = Files.walk(Paths.get(service.catalogFileLocation))
+									.filter(Files::isRegularFile).map(java.nio.file.Path::toFile)
+									.collect(Collectors.toList());
+							for (File f : filesInFolder) {
+								try {
+									service.updateMeasures(f, catalog);
+								} catch (MalformedXMLException e) {
+									System.out.println("Measure Catalog seems broken: " + e.getMessage());
+								} catch (IOException e) {
+									System.out.println("Measure Catalog seems broken: " + e.getMessage());
+								}
+							}
+						} catch (IOException e) {
+							System.out.println("Measure Catalog seems broken: " + e.getMessage());
+						}
+					}
+				if (updateModels)
+					try {
+						service.knownModels = service.updateModels(catalog);
+					} catch (IOException e) {
+						System.out.println("Problems reading Success Models: " + e.getMessage());
+					}
+				return Response.status(Status.OK)
+						.entity(service.visualizeSuccessModel("Node Success Model", nodeName, catalog)).build();
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				System.out.println(e1.toString());
+				e1.printStackTrace();
+			}
+			return Response.status(Status.BAD_REQUEST).entity("Error").build();
+		}
+
+		/**
+		 * 
+		 * Visualizes a given service success model.
+		 * 
+		 * @param content JSON String containing:
+		 *            <ul>
+		 *            <li>modelName the name of the success model</li>
+		 *            <li>updateMeasures if true, all measures are updated from xml file</li>
+		 *            <li>updateModels if true, all models are updated from xml file</li>
+		 *            </ul>
+		 * 
+		 * @return a HTML representation of the success model
+		 * 
+		 */
+		@POST
+		@Consumes(MediaType.APPLICATION_JSON)
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/visualize/serviceSuccessModel")
+		public Response visualizeServiceSuccessModel(String content) {
+			try {
+				JSONParser parser = new JSONParser();
+				JSONObject params = (JSONObject) parser.parse(content);
+
+				String modelName = (String) params.get("modelName");
+				boolean updateMeasures = Boolean.parseBoolean((String) params.get("updateMeasures"));
+				boolean updateModels = Boolean.parseBoolean((String) params.get("updateModels"));
+				String catalog = (String) params.get("catalog");
+				if (updateMeasures)
+					try {
+						if (service.useFileService) {
+							ArrayList<String> measureFiles = service.getMeasureCatalogList();
+							for (String s : measureFiles) {
+								try {
+									service.updateMeasures(new File(""), s);
+								} catch (MalformedXMLException e) {
+									System.out.println("Measure Catalog seems broken: " + e.getMessage());
+								} catch (IOException e) {
+									System.out.println("Measure Catalog seems broken: " + e.getMessage());
+								}
+							}
+						} else {
+							List<File> filesInFolder = Files.walk(Paths.get(service.catalogFileLocation))
+									.filter(Files::isRegularFile).map(java.nio.file.Path::toFile)
+									.collect(Collectors.toList());
+							for (File f : filesInFolder) {
+								try {
+									service.updateMeasures(f, catalog);
+								} catch (MalformedXMLException e) {
+									System.out.println("Measure Catalog seems broken: " + e.getMessage());
+									System.out.println("Measure Catalog seems broken: " + e.getMessage());
+								}
+							}
+						}
+					} catch (IOException e) {
+						System.out.println("Measure Catalog seems broken: " + e.getMessage());
+					}
+				if (updateModels)
+					try {
+						service.knownModels = service.updateModels(catalog);
+					} catch (IOException e) {
+						System.out.println("Problems reading Success Models: " + e.getMessage());
+					}
+				return Response.status(Status.OK).entity(service.visualizeSuccessModel(modelName, null, catalog))
+						.build();
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				System.out.println(e1.toString());
+				e1.printStackTrace();
+			}
+			return Response.status(Status.BAD_REQUEST).entity("Error").build();
+		}
+
+	}
 }

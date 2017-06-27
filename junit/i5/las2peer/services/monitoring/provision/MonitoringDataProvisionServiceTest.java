@@ -5,19 +5,23 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.HashMap;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import i5.las2peer.httpConnector.HttpConnector;
-import i5.las2peer.httpConnector.client.Client;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.p2p.ServiceNameVersion;
 import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
 import i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService;
 import i5.las2peer.testing.MockAgentFactory;
+import i5.las2peer.webConnector.WebConnector;
+import i5.las2peer.webConnector.client.ClientResponse;
+import i5.las2peer.webConnector.client.MiniClient;
 
 /**
  * 
@@ -29,13 +33,14 @@ import i5.las2peer.testing.MockAgentFactory;
  */
 public class MonitoringDataProvisionServiceTest {
 
-	private static final String HTTP_ADDRESS = "localhost";
-	private static final int HTTP_PORT = 8080;
+	private static final String HTTP_ADDRESS = "http://127.0.0.1";
+	private static final int HTTP_PORT = WebConnector.DEFAULT_HTTP_PORT;
 
 	private LocalNode node;
-	private HttpConnector connector;
+	private static WebConnector connector;
+	private static MiniClient c1;
+	private static UserAgent user1;
 	private ByteArrayOutputStream logStream;
-	private UserAgent adam = null;
 
 	private static final String adamsPass = "adamspass";
 	private static final ServiceNameVersion testServiceClass = new ServiceNameVersion(
@@ -46,9 +51,9 @@ public class MonitoringDataProvisionServiceTest {
 		// start Node
 		node = LocalNode.newNode();
 
-		adam = MockAgentFactory.getAdam();
-		adam.unlockPrivateKey(adamsPass);
-		node.storeAgent(adam);
+		user1 = MockAgentFactory.getAdam();
+		user1.unlockPrivateKey(adamsPass);
+		node.storeAgent(user1);
 
 		node.launch();
 
@@ -59,16 +64,24 @@ public class MonitoringDataProvisionServiceTest {
 
 		// start connector
 		logStream = new ByteArrayOutputStream();
-		connector = new HttpConnector();
-		connector.setSocketTimeout(10000);
+		connector = new WebConnector(true, HTTP_PORT, false, 1000);
 		connector.setLogStream(new PrintStream(logStream));
 		connector.start(node);
+		Thread.sleep(1000); // wait a second for the connector to become ready
+
+		c1 = new MiniClient();
+		c1.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
+		c1.setLogin(Long.toString(user1.getId()), "adamspass");
 	}
 
 	@After
 	public void shutDownServer() throws Exception {
-		connector.stop();
-		node.shutDown();
+		if (connector != null) {
+			connector.stop();
+		}
+		if (node != null) {
+			node.shutDown();
+		}
 
 		connector = null;
 		node = null;
@@ -78,30 +91,32 @@ public class MonitoringDataProvisionServiceTest {
 		System.out.println("Connector-Log:");
 		System.out.println("--------------");
 
-		System.out.println(logStream.toString());
+		if (logStream != null) {
+			System.out.println(logStream.toString());
+		}
 	}
 
 	@Test
 	public void getNames() {
-
+		/*
 		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
-
+		
 		try {
 			// Login
 			c.connect();
-
+		
 			Object result = c.invoke(testServiceClass.getName(), "getMeasureNames", "measure_catalog/measure_catalog-mysql.xml", true);
 			assertTrue(result instanceof String[]);
 			String[] resultArray = (String[]) result;
 			for (String measureName : resultArray)
 				System.out.println("Result of asking for all measures: " + measureName);
-
+		
 			result = c.invoke(testServiceClass.getName(), "getNodes");
 			assertTrue(result instanceof String[]);
 			resultArray = (String[]) result;
 			for (String node : resultArray)
 				System.out.println("Result of asking for all nodes: " + node);
-
+		
 			result = c.invoke(testServiceClass.getName(), "getServices");
 			assertTrue(result instanceof String[]);
 			resultArray = (String[]) result;
@@ -118,58 +133,52 @@ public class MonitoringDataProvisionServiceTest {
 					System.out.println("Result of asking for all models: " + service);
 			} else
 				System.out.println("Result of asking for all monitored service names: none!");
-
+		
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Exception: " + e);
 		}
-
+		
 		try {
-
+		
 			// Logout
 			c.disconnect();
-
+		
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Exception: " + e);
 		}
+		*/
 	}
 
 	@Test
 	public void getMeasuresAndModels() {
-
-		Client c = new Client(HTTP_ADDRESS, HTTP_PORT, adam.getLoginName(), adamsPass);
-
 		try {
-			// Login
-			c.connect();
-			Object result = c.invoke(testServiceClass.getName(), "getNodes");
-			String[] resultArray = (String[]) result;
-			if (resultArray.length != 0) {
-				String knownNode = ((String[]) result)[0];
-				System.out.println("Calling Node Success Model with node " + knownNode);
+			ClientResponse result = c1.sendRequest("GET", "mobsos-success-modeling/nodes", "", "*/*",
+					"application/json", new HashMap<String, String>());
+			assertTrue(result.getHttpCode() == 200);
+			JSONParser parser = new JSONParser();
+			JSONObject resultObject = (JSONObject) parser.parse(result.getResponse());
+			if (resultObject.size() != 0) {
+				String knownNode = (String) resultObject.keySet().toArray()[0];
+				// String location = (String) resultObject.get(knownNode);
 
-				result = c.invoke(testServiceClass.getName(), "visualizeNodeSuccessModel", knownNode, true, true,
-						"measure_catalog-mysql.xml");
-				assertTrue(result instanceof String);
-				System.out.println("Visualizing Node Success Model Result:\n" + result);
+				System.out.println("Calling Node Success Model with node " + knownNode);
+				String params = "{\"nodeName\":\"" + knownNode + "\"," + "\"updateMeasures\":\"true\","
+						+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
+				ClientResponse result2 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/nodeSuccessModel",
+						params, "application/json", "application/json", new HashMap<String, String>());
+				assertTrue(result2.getHttpCode() == 200);
+				System.out.println("Visualizing Node Success Model Result:\n" + result2.getResponse());
 			} else
 				System.out.println("No monitored nodes, no node success model visualization possible!");
 
-			result = c.invoke(testServiceClass.getName(), "visualizeServiceSuccessModel", "Chat Service Success Model",
-					true, true, "measure_catalog-mysql.xml");
-			assertTrue(result instanceof String);
-			System.out.println("Visualizing Chat Service Success Model Result:\n" + result);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Exception: " + e);
-		}
-
-		try {
-
-			// Logout
-			c.disconnect();
+			String params = "{\"modelName\":\"Chat Service Success Model\"," + "\"updateMeasures\":\"true\","
+					+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
+			ClientResponse result3 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/serviceSuccessModel",
+					params, "application/json", "application/json", new HashMap<String, String>());
+			assertTrue(result3.getHttpCode() == 200);
+			System.out.println("Visualizing Chat Service Success Model Result:\n" + result3.getResponse());
 
 		} catch (Exception e) {
 			e.printStackTrace();
