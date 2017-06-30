@@ -123,6 +123,8 @@
 		<!-- JUnit Testing -->
 		<target name="junit" depends="compile_junit" description="--> execute all junit tests">
 			<mkdir dir="${export.test_reports}" />
+			<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" classpathref="libraries"/>
+			<jacoco:coverage destfile="${export}/jacoco.exec" xmlns:jacoco="antlib:org.jacoco.ant">
 			<junit fork="yes" haltonerror="yes" haltonfailure="yes" printsummary="yes">
 				<classpath>
 					<pathelement path="${tmp.classes}" />
@@ -138,6 +140,24 @@
 					</fileset>
 				</batchtest>
 			</junit>
+			</jacoco:coverage>
+			<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"  classpathref="libraries"/>
+			<jacoco:report xmlns:jacoco="antlib:org.jacoco.ant">
+				<executiondata>
+					<file file="${export}/jacoco.exec" />
+				</executiondata>
+   	 
+				<structure name="jacoco">
+					<classfiles>
+						<fileset dir="${tmp.classes}" />
+					</classfiles>
+					<sourcefiles encoding="UTF-8">
+						<fileset dir="${src.main}" />
+					</sourcefiles>
+				</structure>
+
+				<xml destfile="${export}/coverage.xml" />
+			</jacoco:report>
 			<delete dir="${tmp.junit}" />
 		</target>
 
