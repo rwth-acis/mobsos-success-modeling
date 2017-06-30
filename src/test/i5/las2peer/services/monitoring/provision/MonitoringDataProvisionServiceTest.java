@@ -1,8 +1,5 @@
 package i5.las2peer.services.monitoring.provision;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -11,6 +8,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -98,7 +96,7 @@ public class MonitoringDataProvisionServiceTest {
 	}
 
 	@Test
-	public void getNames() {
+	public void testGetNames() {
 
 		try {
 			// Login
@@ -106,14 +104,14 @@ public class MonitoringDataProvisionServiceTest {
 					"mobsos-success-modeling/measures?catalog=measure_catalog/measure_catalog-mysql.xml&update=true",
 					"", "*/*", "application/json", new HashMap<String, String>());
 
-			assertTrue(result.getHttpCode() == 200);
+			Assert.assertTrue(result.getHttpCode() == 200);
 			JSONParser parser = new JSONParser();
 			JSONArray resultObject = (JSONArray) parser.parse(result.getResponse());
 			for (Object measureName : resultObject)
 				System.out.println("Result of asking for all measures: " + (String) measureName);
 			ClientResponse result2 = c1.sendRequest("GET", "mobsos-success-modeling/nodes", "", "*/*",
 					"application/json", new HashMap<String, String>());
-			assertTrue(result2.getHttpCode() == 200);
+			Assert.assertTrue(result2.getHttpCode() == 200);
 			JSONObject resultObject2 = (JSONObject) parser.parse(result2.getResponse());
 
 			for (Object node : resultObject2.keySet())
@@ -121,7 +119,7 @@ public class MonitoringDataProvisionServiceTest {
 
 			ClientResponse result3 = c1.sendRequest("GET", "mobsos-success-modeling/services", "", "*/*",
 					"application/json", new HashMap<String, String>());
-			assertTrue(result3.getHttpCode() == 200);
+			Assert.assertTrue(result3.getHttpCode() == 200);
 			JSONArray resultObject3 = (JSONArray) parser.parse(result3.getResponse());
 			for (Object service : resultObject3)
 				System.out.println("Result of asking for all monitored service names: " + (String) service);
@@ -134,7 +132,7 @@ public class MonitoringDataProvisionServiceTest {
 								+ "&update=true&catalog=measure_catalog/measure_catalog-mysql.xml",
 						"", "*/*", "application/json", new HashMap<String, String>());
 
-				assertTrue(result4.getHttpCode() == 200);
+				Assert.assertTrue(result4.getHttpCode() == 200);
 				JSONArray resultObject4 = (JSONArray) parser.parse(result4.getResponse());
 				for (Object service : resultObject4)
 					System.out.println("Result of asking for all models: " + (String) service);
@@ -142,16 +140,16 @@ public class MonitoringDataProvisionServiceTest {
 				System.out.println("Result of asking for all monitored service names: none!");
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail("Exception: " + e);
+			Assert.fail("Exception: " + e);
 		}
 	}
 
 	@Test
-	public void getMeasuresAndModels() {
+	public void testGetMeasuresAndModels() {
 		try {
 			ClientResponse result = c1.sendRequest("GET", "mobsos-success-modeling/nodes", "", "*/*",
 					"application/json", new HashMap<String, String>());
-			assertTrue(result.getHttpCode() == 200);
+			Assert.assertTrue(result.getHttpCode() == 200);
 			JSONParser parser = new JSONParser();
 			JSONObject resultObject = (JSONObject) parser.parse(result.getResponse());
 			if (resultObject.size() != 0) {
@@ -163,7 +161,7 @@ public class MonitoringDataProvisionServiceTest {
 						+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
 				ClientResponse result2 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/nodeSuccessModel",
 						params, "application/json", "application/json", new HashMap<String, String>());
-				assertTrue(result2.getHttpCode() == 200);
+				Assert.assertTrue(result2.getHttpCode() == 200);
 				System.out.println("Visualizing Node Success Model Result:\n" + result2.getResponse());
 			} else
 				System.out.println("No monitored nodes, no node success model visualization possible!");
@@ -172,12 +170,12 @@ public class MonitoringDataProvisionServiceTest {
 					+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
 			ClientResponse result3 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/serviceSuccessModel",
 					params, "application/json", "application/json", new HashMap<String, String>());
-			assertTrue(result3.getHttpCode() == 200);
+			Assert.assertTrue(result3.getHttpCode() == 200);
 			System.out.println("Visualizing Chat Service Success Model Result:\n" + result3.getResponse());
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail("Exception: " + e);
+			Assert.fail("Exception: " + e);
 		}
 	}
 
