@@ -27,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -137,6 +138,90 @@ public class MonitoringDataProvisionService extends RESTService {
 			System.out.println("Monitoring: Could not connect to database!");
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 *
+	 * This method will read the content of the success model folder and generate a {@link SuccessModel} for each file.
+	 *
+	 * @return a map with the {@link SuccessModel}s
+	 *
+	 * @throws MalformedXMLException
+	 * @throws XMLSyntaxException
+	 * @throws IOException if there exists a problem with the file handling
+	 *
+	 */
+	private Map<String, SuccessModel> updateModels(String measureCatalog) throws IOException {
+		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
+		if (useFileService) {
+			ArrayList<String> sModels = getSuccessModels();
+			for (String sm : sModels) {
+				System.out.println("Model: " + sm);
+				String smc = getFile(sm);
+				try {
+					System.out.println(smc);
+					SuccessModel successModel;
+					try {
+						successModel = readSuccessModelFile(new File(""), smc, measureCatalog);
+						models.put(successModel.getName(), successModel);
+					} catch (MalformedXMLException e) {
+						System.out.println("Error reading Success Model: " + e);
+					} catch (IOException e) {
+						System.out.println("Error reading Success Model: " + e);
+					}
+				} catch (Exception x) {
+					x.printStackTrace();
+				}
+			}
+		} else {
+			File sucessModelsFolder = new File(successModelsFolderLocation);
+			if (!sucessModelsFolder.isDirectory())
+				throw new IOException("The given path for the success model folder is not a directory!");
+			for (File file : sucessModelsFolder.listFiles()) {
+				if (file.getName().endsWith(".xml")) {
+					SuccessModel successModel;
+					try {
+						successModel = readSuccessModelFile(file, "", measureCatalog);
+						models.put(successModel.getName(), successModel);
+					} catch (MalformedXMLException e) {
+						System.out.println("Error reading Success Model " + file.getName() + ": " + e);
+					} catch (IOException e) {
+						System.out.println("Error reading Success Model: " + e);
+					}
+				}
+			}
+		}
+		return models;
+	}
+
+	public ArrayList<String> getSuccessModels() {
+		try {
+			// RMI call
+
+			Object result = this.invokeServiceMethod(
+					"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "getFileIndex",
+					new Serializable[] {});
+			if (result != null) {
+				@SuppressWarnings("unchecked")
+				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
+				// Filter results
+				ArrayList<String> resultList = new ArrayList<String>();
+				for (Map<String, Object> k : response) {
+					if (((String) k.get("identifier")).contains(successModelsFolderLocation)) {
+						resultList.add((String) k.get("identifier"));
+					}
+				}
+				return resultList;
+
+			} else {
+				System.out.println("Fehler");
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+		}
+		return new ArrayList<String>();
 	}
 
 	/**
@@ -368,58 +453,6 @@ public class MonitoringDataProvisionService extends RESTService {
 	}
 
 	/**
-	 *
-	 * This method will read the content of the success model folder and generate a {@link SuccessModel} for each file.
-	 *
-	 * @return a map with the {@link SuccessModel}s
-	 *
-	 * @throws MalformedXMLException
-	 * @throws XMLSyntaxException
-	 * @throws IOException if there exists a problem with the file handling
-	 *
-	 */
-	private Map<String, SuccessModel> updateModels(String measureCatalog) throws IOException {
-		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
-		if (useFileService) {
-			ArrayList<String> sModels = getSuccessModels();
-			for (String sm : sModels) {
-				System.out.println("Model: " + sm);
-				String smc = getFile(sm);
-				try {
-					System.out.println(smc);
-					SuccessModel successModel;
-					try {
-						successModel = readSuccessModelFile(new File(""), smc, measureCatalog);
-						models.put(successModel.getName(), successModel);
-					} catch (MalformedXMLException e) {
-						System.out.println("Error reading Success Model: " + e);
-					} catch (IOException e) {
-						System.out.println("Error reading Success Model: " + e);
-					}
-				} catch (Exception x) {
-					x.printStackTrace();
-				}
-			}
-		} else {
-			File sucessModelsFolder = new File(successModelsFolderLocation);
-			if (!sucessModelsFolder.isDirectory())
-				throw new IOException("The given path for the success model folder is not a directory!");
-			for (File file : sucessModelsFolder.listFiles()) {
-				SuccessModel successModel;
-				try {
-					successModel = readSuccessModelFile(file, "", measureCatalog);
-					models.put(successModel.getName(), successModel);
-				} catch (MalformedXMLException e) {
-					System.out.println("Error reading Success Model " + file.getName() + ": " + e);
-				} catch (IOException e) {
-					System.out.println("Error reading Success Model: " + e);
-				}
-			}
-		}
-		return models;
-	}
-
-	/**
 	 * 
 	 * Reads a success model file.
 	 * 
@@ -576,45 +609,6 @@ public class MonitoringDataProvisionService extends RESTService {
 		return measure;
 	}
 
-	public String getMeasureCatalogs() {
-		try {
-			// RMI call
-
-			ArrayList<String> resultList = new ArrayList<String>();
-			if (useFileService) {
-				Object result = this.invokeServiceMethod(
-						"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "getFileIndex",
-						new Serializable[] {});
-				if (result != null) {
-					@SuppressWarnings("unchecked")
-					ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
-					// Filter results
-					for (Map<String, Object> k : response) {
-						if (((String) k.get("identifier")).contains(catalogFileLocation)) {
-							resultList.add((String) k.get("identifier"));
-						}
-					}
-					return resultList.toString();
-
-				} else {
-					System.out.println("Fehler");
-				}
-			} else {
-				List<File> filesInFolder = Files.walk(Paths.get(catalogFileLocation)).filter(Files::isRegularFile)
-						.map(java.nio.file.Path::toFile).collect(Collectors.toList());
-				for (File f : filesInFolder) {
-					resultList.add(f.getName());
-				}
-				return resultList.toString();
-			}
-		} catch (Exception e) {
-			// one may want to handle some exceptions differently
-			e.printStackTrace();
-			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
-		}
-		return "[]";
-	}
-
 	public ArrayList<String> getMeasureCatalogList() {
 		try {
 			// RMI call
@@ -629,36 +623,6 @@ public class MonitoringDataProvisionService extends RESTService {
 				ArrayList<String> resultList = new ArrayList<String>();
 				for (Map<String, Object> k : response) {
 					if (((String) k.get("identifier")).contains(catalogFileLocation)) {
-						resultList.add((String) k.get("identifier"));
-					}
-				}
-				return resultList;
-
-			} else {
-				System.out.println("Fehler");
-			}
-		} catch (Exception e) {
-			// one may want to handle some exceptions differently
-			e.printStackTrace();
-			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
-		}
-		return new ArrayList<String>();
-	}
-
-	public ArrayList<String> getSuccessModels() {
-		try {
-			// RMI call
-
-			Object result = this.invokeServiceMethod(
-					"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "getFileIndex",
-					new Serializable[] {});
-			if (result != null) {
-				@SuppressWarnings("unchecked")
-				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
-				// Filter results
-				ArrayList<String> resultList = new ArrayList<String>();
-				for (Map<String, Object> k : response) {
-					if (((String) k.get("identifier")).contains(successModelsFolderLocation)) {
 						resultList.add((String) k.get("identifier"));
 					}
 				}
@@ -771,7 +735,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		 */
 		@POST
 		@Consumes(MediaType.APPLICATION_JSON)
-		@Produces(MediaType.APPLICATION_JSON)
+		@Produces(MediaType.TEXT_HTML)
 		@Path("/visualize/nodeSuccessModel")
 		public Response visualizeNodeSuccessModel(String content) {
 			try {
@@ -801,7 +765,10 @@ public class MonitoringDataProvisionService extends RESTService {
 									.collect(Collectors.toList());
 							for (File f : filesInFolder) {
 								try {
-									service.updateMeasures(f, catalog);
+									System.out.println(f.getName());
+									if (f.getName().endsWith(".xml")) {
+										service.updateMeasures(f, catalog);
+									}
 								} catch (MalformedXMLException e) {
 									System.out.println("Measure Catalog seems broken: " + e.getMessage());
 								} catch (IOException e) {
@@ -844,7 +811,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		 */
 		@POST
 		@Consumes(MediaType.APPLICATION_JSON)
-		@Produces(MediaType.APPLICATION_JSON)
+		@Produces(MediaType.TEXT_HTML)
 		@Path("/visualize/serviceSuccessModel")
 		public Response visualizeServiceSuccessModel(String content) {
 			try {
@@ -874,7 +841,9 @@ public class MonitoringDataProvisionService extends RESTService {
 									.collect(Collectors.toList());
 							for (File f : filesInFolder) {
 								try {
-									service.updateMeasures(f, catalog);
+									if (f.getName().endsWith(".xml")) {
+										service.updateMeasures(f, catalog);
+									}
 								} catch (MalformedXMLException e) {
 									System.out.println("Measure Catalog seems broken: " + e.getMessage());
 									System.out.println("Measure Catalog seems broken: " + e.getMessage());
@@ -920,8 +889,9 @@ public class MonitoringDataProvisionService extends RESTService {
 							.filter(Files::isRegularFile).map(java.nio.file.Path::toFile).collect(Collectors.toList());
 					for (File f : filesInFolder) {
 						try {
-							System.out.println(f);
-							service.measureCatalogs.put(catalog, service.updateMeasures(f, catalog));
+							if (f.getName().endsWith(".xml")) {
+								service.measureCatalogs.put(catalog, service.updateMeasures(f, catalog));
+							}
 						} catch (MalformedXMLException e) {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
 						} catch (IOException e) {
@@ -1004,6 +974,48 @@ public class MonitoringDataProvisionService extends RESTService {
 				}
 			}
 			return Response.status(Status.OK).entity(modelNames.toArray(new String[0])).build();
+		}
+
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/measureCatalogs")
+		public Response getMeasureCatalogs() {
+			JSONObject catalogs = new JSONObject();
+			JSONArray resultList = new JSONArray();
+			try {
+				if (service.useFileService) {
+					Object result = service.invokeServiceMethod(
+							"i5.las2peer.services.fileService.FileService@" + service.fileServiceVersion,
+							"getFileIndex", new Serializable[] {});
+					if (result != null) {
+						@SuppressWarnings("unchecked")
+						ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
+						// Filter results
+						for (Map<String, Object> k : response) {
+							if (((String) k.get("identifier")).contains(service.catalogFileLocation)) {
+								resultList.add((String) k.get("identifier"));
+							}
+						}
+					} else {
+						System.out.println("Fehler");
+					}
+				} else {
+					List<File> filesInFolder = Files.walk(Paths.get(service.catalogFileLocation))
+							.filter(Files::isRegularFile).map(java.nio.file.Path::toFile).collect(Collectors.toList());
+					for (File f : filesInFolder) {
+						if (f.getName().endsWith(".xml")) {
+							resultList.add(f.getName());
+						}
+					}
+				}
+				catalogs.put("catalogs", (Object) resultList);
+				return Response.status(Status.OK).entity(catalogs.toJSONString()).build();
+			} catch (Exception e) {
+				// one may want to handle some exceptions differently
+				e.printStackTrace();
+				L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+			}
+			return Response.status(Status.OK).entity(catalogs.toJSONString()).build();
 		}
 
 	}

@@ -1,3 +1,3 @@
 agent-service_agent.xml;MDPSPass
 agent-frontend_agent.xml;PSFP
-i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService@0.1.xml;8WpmuJRTljobf9Hk3yaN
+i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService@1.0.xml;EC82wEkB3wiYcEUdkR7g

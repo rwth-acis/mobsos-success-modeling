@@ -3,7 +3,7 @@
 	
 	<property name="core.version" value="0.6.9" />
 
-	<property name="service.name" value="i5.las2peer.services.monitoring.provision" />
+	<property name="service.name" value="i5.las2peer.services.mobsos.successModeling" />
 		<property name="service.class" value="MonitoringDataProvisionService" />
 		<property name="service.version" value="1.0" />
 

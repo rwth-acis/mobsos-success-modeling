@@ -160,7 +160,7 @@ public class MonitoringDataProvisionServiceTest {
 				String params = "{\"nodeName\":\"" + knownNode + "\"," + "\"updateMeasures\":\"true\","
 						+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
 				ClientResponse result2 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/nodeSuccessModel",
-						params, "application/json", "application/json", new HashMap<String, String>());
+						params, "application/json", "text/html", new HashMap<String, String>());
 				Assert.assertTrue(result2.getHttpCode() == 200);
 				System.out.println("Visualizing Node Success Model Result:\n" + result2.getResponse());
 			} else
@@ -169,7 +169,7 @@ public class MonitoringDataProvisionServiceTest {
 			String params = "{\"modelName\":\"Chat Service Success Model\"," + "\"updateMeasures\":\"true\","
 					+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
 			ClientResponse result3 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/serviceSuccessModel",
-					params, "application/json", "application/json", new HashMap<String, String>());
+					params, "application/json", "text/html", new HashMap<String, String>());
 			Assert.assertTrue(result3.getHttpCode() == 200);
 			System.out.println("Visualizing Chat Service Success Model Result:\n" + result3.getResponse());
 
