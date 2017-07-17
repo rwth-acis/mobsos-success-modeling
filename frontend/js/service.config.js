@@ -1,4 +1,4 @@
 var config = {
-  catalogPath: 'monitoring/measureCatalogs/',
-  modelPath: 'monitoring/success_models/'
+  catalogPath: 'measure_catalogs/',
+  modelPath: 'success_models/'
 }

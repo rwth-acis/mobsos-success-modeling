@@ -51,14 +51,14 @@
 	
 	<measure name="Number of Service Registrations">
 		<query name="RegisteredServices">
-			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND REMARKS='ServiceAgent' AND SOURCE_NODE = '$NODE$'
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND JSON_EXTRACT(REMARKS,"$.msg")='ServiceAgent' AND SOURCE_NODE = '$NODE$'
 		</query>
 		<visualization type="Value"/>
 	</measure>
 	
 	<measure name="Number of User Registrations">
 		<query name="RegisteredUsers">
-			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='USerAgent' OR REMARKS='Mediator') AND SOURCE_NODE = '$NODE$'
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND (JSON_EXTRACT(REMARKS,"$.msg")='UserAgent' OR JSON_EXTRACT(REMARKS,"$.msg")='Mediator') AND SOURCE_NODE = '$NODE$'
 		</query>
 		<visualization type="Value"/>
 	</measure>
@@ -78,7 +78,7 @@
 	<measure name="Number of User Registrations over Time">
 		<query name="RegisteredUsers">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(EVENT) AS "Registrations" FROM MESSAGE
-			WHERE EVENT = 'AGENT_REGISTERED' AND (REMARKS='UserAgent' OR REMARKS='Mediator')
+			WHERE EVENT = 'AGENT_REGISTERED' AND (JSON_EXTRACT(REMARKS,"$.msg")='UserAgent' OR JSON_EXTRACT(REMARKS,"$.msg")='Mediator')
 			AND SOURCE_NODE = '$NODE$'
 			GROUP BY Time
 		</query>
@@ -179,8 +179,8 @@
 		<query name="UniqueAddedPrivateUsers">
 			SELECT COUNT(privateJoins.PrivateJoins) AS UniqueJoins FROM
 			    (SELECT joins.uniqueJoins AS PrivateJoins FROM MESSAGE,
-			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, REMARKS FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
-			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, REMARKS) joins)
+			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, JSON_EXTRACT(REMARKS,"$.msg") FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
 			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_3') privateJoins
 		</query>
 		<visualization type="KPI">
@@ -199,8 +199,8 @@
 		<query name="UniqueAddedPublicUsers">
 			SELECT COUNT(publicJoins.PublicJoins) AS UniqueJoins FROM
 			    (SELECT joins.uniqueJoins AS PublicJoins FROM MESSAGE,
-			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, REMARKS FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
-			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, REMARKS) joins)
+			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, JSON_EXTRACT(REMARKS,"$.msg") FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
 			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_4') publicJoins
 		</query>
 		<visualization type="KPI">

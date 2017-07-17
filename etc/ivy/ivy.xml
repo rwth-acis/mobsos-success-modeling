@@ -1,5 +1,5 @@
 <ivy-module version="2.0">
-    <info organisation="i5" module="las2peer-service"/>
+    <info organisation="i5" module="${ant.project.name}" />
     <configurations defaultconf="bundle">
         <conf name="bundle" description="Additional dependencies loaded dynamically"/>
         <conf name="platform" description="Jars needded for the las2peer platform" visibility="private"/>
@@ -9,9 +9,15 @@
 		<artifact type="jar" ext="jar" conf="*"/>
 	</publications>
     <dependencies>
-        <dependency org="i5" name="las2peer" rev="0.6.7" changing="true" conf="platform->*" />
-        <dependency org="i5" name="las2peer-http-connector" rev="0.6.7" changing="true" conf="platform->*" />
-		<dependency org="mysql" name="mysql-connector-java" rev="5.1.16" conf="bundle->default"/>
+        <dependency org="i5" name="las2peer" rev="${core.version}" changing="true" conf="platform->*">
+        	<exclude module="ant-optional"/>
+        </dependency>
+        <dependency org="i5" name="las2peer-web-connector" rev="${core.version}" changing="true" conf="platform->*" />
+        
+        <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.7.9" conf="bundle->default"/>
+        <dependency org="junit" name="junit" rev="4.12" conf="platform->*" />
+		<dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1" conf="bundle->default"/>
+		<dependency org="mysql" name="mysql-connector-java" rev="6.0.6" conf="bundle->default"/>
 		<dependency org="IBMJDBC" name="db2jcc" rev="0" conf="bundle->default"/>
 		<dependency org="IBMJDBC" name="db2jcc_Licence" rev="0" conf="bundle->default"/>
 		<dependency org="Javaluator" name="Javaluator" rev="1" conf="bundle->default"/>
