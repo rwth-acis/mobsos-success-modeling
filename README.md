@@ -1,6 +1,6 @@
 MobSOS Success-Modeling
 ===========================================
-[![Build Status](https://travis-ci.org/rwth-acis/mobsos-success-modeling.svg?branch=master)](https://travis-ci.org/rwth-acis/mobsos-success-modeling) [![codecov](https://codecov.io/gh/rwth-acis/mobsos-success-modeling/branch/master/graph/badge.svg)](https://codecov.io/gh/rwth-acis/mobsos-success-modeling)
+[![Build Status](https://travis-ci.org/rwth-acis/mobsos-success-modeling.svg?branch=master)](https://travis-ci.org/rwth-acis/mobsos-success-modeling) [![codecov](https://codecov.io/gh/rwth-acis/mobsos-success-modeling/branch/master/graph/badge.svg)](https://codecov.io/gh/rwth-acis/mobsos-success-modeling) [![Join the chat at https://gitter.im/rwth-acis/mobsos](https://badges.gitter.im/rwth-acis/mobsos.svg)](https://gitter.im/rwth-acis/mobsos?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This service is part of the MobSOS monitoring concept and provides visualization functionality of the monitored data to the web-frontend.
 
