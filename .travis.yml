@@ -4,8 +4,9 @@ jdk:
 services:
   - mysql
 script: "ant all"
-sudo: false
+sudo: required
 before_script:
+  - bash .travis.install-mysql-5.7.sh
   - mysql -u root -e 'CREATE DATABASE LAS2PEERMON;'
   - mysql -u root LAS2PEERMON < bin/db.sql
 after_success:
