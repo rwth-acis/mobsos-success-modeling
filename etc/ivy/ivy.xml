@@ -17,7 +17,7 @@
         <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.7.9" conf="bundle->default"/>
         <dependency org="junit" name="junit" rev="4.12" conf="platform->*" />
 		<dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1" conf="bundle->default"/>
-		<dependency org="mysql" name="mysql-connector-java" rev="5.1.16" conf="bundle->default"/>
+		<dependency org="mysql" name="mysql-connector-java" rev="6.0.6" conf="bundle->default"/>
 		<dependency org="IBMJDBC" name="db2jcc" rev="0" conf="bundle->default"/>
 		<dependency org="IBMJDBC" name="db2jcc_Licence" rev="0" conf="bundle->default"/>
 		<dependency org="Javaluator" name="Javaluator" rev="1" conf="bundle->default"/>
