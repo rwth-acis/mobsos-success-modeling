@@ -4,8 +4,7 @@
 * @author Peter de Lange (lange@dbis.rwth-aachen.de)
 */
 
-
-var psLibrary = new PS.ProvisionService();
+var psLibrary = new MobSOSSuccessModelingClient("http://localhost:8080/mobsos-success-modeling/");
 
 
 	//Left
@@ -22,12 +21,10 @@ var psLibrary = new PS.ProvisionService();
 /**
 * Logs in the anonymous user.
 */
+
 var login = function(){
-	psLibrary.login(function(){
-		get_nodes();
-		get_services();
-		get_Catalogs();
-	});
+	get_nodes();
+	get_Catalogs();
 };
 
 /**
@@ -36,16 +33,15 @@ var login = function(){
 var get_Catalogs = function(){
 	psLibrary.getCatalogs(function(result){
 		if(result != null){
-			result = result.replace(" ", "");
-			result = result.substring(1,result.length-1);
-			var catalogs = result.split(",");
+			var catalogs = result['catalogs'];
 			catalogSelectNode.options.length=0
 			for (var i = 0; i < catalogs.length; i++) {
 				var item = catalogs[i].replace(config.catalogPath,"");
-				console.log(item);
 				catalogSelectNode[i]=new Option(item);
 			}
 			$('.selectpicker').selectpicker('refresh');
+			console.log("catalogs loaded.");
+			get_services();
 		}
 	});
 };
@@ -56,12 +52,14 @@ var get_Catalogs = function(){
 var get_nodes = function(){
 	psLibrary.getNodes(function(result){
 		if(result != null){
-			if($.isArray(result)){ //Ensure no (Ajax Client) error message is processed
-				nodeSelectNode.options.length=0
-				for (var i = 0; i < result.length; i++) {
-					nodeSelectNode[i]=new Option(result[i]);
-				}
+			//nodeSelectNode.options.length=0;
+			var i=0;
+			for (key in result) {
+				nodeSelectNode[i]=new Option(key +"  "+ result[key],key);
+				i++;
 			}
+			$('.selectpicker').selectpicker('refresh');
+			console.log("nodes loaded.");
 		}
 	});
 };
@@ -78,6 +76,9 @@ var get_services = function(){
 					serviceSelectNode.options[i]=new Option(result[i]);
 				}
 			}
+			$('.selectpicker').selectpicker('refresh');
+			console.log("services loaded.");
+			get_success_models();
 		}
 	});
 };
@@ -94,7 +95,6 @@ var get_success_models = function(){
 	successModelSelectNode.options[0]  = new Option("Success model not found");
 	var serviceName = serviceSelectNode.options[serviceSelectNode.selectedIndex].text;
 	var catalogName = config.catalogPath + catalogSelectNode.options[catalogSelectNode.selectedIndex].text;
-	console.log(catalogName);
 	psLibrary.getSuccessModels(serviceName, catalogName, function(result){
 		console.log("sucModels: "+ result);
 		if(result != null){
@@ -106,6 +106,7 @@ var get_success_models = function(){
 			}
 		}
 		$('.selectpicker').selectpicker('refresh');
+		console.log("success models loaded.");
 	});
 	$('.selectpicker').selectpicker('refresh');
 };
@@ -114,7 +115,7 @@ var get_success_models = function(){
  * Visualizes a node success model and writes it to the output div.
  */
 var visualize_node_success_model = function(){
-	var nodeName = nodeSelectNode.options[nodeSelectNode.selectedIndex].text;
+	var nodeName = nodeSelectNode.options[nodeSelectNode.selectedIndex].value;
 	var catalogName = config.catalogPath + catalogSelectNode.options[catalogSelectNode.selectedIndex].text;
 	psLibrary.visualizeNodeSuccessModel(nodeName, catalogName, function(result){
 		if(result.substr(0, 16) != "Error! Message: "){ //Ensure no (Ajax Client) error message is processed
@@ -149,6 +150,3 @@ var visualize_service_success_model = function(){
 		}
 	});
 };
-
-//Login by default
-login();

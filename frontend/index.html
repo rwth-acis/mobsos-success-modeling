@@ -7,14 +7,15 @@
     <script type="text/javascript" src="js/storage.js"></script>
     <script type="text/javascript" src="js/lasAjaxClient.js"></script>
     <script type="text/javascript" src="js/provisionServiceLibrary.js"></script>
+    <script type="text/javascript" src="js/service.config.js"></script>
     <link href="https://netdna.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
     <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/css/bootstrap-select.min.css">
 
 
-     <link rel="import" href="bower_components/polymer/polymer.html">
-  <link rel="import" href="bower_components/las2peer-frontend-user-widget/las2peer-frontend-user-widget.html">
-  <link rel="import" href="bower_components/las2peer-file-upload-widget/las2peer-file-upload-widget.html">
+     <link rel="import" href="../bower_components/polymer/polymer.html">
+  <link rel="import" href="../bower_components/las2peer-frontend-user-widget/las2peer-frontend-user-widget.html">
+  <link rel="import" href="../bower_components/las2peer-file-upload-widget/las2peer-file-upload-widget.html">
 
   <style is="custom-style">
   #uploadToast {
@@ -126,7 +127,13 @@ var openDialog = function(){
   <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/js/bootstrap-select.min.js"></script>
+
+<script type="text/javascript" src="js/mobsos-success-modeling.js"></script>
+<script type="text/javascript" src="js/provisionService.js"></script>
+
 <script>
+
+
 	(function() {
       var po = document.createElement('script');
       po.type = 'text/javascript';
@@ -144,7 +151,9 @@ var openDialog = function(){
         // OpenID Connect user info
         console.log(oidc_userinfo);
         showUserInformation();
-        updateFileUpload();
+        if(config.useFileService){
+          updateFileUpload();
+        }
 		//alert(oidc_userinfo.name);
        
       } else {
@@ -152,10 +161,10 @@ var openDialog = function(){
     	// OpenID Connect user info
           console.log(oidc_userinfo);
       }
+      //Login by default
+      login();
     }
 
 </script>
-<script type="text/javascript" src="js/service.config.js"></script>
-<script type="text/javascript" src="js/provisionService.js"></script>
 </body>
 </html>
