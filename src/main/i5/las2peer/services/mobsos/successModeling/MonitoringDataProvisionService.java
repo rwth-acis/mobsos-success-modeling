@@ -36,11 +36,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import i5.las2peer.api.Context;
+import i5.las2peer.api.ManualDeployment;
+import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.logging.L2pLogger;
-import i5.las2peer.logging.NodeObserver.Event;
-import i5.las2peer.persistency.MalformedXMLException;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
+import i5.las2peer.serialization.MalformedXMLException;
+import i5.las2peer.serialization.XmlTools;
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabaseType;
 import i5.las2peer.services.mobsos.successModeling.successModel.Factor;
@@ -52,7 +54,6 @@ import i5.las2peer.services.mobsos.successModeling.visualizations.Chart.ChartTyp
 import i5.las2peer.services.mobsos.successModeling.visualizations.KPI;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Value;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
-import i5.las2peer.tools.XmlTools;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.Contact;
 import io.swagger.annotations.Info;
@@ -68,6 +69,7 @@ import io.swagger.annotations.SwaggerDefinition;
  *
  */
 @ServicePath("mobsos-success-modeling")
+@ManualDeployment
 public class MonitoringDataProvisionService extends RESTService {
 
 	public final String NODE_QUERY;
@@ -198,9 +200,8 @@ public class MonitoringDataProvisionService extends RESTService {
 		try {
 			// RMI call
 
-			Object result = this.invokeServiceMethod(
-					"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "getFileIndex",
-					new Serializable[] {});
+			Object result = Context.get().invoke("i5.las2peer.services.fileService.FileService@" + fileServiceVersion,
+					"getFileIndex", new Serializable[] {});
 			if (result != null) {
 				@SuppressWarnings("unchecked")
 				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
@@ -219,7 +220,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		} catch (Exception e) {
 			// one may want to handle some exceptions differently
 			e.printStackTrace();
-			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
 		return new ArrayList<String>();
 	}
@@ -613,9 +614,8 @@ public class MonitoringDataProvisionService extends RESTService {
 		try {
 			// RMI call
 
-			Object result = this.invokeServiceMethod(
-					"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "getFileIndex",
-					new Serializable[] {});
+			Object result = Context.get().invoke("i5.las2peer.services.fileService.FileService@" + fileServiceVersion,
+					"getFileIndex", new Serializable[] {});
 			if (result != null) {
 				@SuppressWarnings("unchecked")
 				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
@@ -634,7 +634,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		} catch (Exception e) {
 			// one may want to handle some exceptions differently
 			e.printStackTrace();
-			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
 		return new ArrayList<String>();
 	}
@@ -643,9 +643,8 @@ public class MonitoringDataProvisionService extends RESTService {
 		try {
 			// RMI call
 
-			Object result = this.invokeServiceMethod(
-					"i5.las2peer.services.fileService.FileService@" + fileServiceVersion, "fetchFile",
-					new Serializable[] { file });
+			Object result = Context.get().invoke("i5.las2peer.services.fileService.FileService@" + fileServiceVersion,
+					"fetchFile", new Serializable[] { file });
 			if (result != null) {
 				@SuppressWarnings("unchecked")
 				Map<String, Object> response = (Map<String, Object>) result;
@@ -657,7 +656,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		} catch (Exception e) {
 			// one may want to handle some exceptions differently
 			e.printStackTrace();
-			L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
 		return "";
 	}
@@ -984,7 +983,7 @@ public class MonitoringDataProvisionService extends RESTService {
 			JSONArray resultList = new JSONArray();
 			try {
 				if (service.useFileService) {
-					Object result = service.invokeServiceMethod(
+					Object result = Context.get().invoke(
 							"i5.las2peer.services.fileService.FileService@" + service.fileServiceVersion,
 							"getFileIndex", new Serializable[] {});
 					if (result != null) {
@@ -1013,7 +1012,7 @@ public class MonitoringDataProvisionService extends RESTService {
 			} catch (Exception e) {
 				// one may want to handle some exceptions differently
 				e.printStackTrace();
-				L2pLogger.logEvent(this, Event.SERVICE_ERROR, e.toString());
+				L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 			}
 			return Response.status(Status.OK).entity(catalogs.toJSONString()).build();
 		}

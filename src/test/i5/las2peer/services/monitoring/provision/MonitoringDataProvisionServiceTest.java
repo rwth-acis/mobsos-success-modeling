@@ -12,15 +12,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import i5.las2peer.p2p.LocalNode;
-import i5.las2peer.p2p.ServiceNameVersion;
-import i5.las2peer.security.ServiceAgent;
-import i5.las2peer.security.UserAgent;
+import i5.las2peer.api.p2p.ServiceNameVersion;
+import i5.las2peer.connectors.webConnector.WebConnector;
+import i5.las2peer.connectors.webConnector.client.ClientResponse;
+import i5.las2peer.connectors.webConnector.client.MiniClient;
+import i5.las2peer.p2p.PastryNodeImpl;
+import i5.las2peer.security.ServiceAgentImpl;
+import i5.las2peer.security.UserAgentImpl;
 import i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService;
 import i5.las2peer.testing.MockAgentFactory;
-import i5.las2peer.webConnector.WebConnector;
-import i5.las2peer.webConnector.client.ClientResponse;
-import i5.las2peer.webConnector.client.MiniClient;
+import i5.las2peer.testing.TestSuite;
 
 /**
  * 
@@ -35,10 +36,10 @@ public class MonitoringDataProvisionServiceTest {
 	private static final String HTTP_ADDRESS = "http://127.0.0.1";
 	private static final int HTTP_PORT = WebConnector.DEFAULT_HTTP_PORT;
 
-	private LocalNode node;
+	private PastryNodeImpl node;
 	private static WebConnector connector;
 	private static MiniClient c1;
-	private static UserAgent user1;
+	private static UserAgentImpl user1;
 	private ByteArrayOutputStream logStream;
 
 	private static final String adamsPass = "adamspass";
@@ -48,16 +49,14 @@ public class MonitoringDataProvisionServiceTest {
 	@Before
 	public void startServer() throws Exception {
 		// start Node
-		node = LocalNode.newNode();
+		node = TestSuite.launchNetwork(1).get(0);
 
 		user1 = MockAgentFactory.getAdam();
-		user1.unlockPrivateKey(adamsPass);
+		user1.unlock(adamsPass);
 		node.storeAgent(user1);
 
-		node.launch();
-
-		ServiceAgent testService = ServiceAgent.createServiceAgent(testServiceClass, "a pass");
-		testService.unlockPrivateKey("a pass");
+		ServiceAgentImpl testService = ServiceAgentImpl.createServiceAgent(testServiceClass, "a pass");
+		testService.unlock("a pass");
 
 		node.registerReceiver(testService);
 
@@ -69,8 +68,8 @@ public class MonitoringDataProvisionServiceTest {
 		Thread.sleep(1000); // wait a second for the connector to become ready
 
 		c1 = new MiniClient();
-		c1.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
-		c1.setLogin(Long.toString(user1.getId()), "adamspass");
+		c1.setConnectorEndpoint(connector.getHttpEndpoint());
+		c1.setLogin(user1.getIdentifier(), "adamspass");
 	}
 
 	@After
@@ -84,8 +83,6 @@ public class MonitoringDataProvisionServiceTest {
 
 		connector = null;
 		node = null;
-
-		LocalNode.reset();
 
 		System.out.println("Connector-Log:");
 		System.out.println("--------------");

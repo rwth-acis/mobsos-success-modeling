@@ -9,10 +9,9 @@
 		<artifact type="jar" ext="jar" conf="*"/>
 	</publications>
     <dependencies>
-        <dependency org="i5" name="las2peer" rev="${core.version}" changing="true" conf="platform->*">
+        <dependency org="i5" name="las2peer-bundle" rev="${core.version}" changing="true" conf="platform->*">
         	<exclude module="ant-optional"/>
         </dependency>
-        <dependency org="i5" name="las2peer-web-connector" rev="${core.version}" changing="true" conf="platform->*" />
         
         <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.7.9" conf="bundle->default"/>
         <dependency org="junit" name="junit" rev="4.12" conf="platform->*" />
