@@ -38,7 +38,6 @@ import org.w3c.dom.NodeList;
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.api.logging.MonitoringEvent;
-import i5.las2peer.logging.L2pLogger;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.serialization.MalformedXMLException;
@@ -219,7 +218,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		} catch (Exception e) {
 			// one may want to handle some exceptions differently
 			e.printStackTrace();
-			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
 		return new ArrayList<>();
 	}
@@ -643,7 +642,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		} catch (Exception e) {
 			// one may want to handle some exceptions differently
 			e.printStackTrace();
-			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
 		return new ArrayList<>();
 	}
@@ -665,7 +664,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		} catch (Exception e) {
 			// one may want to handle some exceptions differently
 			e.printStackTrace();
-			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
 		return "";
 	}
@@ -1027,7 +1026,7 @@ public class MonitoringDataProvisionService extends RESTService {
 			} catch (Exception e) {
 				// one may want to handle some exceptions differently
 				e.printStackTrace();
-				L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+				Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 			}
 			return Response.status(Status.OK).entity(catalogs.toJSONString()).build();
 		}
