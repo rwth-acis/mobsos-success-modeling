@@ -33,7 +33,6 @@ import i5.las2peer.testing.TestSuite;
  */
 public class MonitoringDataProvisionServiceTest {
 
-	private static final String HTTP_ADDRESS = "http://127.0.0.1";
 	private static final int HTTP_PORT = WebConnector.DEFAULT_HTTP_PORT;
 
 	private PastryNodeImpl node;

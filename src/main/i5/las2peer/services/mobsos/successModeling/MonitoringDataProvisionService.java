@@ -91,8 +91,8 @@ public class MonitoringDataProvisionService extends RESTService {
 	private String DB2Schema;
 
 	private SQLDatabase database; // The database instance to write to.
-	private TreeMap<String, Map<String, Measure>> measureCatalogs = new TreeMap<String, Map<String, Measure>>();
-	private Map<String, SuccessModel> knownModels = new TreeMap<String, SuccessModel>();
+	private TreeMap<String, Map<String, Measure>> measureCatalogs = new TreeMap<>();
+	private Map<String, SuccessModel> knownModels = new TreeMap<>();
 
 	private String fileServiceVersion = "1.1";
 
@@ -148,13 +148,11 @@ public class MonitoringDataProvisionService extends RESTService {
 	 *
 	 * @return a map with the {@link SuccessModel}s
 	 *
-	 * @throws MalformedXMLException
-	 * @throws XMLSyntaxException
 	 * @throws IOException if there exists a problem with the file handling
 	 *
 	 */
 	private Map<String, SuccessModel> updateModels(String measureCatalog) throws IOException {
-		Map<String, SuccessModel> models = new TreeMap<String, SuccessModel>();
+		Map<String, SuccessModel> models = new TreeMap<>();
 		if (useFileService) {
 			ArrayList<String> sModels = getSuccessModels();
 			for (String sm : sModels) {
@@ -177,8 +175,9 @@ public class MonitoringDataProvisionService extends RESTService {
 			}
 		} else {
 			File sucessModelsFolder = new File(successModelsFolderLocation);
-			if (!sucessModelsFolder.isDirectory())
+			if (!sucessModelsFolder.isDirectory()) {
 				throw new IOException("The given path for the success model folder is not a directory!");
+			}
 			for (File file : sucessModelsFolder.listFiles()) {
 				if (file.getName().endsWith(".xml")) {
 					SuccessModel successModel;
@@ -206,7 +205,7 @@ public class MonitoringDataProvisionService extends RESTService {
 				@SuppressWarnings("unchecked")
 				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
 				// Filter results
-				ArrayList<String> resultList = new ArrayList<String>();
+				ArrayList<String> resultList = new ArrayList<>();
 				for (Map<String, Object> k : response) {
 					if (((String) k.get("identifier")).contains(successModelsFolderLocation)) {
 						resultList.add((String) k.get("identifier"));
@@ -222,7 +221,7 @@ public class MonitoringDataProvisionService extends RESTService {
 			e.printStackTrace();
 			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
-		return new ArrayList<String>();
+		return new ArrayList<>();
 	}
 
 	/**
@@ -248,8 +247,9 @@ public class MonitoringDataProvisionService extends RESTService {
 			}
 		}
 		model = knownModels.get(modelName);
-		if (model == null)
+		if (model == null) {
 			return "Success Model not known!";
+		}
 		// Find the Service Agent
 		String serviceId = null;
 		if (model.getServiceName() != null) {
@@ -258,22 +258,24 @@ public class MonitoringDataProvisionService extends RESTService {
 				reconnect();
 				resultSet = database.query(SERVICE_QUERY);
 				while (resultSet.next()) {
-					if (resultSet.getString(2).equals(model.getServiceName()))
+					if (resultSet.getString(2).equals(model.getServiceName())) {
 						serviceId = resultSet.getString(1);
+					}
 				}
 			} catch (SQLException e) {
 				System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
 				return "Problems getting service agent!";
 			}
-			if (serviceId == null)
+			if (serviceId == null) {
 				return "Requested Service: " + model.getServiceName() + " is not monitored!";
+			}
 		} else if (nodeName == null) {
 			return "No node given!";
 		}
 		Dimension[] dimensions = Dimension.getDimensions();
 		String[] dimensionNames = Dimension.getDimensionNames();
-		List<Factor> factorsOfDimension = new ArrayList<Factor>();
-		List<Measure> measuresOfFactor = new ArrayList<Measure>();
+		List<Factor> factorsOfDimension = new ArrayList<>();
+		List<Measure> measuresOfFactor = new ArrayList<>();
 
 		String returnStatement = "<div id = '" + modelName + "'>\n";
 		for (int i = 0; i < dimensions.length; i++) {
@@ -311,14 +313,13 @@ public class MonitoringDataProvisionService extends RESTService {
 	 * @return a map with the measures
 	 *
 	 * @throws MalformedXMLException
-	 * @throws XMLSyntaxException
 	 * @throws IOException if the catalog file does not exist
 	 *
 	 */
 	private Map<String, Measure> updateMeasures(File catalog, String measureFile)
 			throws MalformedXMLException, IOException {
 
-		Map<String, Measure> measures = new TreeMap<String, Measure>();
+		Map<String, Measure> measures = new TreeMap<>();
 		Element root;
 		if (useFileService) {
 			String measureXML = getFile(measureFile);
@@ -336,14 +337,16 @@ public class MonitoringDataProvisionService extends RESTService {
 			if (children.item(measureNumber).getNodeType() == Node.ELEMENT_NODE) {
 				Element measureElement = (Element) children.item(measureNumber);
 
-				Map<String, String> queries = new HashMap<String, String>();
+				Map<String, String> queries = new HashMap<>();
 				Visualization visualization = null;
 
-				if (!measureElement.hasAttribute("name"))
+				if (!measureElement.hasAttribute("name")) {
 					throw new MalformedXMLException("Catalog contains a measure without a name!");
+				}
 				String measureName = measureElement.getAttribute("name");
-				if (measures.containsKey("measureName"))
+				if (measures.containsKey("measureName")) {
 					throw new MalformedXMLException("Catalog already contains a measure " + measureName + "!");
+				}
 				NodeList mChildren = measureElement.getChildNodes();
 				for (int measureChildCount = 0; measureChildCount < mChildren.getLength(); measureChildCount++) {
 					if (mChildren.item(measureChildCount).getNodeType() == Node.ELEMENT_NODE) {
@@ -362,9 +365,10 @@ public class MonitoringDataProvisionService extends RESTService {
 						}
 
 						else if (childType.equals("visualization")) {
-							if (visualization != null)
+							if (visualization != null) {
 								throw new MalformedXMLException(
 										"Measure " + measureName + " is broken, duplicate 'Visualization' entry!");
+							}
 							visualization = readVisualization(measureChild);
 						}
 
@@ -375,10 +379,12 @@ public class MonitoringDataProvisionService extends RESTService {
 					}
 				}
 
-				if (visualization == null)
+				if (visualization == null) {
 					throw new MalformedXMLException("Measure " + measureName + " is broken, no visualization element!");
-				if (queries.isEmpty())
+				}
+				if (queries.isEmpty()) {
 					throw new MalformedXMLException("Measure " + measureName + " is broken, no query element!");
+				}
 
 				measures.put(measureName, new Measure(measureName, queries, visualization));
 			}
@@ -394,15 +400,13 @@ public class MonitoringDataProvisionService extends RESTService {
 	 * @return a visualization object
 	 *
 	 * @throws MalformedXMLException
-	 * @throws XMLSyntaxException
-	 *
 	 */
 	private Visualization readVisualization(Element visualizationElement) throws MalformedXMLException {
 		String visualizationType = visualizationElement.getAttribute("type");
 		if (visualizationType.equals("Value")) {
 			return new Value();
 		} else if (visualizationType.equals("KPI")) {
-			Map<Integer, String> expression = new TreeMap<Integer, String>();
+			Map<Integer, String> expression = new TreeMap<>();
 			NodeList children = visualizationElement.getChildNodes();
 			for (int i = 0; i < children.getLength(); i++) {
 				if (children.item(i).getNodeType() == Node.ELEMENT_NODE) {
@@ -424,24 +428,30 @@ public class MonitoringDataProvisionService extends RESTService {
 					elements[j] = (Element) children.item(i);
 					j++;
 				}
-				if (j >= 5)
+				if (j >= 5) {
 					break;
+				}
 			}
 			type = elements[0].getFirstChild().getTextContent();
 			for (int i = 0; i < 4; ++i) {
 				parameters[i] = elements[i + 1].getFirstChild().getTextContent();
 			}
 
-			if (type.equals("BarChart"))
+			if (type.equals("BarChart")) {
 				chartType = ChartType.BarChart;
-			if (type.equals("LineChart"))
+			}
+			if (type.equals("LineChart")) {
 				chartType = ChartType.LineChart;
-			if (type.equals("PieChart"))
+			}
+			if (type.equals("PieChart")) {
 				chartType = ChartType.PieChart;
-			if (type.equals("RadarChart"))
+			}
+			if (type.equals("RadarChart")) {
 				chartType = ChartType.RadarChart;
-			if (type.equals("TimelineChart"))
+			}
+			if (type.equals("TimelineChart")) {
 				chartType = ChartType.TimelineChart;
+			}
 
 			try {
 				return new Chart(chartType, parameters);
@@ -461,9 +471,7 @@ public class MonitoringDataProvisionService extends RESTService {
 	 * 
 	 * @return a {@link SuccessModel}
 	 * @throws MalformedXMLException
-	 * @throws XMLSyntaxException
 	 * @throws IOException
-	 * 
 	 */
 	private SuccessModel readSuccessModelFile(File successModelFile, String successModelFileContent, String measureFile)
 			throws MalformedXMLException, IOException {
@@ -483,16 +491,19 @@ public class MonitoringDataProvisionService extends RESTService {
 		}
 		boolean nodeSuccessModel = false;
 		String modelName = root.getAttribute("name");
-		if (root.getNodeName().equals("NodeSuccessModel"))
+		if (root.getNodeName().equals("NodeSuccessModel")) {
 			nodeSuccessModel = true;
+		}
 
 		// If not a node success model, get the service name
 		String serviceName = null;
 		if (!nodeSuccessModel) {
-			if (!root.getNodeName().equals("SuccessModel"))
+			if (!root.getNodeName().equals("SuccessModel")) {
 				throw new MalformedXMLException(successModelFile.toString() + ": Success model expected!");
-			if (!root.hasAttribute("service"))
+			}
+			if (!root.hasAttribute("service")) {
 				throw new MalformedXMLException("Service attribute expected!");
+			}
 			serviceName = root.getAttribute("service");
 		}
 		NodeList children = root.getChildNodes();
@@ -502,36 +513,38 @@ public class MonitoringDataProvisionService extends RESTService {
 				elements.add((Element) children.item(dimensionNumber));
 			}
 		}
-		if (elements.size() != 6)
+		if (elements.size() != 6) {
 			throw new MalformedXMLException(successModelFile.toString() + ": Six dimensions expected!");
-		List<Factor> factors = new ArrayList<Factor>();
+		}
+		List<Factor> factors = new ArrayList<>();
 
 		for (Element dimensionElement : elements) {
 
 			String dimensionName = dimensionElement.getAttribute("name");
 			Dimension dimension;
-			if (dimensionName.equals("System Quality"))
+			if (dimensionName.equals("System Quality")) {
 				dimension = Dimension.SystemQuality;
-			else if (dimensionName.equals("Information Quality"))
+			} else if (dimensionName.equals("Information Quality")) {
 				dimension = Dimension.InformationQuality;
-			else if (dimensionName.equals("Use"))
+			} else if (dimensionName.equals("Use")) {
 				dimension = Dimension.Use;
-			else if (dimensionName.equals("User Satisfaction"))
+			} else if (dimensionName.equals("User Satisfaction")) {
 				dimension = Dimension.UserSatisfaction;
-			else if (dimensionName.equals("Individual Impact"))
+			} else if (dimensionName.equals("Individual Impact")) {
 				dimension = Dimension.IndividualImpact;
-			else if (dimensionName.equals("Community Impact"))
+			} else if (dimensionName.equals("Community Impact")) {
 				dimension = Dimension.CommunityImpact;
-			else
+			} else {
 				throw new MalformedXMLException(
 						successModelFile.toString() + ": Dimension " + dimensionName + " is unknown!");
+			}
 			NodeList dChildren = dimensionElement.getChildNodes();
 			for (int factorNumber = 0; factorNumber < dChildren.getLength(); factorNumber++) {
 				if (dChildren.item(factorNumber).getNodeType() == Node.ELEMENT_NODE) {
 					Element factorElement = (Element) dChildren.item(factorNumber);
 					String factorName = factorElement.getAttribute("name");
 
-					List<Measure> factorMeasures = new ArrayList<Measure>();
+					List<Measure> factorMeasures = new ArrayList<>();
 					NodeList fChildren = factorElement.getChildNodes();
 					for (int measureNumber = 0; measureNumber < fChildren.getLength(); measureNumber++) {
 						if (fChildren.item(measureNumber).getNodeType() == Node.ELEMENT_NODE) {
@@ -568,15 +581,13 @@ public class MonitoringDataProvisionService extends RESTService {
 	 *
 	 * Inserts the node id into the queries of a measure.
 	 *
-	 * @param query a query with placeholder
-	 * @param queryParameters the corresponding query parameters
-	 *
+	 * @param measure
+	 * @param nodeId
 	 * @return the measure with inserted nodeId
-	 *
 	 */
 	private Measure insertNode(Measure measure, String nodeId) {
 		Pattern pattern = Pattern.compile("\\$NODE\\$");
-		Map<String, String> insertedQueries = new HashMap<String, String>();
+		Map<String, String> insertedQueries = new HashMap<>();
 
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
@@ -591,15 +602,13 @@ public class MonitoringDataProvisionService extends RESTService {
 	 *
 	 * Inserts the service id into the queries of a measure.
 	 *
-	 * @param query a query with placeholder
-	 * @param queryParameters the corresponding query parameters
-	 *
+	 * @param measure
+	 * @param serviceId
 	 * @return the measure with inserted serviceId
-	 *
 	 */
 	private Measure insertService(Measure measure, String serviceId) {
 		Pattern pattern = Pattern.compile("\\$SERVICE\\$");
-		Map<String, String> insertedQueries = new HashMap<String, String>();
+		Map<String, String> insertedQueries = new HashMap<>();
 
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
@@ -620,7 +629,7 @@ public class MonitoringDataProvisionService extends RESTService {
 				@SuppressWarnings("unchecked")
 				ArrayList<Map<String, Object>> response = (ArrayList<Map<String, Object>>) result;
 				// Filter results
-				ArrayList<String> resultList = new ArrayList<String>();
+				ArrayList<String> resultList = new ArrayList<>();
 				for (Map<String, Object> k : response) {
 					if (((String) k.get("identifier")).contains(catalogFileLocation)) {
 						resultList.add((String) k.get("identifier"));
@@ -636,7 +645,7 @@ public class MonitoringDataProvisionService extends RESTService {
 			e.printStackTrace();
 			L2pLogger.logEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
-		return new ArrayList<String>();
+		return new ArrayList<>();
 	}
 
 	public String getFile(String file) {
@@ -745,7 +754,7 @@ public class MonitoringDataProvisionService extends RESTService {
 				boolean updateMeasures = Boolean.parseBoolean((String) params.get("updateMeasures"));
 				boolean updateModels = Boolean.parseBoolean((String) params.get("updateModels"));
 				String catalog = (String) params.get("catalog");
-				if (updateMeasures)
+				if (updateMeasures) {
 					if (service.useFileService) {
 						ArrayList<String> measureFiles = service.getMeasureCatalogList();
 						for (String s : measureFiles) {
@@ -778,12 +787,14 @@ public class MonitoringDataProvisionService extends RESTService {
 							System.out.println("Measure Catalog seems broken: " + e.getMessage());
 						}
 					}
-				if (updateModels)
+				}
+				if (updateModels) {
 					try {
 						service.knownModels = service.updateModels(catalog);
 					} catch (IOException e) {
 						System.out.println("Problems reading Success Models: " + e.getMessage());
 					}
+				}
 				return Response.status(Status.OK)
 						.entity(service.visualizeSuccessModel("Node Success Model", nodeName, catalog)).build();
 			} catch (ParseException e1) {
@@ -821,7 +832,7 @@ public class MonitoringDataProvisionService extends RESTService {
 				boolean updateMeasures = Boolean.parseBoolean((String) params.get("updateMeasures"));
 				boolean updateModels = Boolean.parseBoolean((String) params.get("updateModels"));
 				String catalog = (String) params.get("catalog");
-				if (updateMeasures)
+				if (updateMeasures) {
 					try {
 						if (service.useFileService) {
 							ArrayList<String> measureFiles = service.getMeasureCatalogList();
@@ -852,12 +863,14 @@ public class MonitoringDataProvisionService extends RESTService {
 					} catch (IOException e) {
 						System.out.println("Measure Catalog seems broken: " + e.getMessage());
 					}
-				if (updateModels)
+				}
+				if (updateModels) {
 					try {
 						service.knownModels = service.updateModels(catalog);
 					} catch (IOException e) {
 						System.out.println("Problems reading Success Models: " + e.getMessage());
 					}
+				}
 				return Response.status(Status.OK).entity(service.visualizeSuccessModel(modelName, null, catalog))
 						.build();
 			} catch (ParseException e1) {
@@ -882,7 +895,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		@Produces(MediaType.APPLICATION_JSON)
 		@Path("/measures")
 		public Response getMeasureNames(@QueryParam("catalog") String catalog, @QueryParam("update") boolean update) {
-			if (update)
+			if (update) {
 				try {
 					List<File> filesInFolder = Files.walk(Paths.get(service.catalogFileLocation))
 							.filter(Files::isRegularFile).map(java.nio.file.Path::toFile).collect(Collectors.toList());
@@ -900,6 +913,7 @@ public class MonitoringDataProvisionService extends RESTService {
 				} catch (IOException e) {
 					System.out.println("Measure Catalog seems broken: " + e.getMessage());
 				}
+			}
 			String[] returnArray = new String[service.measureCatalogs.get(catalog).size()];
 			int counter = 0;
 			for (String key : service.measureCatalogs.get(catalog).keySet()) {
@@ -920,7 +934,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		@Produces(MediaType.APPLICATION_JSON)
 		@Path("/services")
 		public Response getServices() {
-			List<String> monitoredServices = new ArrayList<String>();
+			List<String> monitoredServices = new ArrayList<>();
 
 			ResultSet resultSet;
 			try {
@@ -956,15 +970,16 @@ public class MonitoringDataProvisionService extends RESTService {
 		@Path("/models")
 		public Response getModels(@QueryParam("service") String serviceName, @QueryParam("update") boolean update,
 				@QueryParam("catalog") String catalog) {
-			if (update)
+			if (update) {
 				try {
 					service.knownModels = service.updateModels(catalog);
 				} catch (IOException e) {
 					System.out.println(e.getMessage());
 				}
+			}
 
 			Collection<SuccessModel> models = service.knownModels.values();
-			List<String> modelNames = new ArrayList<String>();
+			List<String> modelNames = new ArrayList<>();
 			Iterator<SuccessModel> iterator = models.iterator();
 			while (iterator.hasNext()) {
 				SuccessModel model = iterator.next();
@@ -992,7 +1007,7 @@ public class MonitoringDataProvisionService extends RESTService {
 						// Filter results
 						for (Map<String, Object> k : response) {
 							if (((String) k.get("identifier")).contains(service.catalogFileLocation)) {
-								resultList.add((String) k.get("identifier"));
+								resultList.add(k.get("identifier"));
 							}
 						}
 					} else {
@@ -1007,7 +1022,7 @@ public class MonitoringDataProvisionService extends RESTService {
 						}
 					}
 				}
-				catalogs.put("catalogs", (Object) resultList);
+				catalogs.put("catalogs", resultList);
 				return Response.status(Status.OK).entity(catalogs.toJSONString()).build();
 			} catch (Exception e) {
 				// one may want to handle some exceptions differently
