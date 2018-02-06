@@ -259,7 +259,7 @@ MobSOSSuccessModelingClient.prototype.sendRequestExt = function (ext_ep, method,
 		data: content,	
 		contentType: mtype,
 		crossDomain: true,
-		headers: {},
+		headers: {"oidc_provider":oidc_server},
 		error: function (xhr, errorType, error) {
 			//console.log("Error in sendRequestExt");	
 			//console.log(error);
@@ -306,7 +306,7 @@ MobSOSSuccessModelingClient.prototype.sendRequest = function(method, relativePat
 		data: content,
 		contentType: mtype,
 		crossDomain: true,
-		headers: {},
+		headers: {"oidc_provider":oidc_server},
 
 		error: function (xhr, errorType, error) {
 			console.log(error);
