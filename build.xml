@@ -1,6 +1,6 @@
 <project name="MonitoringDataProvisionService" default="jar" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
 
-	<property name="core.version" value="0.7-SNAPSHOT" />
+	<property name="core.version" value="0.7.2" />
 
 	<property name="service.name" value="i5.las2peer.services.mobsos.successModeling" />
 	<property name="service.class" value="MonitoringDataProvisionService" />
