@@ -250,22 +250,23 @@ public class MonitoringDataProvisionService extends RESTService {
 			return "Success Model not known!";
 		}
 		// Find the Service Agent
-		String serviceId = null;
+		ArrayList<String> serviceId = null;
 		if (model.getServiceName() != null) {
 			ResultSet resultSet;
 			try {
 				reconnect();
 				resultSet = database.query(SERVICE_QUERY);
+				serviceId = new ArrayList<String>();
 				while (resultSet.next()) {
 					if (resultSet.getString(2).equals(model.getServiceName())) {
-						serviceId = resultSet.getString(1);
+						serviceId.add(resultSet.getString(1));
 					}
 				}
 			} catch (SQLException e) {
 				System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
 				return "Problems getting service agent!";
 			}
-			if (serviceId == null) {
+			if (serviceId.isEmpty()) {
 				return "Requested Service: " + model.getServiceName() + " is not monitored!";
 			}
 		} else if (nodeName == null) {
@@ -605,14 +606,38 @@ public class MonitoringDataProvisionService extends RESTService {
 	 * @param serviceId
 	 * @return the measure with inserted serviceId
 	 */
-	private Measure insertService(Measure measure, String serviceId) {
-		Pattern pattern = Pattern.compile("\\$SERVICE\\$");
+	private Measure insertService(Measure measure, ArrayList<String> serviceId) {
+		String[] ps = new String[2];
+		ps[0] = "SOURCE";
+		ps[1] = "DESTINATION";
+		Pattern[] pattern = new Pattern[ps.length];
+		for (int i = 0; i < ps.length; i++) {
+			pattern[i] = Pattern.compile("\\$" + ps[i] + "_AGENT\\$");
+		}
+
+		pattern[1] = Pattern.compile("\\$DESTINATION_AGENT\\$");
 		Map<String, String> insertedQueries = new HashMap<>();
 
 		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
 		while (queries.hasNext()) {
 			Map.Entry<String, String> entry = queries.next();
-			insertedQueries.put(entry.getKey(), (pattern.matcher(entry.getValue()).replaceAll(serviceId)));
+			String[] r = new String[ps.length];
+			for (int i = 0; i < ps.length; i++) {
+				r[i] = "(";
+			}
+			for (String s : serviceId) {
+				for (int i = 0; i < ps.length; i++) {
+					r[i] += ps[i] + "_AGENT = '" + s + "' OR ";
+				}
+			}
+			for (int i = 0; i < ps.length; i++) {
+				r[i] = r[i].substring(0, r[i].length() - 3) + ")";
+			}
+			String toReplace = entry.getValue();
+			for (int i = 0; i < ps.length; i++) {
+				toReplace = pattern[i].matcher(toReplace).replaceAll(r[i]);
+			}
+			insertedQueries.put(entry.getKey(), toReplace);
 		}
 		measure.setInsertedQueries(insertedQueries);
 		return measure;

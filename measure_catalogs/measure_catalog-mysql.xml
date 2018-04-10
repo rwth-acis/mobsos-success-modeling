@@ -111,7 +111,7 @@
 	<measure name="Number of private Chatrooms over Time">
 		<query name="PrivateChatrooms">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Private Chatrooms' FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT = '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND $SOURCE_AGENT$
 			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
@@ -126,7 +126,7 @@
 	<measure name="Number of public Chatrooms over Time">
 		<query name="PublicChatrooms">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Public Chatrooms' FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND SOURCE_AGENT = '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND $SOURCE_AGENT$
 			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
@@ -142,7 +142,7 @@
 		<query name="SendMessages">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Send Messages' FROM MESSAGE
 			WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1')
-			AND SOURCE_AGENT = '$SERVICE$'
+			AND $SOURCE_AGENT$
 			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
@@ -158,7 +158,7 @@
 		<query name="ReceivedMessages">
 			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Received Messages' FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_7'
-			AND SOURCE_AGENT = '$SERVICE$'
+			AND $SOURCE_AGENT$
 			GROUP BY Time;
 		</query>
 		<visualization type="Chart">
@@ -174,13 +174,13 @@
 		<query name="StoredPrivateChatrooms">
 			SELECT COUNT(*) AS Number FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3'
-			AND SOURCE_AGENT = '$SERVICE$'
+			AND $SOURCE_AGENT$
 		</query>
 		<query name="UniqueAddedPrivateUsers">
 			SELECT COUNT(privateJoins.PrivateJoins) AS UniqueJoins FROM
 			    (SELECT joins.uniqueJoins AS PrivateJoins FROM MESSAGE,
 			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, JSON_EXTRACT(REMARKS,"$.msg") FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
-			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
+			        AND $SOURCE_AGENT$ GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
 			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_3') privateJoins
 		</query>
 		<visualization type="KPI">
@@ -194,13 +194,13 @@
 		<query name="StoredPublicChatrooms">
 			SELECT COUNT(*) AS Number FROM MESSAGE
 			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4'
-			AND SOURCE_AGENT = '$SERVICE$'
+			AND $SOURCE_AGENT$
 		</query>
 		<query name="UniqueAddedPublicUsers">
 			SELECT COUNT(publicJoins.PublicJoins) AS UniqueJoins FROM
 			    (SELECT joins.uniqueJoins AS PublicJoins FROM MESSAGE,
 			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, JSON_EXTRACT(REMARKS,"$.msg") FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
-			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
+			        AND $SOURCE_AGENT$ GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
 			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_4') publicJoins
 		</query>
 		<visualization type="KPI">
@@ -214,13 +214,13 @@
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND $SOURCE_AGENT$
 			GROUP BY DESTINATION_AGENT) allUsers
 		</query>
 		<query name="TotalMessages">
 			SELECT COUNT(*) FROM MESSAGE WHERE
 			EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2'
-			AND SOURCE_AGENT = '$SERVICE$'
+			AND $SOURCE_AGENT$
 		</query>
 		<visualization type="KPI">
 			<operand name="TotalMessages" index="0"/>
@@ -233,12 +233,12 @@
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND $SOURCE_AGENT$
 			GROUP BY DESTINATION_AGENT) allUsers
 		</query>
 		<query name="TotalMessages">
 			SELECT COUNT(*) FROM MESSAGE WHERE
-			EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = '$SERVICE$'
+			EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND $SOURCE_AGENT$
 		</query>
 		<visualization type="KPI">
 			<operand name="TotalMessages" index="0"/>
@@ -250,9 +250,9 @@
 	<measure name="Average Time to fetch Chatroom Information in Milliseconds">
 		<query name="AverageTime">
 			SELECT AVG(timeToFetch.difference) AS AverageTime FROM
-			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
+			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m, (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m2 WHERE
 			m.EVENT = 'SERVICE_CUSTOM_MESSAGE_5' AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_6'
-			AND m.REMARKS=m2.REMARKS AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$') timeToFetch
+			AND m.REMARKS=m2.REMARKS AND m.SOURCE_AGENT = m2.SOURCE_AGENT) timeToFetch
 		</query>
 		<visualization type="KPI">
 			<operand name="AverageTime" index="0"/>
@@ -262,10 +262,10 @@
 	<measure name="Average Time to send Message in Milliseconds">
 		<query name="AverageTime">
 			SELECT AVG(timeToSend.difference) AS AverageTime FROM
-			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
+			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m, (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m2 WHERE
 			(m.EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR m.EVENT = 'SERVICE_CUSTOM_MESSAGE_2')
 			AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_10' AND m.REMARKS=m2.REMARKS AND
-			m.SOURCE_AGENT = '$SERVICE$') timeToSend
+			m.SOURCE_AGENT = m2.SOURCE_AGENT) timeToSend
 		</query>
 		<visualization type="KPI">
 			<operand name="AverageTime" index="0"/>
@@ -276,11 +276,11 @@
 		<query name="AverageTime">
 			SELECT AVG(timeSpend.difference)/1000 AS AverageTime FROM
 				(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference
-				FROM MESSAGE m, MESSAGE m2
+				FROM (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m, (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m2
 				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
 				AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_9'
 				AND m.REMARKS = m2.REMARKS AND m.ID &lt; m2.ID
-				AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$'
+				AND m.SOURCE_AGENT = m2.SOURCE_AGENT
 				GROUP BY m.ID) timeSpend
 		</query>
 		<visualization type="KPI">
@@ -290,7 +290,7 @@
 	
 	<measure name="Total Number of Messages shared">
 		<query name="AllSendMessages">
-			SELECT COUNT(*) FROM MESSAGE WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2') AND SOURCE_AGENT = '$SERVICE$'
+			SELECT COUNT(*) FROM MESSAGE WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2') AND $SOURCE_AGENT$
 		</query>
 		<visualization type="Value"/>
 	</measure>
@@ -299,11 +299,11 @@
 		<query name="TotalTime">
 			SELECT SUM(timeSpend.difference)/1000/60 AS TotalTime FROM
 				(SELECT AVG(m2.TIME_STAMP - m.TIME_STAMP) AS difference
-				FROM MESSAGE m, MESSAGE m2
+				FROM (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m, (SELECT * FROM MESSAGE WHERE $SOURCE_AGENT$) m2
 				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
 				AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_9'
 				AND m.REMARKS = m2.REMARKS AND m.ID &lt; m2.ID
-				AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$'
+				AND m.SOURCE_AGENT = m2.SOURCE_AGENT
 				GROUP BY m.ID) AS timeSpend
 		</query>
 		<visualization type="Value"/>
@@ -313,13 +313,13 @@
 		<query name="TotalUsers">
 			SELECT COUNT(*) AS UserCount FROM
 			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
-			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND $SOURCE_AGENT$
 			GROUP BY DESTINATION_AGENT) allUsers
 		</query>
 		<query name="TotalCreatedChatrooms">
 			SELECT COUNT(*) FROM MESSAGE WHERE
 			(EVENT = 'SERVICE_CUSTOM_MESSAGE_3' or EVENT = 'SERVICE_CUSTOM_MESSAGE_4')
-			 AND SOURCE_AGENT = '$SERVICE$'
+			 AND $SOURCE_AGENT$
 		</query>
 		<visualization type="KPI">
 			<operand name="TotalCreatedChatrooms" index="0"/>
