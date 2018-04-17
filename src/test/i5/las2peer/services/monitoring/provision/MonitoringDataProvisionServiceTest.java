@@ -116,8 +116,8 @@ public class MonitoringDataProvisionServiceTest {
 			ClientResponse result3 = c1.sendRequest("GET", "mobsos-success-modeling/services", "", "*/*",
 					"application/json", new HashMap<String, String>());
 			Assert.assertTrue(result3.getHttpCode() == 200);
-			JSONArray resultObject3 = (JSONArray) parser.parse(result3.getResponse());
-			for (Object service : resultObject3)
+			JSONObject resultObject3 = (JSONObject) parser.parse(result3.getResponse());
+			for (Object service : resultObject3.keySet())
 				System.out.println("Result of asking for all monitored service names: " + (String) service);
 
 			if (resultObject3.size() != 0) {

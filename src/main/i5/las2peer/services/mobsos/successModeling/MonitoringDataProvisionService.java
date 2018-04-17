@@ -958,8 +958,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		@Produces(MediaType.APPLICATION_JSON)
 		@Path("/services")
 		public Response getServices() {
-			List<String> monitoredServices = new ArrayList<>();
-
+			JSONObject monitoredServices = new JSONObject();
 			ResultSet resultSet;
 			try {
 				service.reconnect();
@@ -970,13 +969,12 @@ public class MonitoringDataProvisionService extends RESTService {
 			}
 			try {
 				while (resultSet.next()) {
-					monitoredServices.add(resultSet.getString(2));
+					monitoredServices.put(resultSet.getString(2), resultSet.getString(3));
 				}
 			} catch (SQLException e) {
 				System.out.println("Problems reading result set: " + e);
 			}
-			return Response.status(Status.OK).entity(monitoredServices.toArray(new String[monitoredServices.size()]))
-					.build();
+			return Response.status(Status.OK).entity(monitoredServices.toJSONString()).build();
 		}
 
 		/**
