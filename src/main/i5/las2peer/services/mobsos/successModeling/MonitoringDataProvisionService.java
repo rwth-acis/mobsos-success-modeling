@@ -21,6 +21,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -221,6 +222,26 @@ public class MonitoringDataProvisionService extends RESTService {
 			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 		}
 		return new ArrayList<>();
+	}
+
+	public ArrayList<String> getServiceIds(String service) {
+		ArrayList<String> serviceId = null;
+
+		ResultSet resultSet;
+		try {
+			reconnect();
+			resultSet = database.query(SERVICE_QUERY);
+			serviceId = new ArrayList<String>();
+			while (resultSet.next()) {
+				if (resultSet.getString(2).equals(service)) {
+					serviceId.add(resultSet.getString(1));
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
+			return new ArrayList<String>();
+		}
+		return serviceId;
 	}
 
 	/**
@@ -1052,6 +1073,65 @@ public class MonitoringDataProvisionService extends RESTService {
 				Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
 			}
 			return Response.status(Status.OK).entity(catalogs.toJSONString()).build();
+		}
+
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/trainingSet/{unitId}")
+		public Response getTrainingSet(@QueryParam("service") String serviceName, @PathParam("unitId") String unit,
+				@QueryParam("messageType") String logMessageType) {
+			JSONArray resultList = new JSONArray();
+			try {
+				// GET SERVICE AGENT
+				ArrayList<String> sa = service.getServiceIds(serviceName);
+				// GET MESSAGE FOR SERVICE AGENT
+				String q = "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE SOURCE_AGENT='"
+						+ sa.get(0) + "' AND EVENT='" + logMessageType + "'";
+				if (unit != null && unit.length() > 0) {
+					q += " AND JSON_EXTRACT(REMARKS,'$.unit')='" + unit + "'";
+				}
+				service.reconnect();
+				ResultSet resultSet = service.database.query(q);
+				while (resultSet.next()) {
+					String from = resultSet.getString(1);
+					String to = resultSet.getString(2);
+					JSONObject j = new JSONObject();
+					j.put(from, to);
+					resultList.add(j);
+				}
+			} catch (Exception e) {
+				// one may want to handle some exceptions differently
+				e.printStackTrace();
+				Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+			}
+			return Response.status(Status.OK).entity(resultList.toJSONString()).build();
+		}
+
+		@GET
+		@Produces(MediaType.APPLICATION_JSON)
+		@Path("/trainingUnits")
+		public Response getTrainingSetUnits(@QueryParam("service") String serviceName,
+				@QueryParam("messageType") String logMessageType) {
+			JSONArray resultList = new JSONArray();
+			try {
+				// GET SERVICE AGENT
+				ArrayList<String> sa = service.getServiceIds(serviceName);
+				// GET MESSAGE FOR SERVICE AGENT
+				String q = "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE SOURCE_AGENT='" + sa.get(0)
+						+ "' AND EVENT='" + logMessageType + "' GROUP BY REMARKS->>\"$.unit\"";
+				service.reconnect();
+				ResultSet resultSet = service.database.query(q);
+				while (resultSet.next()) {
+					String u = resultSet.getString(1);
+					resultList.add(u);
+				}
+			} catch (Exception e) {
+				// one may want to handle some exceptions differently
+				e.printStackTrace();
+				Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+			}
+			JSONObject j = new JSONObject();
+			return Response.status(Status.OK).entity(resultList.toJSONString()).build();
 		}
 
 	}
