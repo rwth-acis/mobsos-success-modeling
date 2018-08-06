@@ -715,6 +715,68 @@ public class MonitoringDataProvisionService extends RESTService {
 		return "";
 	}
 
+	public net.minidev.json.JSONArray getTrainingDataUnits(String serviceName, String logMessageType) {
+		net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
+		try {
+			// GET SERVICE AGENT
+			ArrayList<String> sa = getServiceIds(serviceName);
+			// GET MESSAGE FOR SERVICE AGENT
+			String q = "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE (SOURCE_AGENT='" + sa.get(0) + "'";
+			if (sa.size() > 1) {
+				for (int i = 1; i < sa.size(); ++i) {
+					q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
+				}
+			}
+			q += ") AND EVENT='" + logMessageType + "' GROUP BY REMARKS->>\"$.unit\"";
+			reconnect();
+			ResultSet resultSet = database.query(q);
+			while (resultSet.next()) {
+				String u = resultSet.getString(1);
+				resultList.add(u);
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+		}
+		return resultList;
+	}
+
+	public net.minidev.json.JSONArray getTrainingDataSet(String serviceName, String unit, String logMessageType) {
+		net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
+		try {
+			// GET SERVICE AGENT
+			ArrayList<String> sa = getServiceIds(serviceName);
+			// GET MESSAGE FOR SERVICE AGENT
+			String q = "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE (SOURCE_AGENT='"
+					+ sa.get(0) + "'";
+			if (sa.size() > 1) {
+				for (int i = 1; i < sa.size(); ++i) {
+					q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
+				}
+			}
+			q += ") AND EVENT='" + logMessageType + "'";
+			if (unit != null && unit.length() > 0) {
+				q += " AND JSON_EXTRACT(REMARKS,'$.unit')='" + unit + "'";
+			}
+			reconnect();
+			ResultSet resultSet = database.query(q);
+			while (resultSet.next()) {
+				String from = resultSet.getString(1);
+				String to = resultSet.getString(2);
+				net.minidev.json.JSONObject j = new net.minidev.json.JSONObject();
+				j.put("from", from);
+				j.put("to", to);
+				resultList.add(j);
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+		}
+		return resultList;
+	}
+
 	@Override
 	protected void initResources() {
 		getResourceConfig().register(Resource.class);
@@ -1080,30 +1142,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		@Path("/trainingSet/{unitId}")
 		public Response getTrainingSet(@QueryParam("service") String serviceName, @PathParam("unitId") String unit,
 				@QueryParam("messageType") String logMessageType) {
-			JSONArray resultList = new JSONArray();
-			try {
-				// GET SERVICE AGENT
-				ArrayList<String> sa = service.getServiceIds(serviceName);
-				// GET MESSAGE FOR SERVICE AGENT
-				String q = "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE SOURCE_AGENT='"
-						+ sa.get(0) + "' AND EVENT='" + logMessageType + "'";
-				if (unit != null && unit.length() > 0) {
-					q += " AND JSON_EXTRACT(REMARKS,'$.unit')='" + unit + "'";
-				}
-				service.reconnect();
-				ResultSet resultSet = service.database.query(q);
-				while (resultSet.next()) {
-					String from = resultSet.getString(1);
-					String to = resultSet.getString(2);
-					JSONObject j = new JSONObject();
-					j.put(from, to);
-					resultList.add(j);
-				}
-			} catch (Exception e) {
-				// one may want to handle some exceptions differently
-				e.printStackTrace();
-				Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
-			}
+			net.minidev.json.JSONArray resultList = service.getTrainingDataSet(serviceName, unit, logMessageType);
 			return Response.status(Status.OK).entity(resultList.toJSONString()).build();
 		}
 
@@ -1112,25 +1151,7 @@ public class MonitoringDataProvisionService extends RESTService {
 		@Path("/trainingUnits")
 		public Response getTrainingSetUnits(@QueryParam("service") String serviceName,
 				@QueryParam("messageType") String logMessageType) {
-			JSONArray resultList = new JSONArray();
-			try {
-				// GET SERVICE AGENT
-				ArrayList<String> sa = service.getServiceIds(serviceName);
-				// GET MESSAGE FOR SERVICE AGENT
-				String q = "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE SOURCE_AGENT='" + sa.get(0)
-						+ "' AND EVENT='" + logMessageType + "' GROUP BY REMARKS->>\"$.unit\"";
-				service.reconnect();
-				ResultSet resultSet = service.database.query(q);
-				while (resultSet.next()) {
-					String u = resultSet.getString(1);
-					resultList.add(u);
-				}
-			} catch (Exception e) {
-				// one may want to handle some exceptions differently
-				e.printStackTrace();
-				Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
-			}
-			JSONObject j = new JSONObject();
+			net.minidev.json.JSONArray resultList = service.getTrainingDataUnits(serviceName, logMessageType);
 			return Response.status(Status.OK).entity(resultList.toJSONString()).build();
 		}
 
