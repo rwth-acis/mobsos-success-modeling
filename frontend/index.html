@@ -2,7 +2,7 @@
 <head>
     <title>las2peer Monitoring Data Provision Service</title>
     <link rel="stylesheet" type="text/css" href="css/style.css" media="all">
-      <script src="../bower_components/webcomponentsjs/webcomponents-lite.min.js">
+      <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js">
     </script>
     <script type="text/javascript" src="js/storage.js"></script>
     <script type="text/javascript" src="js/lasAjaxClient.js"></script>
@@ -12,10 +12,10 @@
     <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.11.2/css/bootstrap-select.min.css">
 
+  <!-- <link rel="import" href="../bower_components/polymer/polymer.html">
+  <link rel="import" href="../bower_components/las2peer-file-upload-widget/las2peer-file-upload-widget.html"> -->
 
-     <link rel="import" href="../bower_components/polymer/polymer.html">
-  <link rel="import" href="../bower_components/las2peer-frontend-user-widget/las2peer-frontend-user-widget.html">
-  <link rel="import" href="../bower_components/las2peer-file-upload-widget/las2peer-file-upload-widget.html">
+  <script type="module" src="../node_modules/las2peer-frontend-statusbar/las2peer-frontend-statusbar.js"></script>
 
   <style is="custom-style">
   #uploadToast {
@@ -32,12 +32,13 @@
 
 <!-- Fixed navbar -->
   <div class="navbar navbar-default " role="navigation">
+    <las2peer-frontend-statusbar service="MobSOS Monitoring" baseurl="https://las2peer.dbis.rwth-aachen.de:9098" oidcreturnurl="http://las2peer.dbis.rwth-aachen.de/node_modules/las2peer-frontend-statusbar/callbacks" oidcclientid="2e7435ab-d065-4d78-855f-e55a41983c15"></las2peer-frontend-statusbar>
   <div class="container">
   <div class="navbar-header">
-        <center><h2>MobSOS Monitoring</h2></center>
-        </div>
+<!--        <center><h2>MobSOS Monitoring</h2></center>
+        </div> -->
         <!-- OpenID Connect Button: add HTML element representing button -->
-        <span class="navbar-right"> <div id="user-information" style="width:76px;height:55px"><las2peer-user-widget></las2peer-user-widget></div></span>
+<!--        <span class="navbar-right"> <div id="user-information" style="width:76px;height:55px"><las2peer-user-widget></las2peer-user-widget></div></span>
         <span id="signinButton">
           <span class="oidc-signin navbar-btn navbar-right btn-default"
                 data-callback="signinCallback"
@@ -45,50 +46,50 @@
                 data-logo="logo.png"
                 data-size="sm"
                 data-server="https://api.learning-layers.eu/o/oauth2"
-                data-clientid="7fa2f68c-1038-4d7d-9e2c-d4e6a9b97fac"
-                data-scope="openid email profile"> <!--  8faf3dc2-fe60-4b77-8e34-7bd34496f3ca   2022a312-913f-407a-bad1-7061f358d7f4-->
-          </span>
-        </span>
+                data-clientid="2e7435ab-d065-4d78-855f-e55a41983c15"
+                data-scope="openid email profile"> --> <!--  8faf3dc2-fe60-4b77-8e34-7bd34496f3ca   2022a312-913f-407a-bad1-7061f358d7f4-->
+<!--          </span>
+        </span> -->
       </div><!--/.nav-collapse -->
       </div>
   </div>
 <div id="ps_mainView" >
 <center>
 <paper-toast id="uploadToast" class="fit-bottom" text=""></paper-toast>
-	<table style="text-align: left; width: 95%; height: 85%;" border="0" cellpadding="10" cellspacing="10">
-	  <tbody>
-		<tr style="height: 95%;">
-			<td valign="top" style="width: 50%">
-				<div style="margin-left: 10px">
-				<h4>Monitored Nodes</h4>
-			    <form name="ps_visualizeNodeModel" action="javascript:visualize_node_success_model()">
-		    	    <select class="selectpicker" data-width="75%" name="NodeSelection" size="1">
-				    </select>
-					<input style = "font-size: 1em;" type="submit" value="Visualize!"/>
-				</form>
-				<div id = "ps_nodeSuccessModel" style="height:100%; width:100%;"></div>
-				</div>
-			</td>
-			<td id="rightCell" valign="top">
-				<div style="margin-left: 10px">
-				<h4>Monitored Services</h4>
-				<form name="ps_visualizeServiceModel" action="javascript:visualize_service_success_model()">
+  <table style="text-align: left; width: 95%; height: 85%;" border="0" cellpadding="10" cellspacing="10">
+    <tbody>
+    <tr style="height: 95%;">
+      <td valign="top" style="width: 50%">
+        <div style="margin-left: 10px">
+        <h4>Monitored Nodes</h4>
+          <form name="ps_visualizeNodeModel" action="javascript:visualize_node_success_model()">
+              <select class="selectpicker" data-width="75%" name="NodeSelection" size="1">
+            </select>
+          <input style = "font-size: 1em;" type="submit" value="Visualize!"/>
+        </form>
+        <div id = "ps_nodeSuccessModel" style="height:100%; width:100%;"></div>
+        </div>
+      </td>
+      <td id="rightCell" valign="top">
+        <div style="margin-left: 10px">
+        <h4>Monitored Services</h4>
+        <form name="ps_visualizeServiceModel" action="javascript:visualize_service_success_model()">
          Catalog: <select class="selectpicker" data-width="width:43%" name="CatalogSelection" size="1">&emsp; <input id="uploadButton"  style = "margin-left:5px;font-size: 1em; display:none" type="button" onClick="openDialog();" value="Upload Catalog/SuccessModel"/>
             </select><br>
-		    	    Service: <select class="selectpicker" data-width="width:43%" name="ServiceSelection" size="1"
-		    	    onchange="javascript:get_success_models()">
-				    </select>
-				    Success Model:<select class="selectpicker" data-width="width:44%" name="SuccessModelName" size="1">
-				      	<option>Select Service First..</option>
-				    </select>
-				    <input style = "font-size: 1em;" type="submit" value="Visualize!"/>
-				</form>
-				<div id = "ps_serviceSuccessModel" style="height:100%; width:100%;"></div>
-				</div>
-			</td>
-		</tr>
-	  </tbody>
-	</table>
+              Service: <select class="selectpicker" data-width="width:43%" name="ServiceSelection" size="1"
+              onchange="javascript:get_success_models()">
+            </select>
+            Success Model:<select class="selectpicker" data-width="width:44%" name="SuccessModelName" size="1">
+                <option>Select Service First..</option>
+            </select>
+            <input style = "font-size: 1em;" type="submit" value="Visualize!"/>
+        </form>
+        <div id = "ps_serviceSuccessModel" style="height:100%; width:100%;"></div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
 </center>
 </div>
 
@@ -134,7 +135,7 @@ var openDialog = function(){
 <script>
 
 
-	(function() {
+  (function() {
       var po = document.createElement('script');
       po.type = 'text/javascript';
       po.async = true;
@@ -154,11 +155,11 @@ var openDialog = function(){
         if(config.useFileService){
           updateFileUpload();
         }
-		//alert(oidc_userinfo.name);
+    //alert(oidc_userinfo.name);
        
       } else {
         // anonymous
-    	// OpenID Connect user info
+      // OpenID Connect user info
           console.log(oidc_userinfo);
       }
       //Login by default
