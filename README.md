@@ -6,7 +6,7 @@ This service is part of the MobSOS monitoring concept and provides visualization
 
 Database
 --------
-The Success-Modeling service uses the database with the monitored data. If you need to set up the database have a look at the [MobSOS Data-Processing service](mobsos-data-processing).
+The Success-Modeling service uses the database with the monitored data. If you need to set up the database have a look at the [MobSOS Data-Processing service](https://github.com/rwth-acis/mobsos-data-processing#database).
 * [MySQL](https://github.com/rwth-acis/mobsos-data-processing/blob/master/bin/create_database_MySQL.sql) 
 * [DB2](https://github.com/rwth-acis/mobsos-data-processing/blob/master/bin/create_database_DB2.sql)
 
