@@ -81,4 +81,8 @@ public class Measure {
 	public void setInsertedQueries(Map<String, String> insertedQueries){
 		this.insertedQueries = insertedQueries;
 	}
+
+	public Map<String, String> getInsertedQueries() {
+		return insertedQueries;
+	}
 }

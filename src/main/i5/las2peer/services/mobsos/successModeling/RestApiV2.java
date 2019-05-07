@@ -5,6 +5,7 @@ import i5.las2peer.api.Context;
 import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.serialization.MalformedXMLException;
 import i5.las2peer.services.mobsos.successModeling.files.FileBackendException;
+import i5.las2peer.services.mobsos.successModeling.successModel.Measure;
 import i5.las2peer.services.mobsos.successModeling.successModel.MeasureCatalog;
 import i5.las2peer.services.mobsos.successModeling.successModel.SuccessModel;
 import io.swagger.annotations.*;
@@ -18,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -228,6 +230,33 @@ public class RestApiV2 {
         return getSuccessModelsForGroupAndService(group, serviceName);
     }
 
+    @GET
+    @Path("/models/{group}/{service}/{measure}")
+    public Response getMeasureDataForSuccessModelsAndGroupAndService(@PathParam("group") String group,
+                                                                     @PathParam("service") String serviceName,
+                                                                     @PathParam("measure") String measureName) {
+        try {
+            MeasureCatalog catalog = service.getMeasureCatalogByGroup(group);
+            if (successModelExists(group, serviceName) && catalog != null && catalog.getMeasures().containsKey(measureName)) {
+                SuccessModel groupModelForService = service.knownModelsV2.get(group).get(serviceName);
+                Measure measure = catalog.getMeasures().get(measureName);
+                measure = this.service.insertService(measure, serviceName);
+                List<String> dbResult = this.service.getRawMeasureData(measure, serviceName);
+                return Response.status(Response.Status.OK)
+                        .entity(new MeasureDataDTO())
+                        .build();
+            }
+        } catch (Exception e) {
+            // one may want to handle some exceptions differently
+            e.printStackTrace();
+            Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+        }
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity(new ErrorDTO("No measure " + measureName + " found for group " + group +
+                        " and service " + serviceName))
+                .build();
+    }
+
     private void checkGroupMembership(String group) {
         if (!service.currentUserIsMemberOfGroup(group)) {
             throw new ForbiddenException("User is not member of group " + group);
@@ -277,6 +306,17 @@ public class RestApiV2 {
 
         SuccessModelDTO(SuccessModel successModel) {
             this.xml = successModel.getXml();
+        }
+    }
+
+    public static class MeasureDataDTO {
+        public List data;
+
+        MeasureDataDTO() {
+        }
+
+        MeasureDataDTO(List xml) {
+            this.data = xml;
         }
     }
 

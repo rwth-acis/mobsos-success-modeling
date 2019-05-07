@@ -3,10 +3,12 @@ package i5.las2peer.services.mobsos.successModeling;
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.api.logging.MonitoringEvent;
-import i5.las2peer.api.security.*;
+import i5.las2peer.api.security.Agent;
+import i5.las2peer.api.security.AgentNotFoundException;
+import i5.las2peer.api.security.AgentOperationFailedException;
+import i5.las2peer.api.security.UserAgent;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
-import i5.las2peer.security.GroupAgentImpl;
 import i5.las2peer.serialization.MalformedXMLException;
 import i5.las2peer.serialization.XmlTools;
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
@@ -21,6 +23,7 @@ import i5.las2peer.services.mobsos.successModeling.visualizations.Chart.ChartTyp
 import i5.las2peer.services.mobsos.successModeling.visualizations.KPI;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Value;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
+import i5.las2peer.services.mobsos.successModeling.visualizations.charts.MethodResult;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -167,7 +170,7 @@ public class MonitoringDataProvisionService extends RESTService {
     }
 
     private List<String> getSuccessModels() throws FileBackendException {
-        return modelFileBackend.listFiles().stream().filter(s -> s.endsWith(".xml")).collect(Collectors.toList());
+        return modelFileBackend.listFiles().stream().filter(s -> s.endsWith(".data")).collect(Collectors.toList());
     }
 
     /**
@@ -242,6 +245,23 @@ public class MonitoringDataProvisionService extends RESTService {
         }
         returnStatement.append("</div>\n");
         return returnStatement.toString();
+    }
+
+    protected List<String> getRawMeasureData(Measure measure, String serviceId) {
+        List<String> result = new ArrayList<>();
+        measure = insertService(measure, serviceId);
+        try {
+            reconnect();
+            for (String query : measure.getInsertedQueries().values()) {
+                ResultSet resultSet = database.query(query);
+                MethodResult methodResult = new MethodResult(resultSet);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        return result;
     }
 
     private void refreshMeasures() {
@@ -590,7 +610,7 @@ public class MonitoringDataProvisionService extends RESTService {
      * @param serviceId
      * @return the measure with inserted serviceId
      */
-    private Measure insertService(Measure measure, String serviceId) {
+    protected Measure insertService(Measure measure, String serviceId) {
         Pattern pattern = Pattern.compile("\\$SERVICE\\$");
         return insertQueryVariable(measure, serviceId, pattern);
     }
