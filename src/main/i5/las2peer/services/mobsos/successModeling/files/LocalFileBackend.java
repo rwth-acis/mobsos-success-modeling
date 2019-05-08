@@ -1,5 +1,6 @@
 package i5.las2peer.services.mobsos.successModeling.files;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -32,11 +33,30 @@ public class LocalFileBackend implements FileBackend {
         return listFiles("");
     }
 
+    @Override
+    public void writeFile(String path, String content, String group) throws FileBackendException {
+        Path realPath = Paths.get(basePath, path);
+        File file = realPath.toFile();
+        try {
+            File parent = file.getParentFile();
+            if (!parent.exists() && !parent.mkdirs()) {
+                throw new FileBackendException("File " + path + " could not be created");
+            }
+            BufferedWriter writer = Files.newBufferedWriter(realPath);
+            writer.write(content);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new FileBackendException(e);
+        }
+    }
+
     public List<String> listFiles(String path) throws FileBackendException {
         Path realPath = Paths.get(basePath, path);
         try {
             return Files.walk(realPath)
-                    .filter(Files::isRegularFile).map(java.nio.file.Path::toFile).map(File::getName)
+                    .filter(Files::isRegularFile).map(java.nio.file.Path::toFile).map(File::getPath)
+                    .map(s -> Paths.get(basePath).relativize(Paths.get(s)).toString())
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new FileBackendException(e);

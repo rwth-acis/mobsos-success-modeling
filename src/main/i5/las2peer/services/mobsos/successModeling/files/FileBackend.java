@@ -7,4 +7,5 @@ public interface FileBackend {
     public String getFile(String path) throws FileBackendException;
     public List<String> listFiles(String path) throws FileBackendException;
     public List<String> listFiles() throws FileBackendException;
+    public void writeFile(String path, String content, String group) throws FileBackendException;
 }

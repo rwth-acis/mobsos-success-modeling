@@ -1,5 +1,7 @@
 package i5.las2peer.services.mobsos.successModeling.successModel;
 
+import org.json.simple.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -14,7 +16,8 @@ import java.util.List;
  *
  */
 public class SuccessModel {
-	
+
+	private String xml;
 	
 	/**
 	 * 
@@ -88,10 +91,11 @@ public class SuccessModel {
 	 * @param factors a list of {@link Factor}s
 	 * 
 	 */
-	public SuccessModel(String name, String serviceName, List<Factor> factors){
+	public SuccessModel(String name, String serviceName, List<Factor> factors, String xml){
 		this.name = name;
 		this.serviceName = serviceName;
 		this.factors = factors;
+		this.xml = xml;
 	}
 	
 	
@@ -139,6 +143,18 @@ public class SuccessModel {
 		}
 		return factorsOfDimension;
 	}
-	
-	
+
+	public String getXml() {
+		return xml;
+	}
+
+	public void setXml(String xml) {
+		this.xml = xml;
+	}
+
+	public JSONObject toJSON(){
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("xml", this.xml);
+		return jsonObject;
+	}
 }
