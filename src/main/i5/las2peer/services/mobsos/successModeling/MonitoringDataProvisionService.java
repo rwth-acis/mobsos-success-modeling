@@ -50,6 +50,13 @@ public class MonitoringDataProvisionService extends RESTService {
 
     public final String NODE_QUERY;
     public final String SERVICE_QUERY;
+    public final String AGENT_QUERY_WITH_MD5ID_PARAM;
+    public final String GROUP_QUERY;
+    public final String GROUP_QUERY_WITH_ID_PARAM;
+    public final String GROUP_AGENT_INSERT;
+    public final String GROUP_INFORMATION_INSERT;
+    public final String GROUP_INFORMATION_UPDATE;
+
     /**
      * Interval between rereading all model and measurement files in milliseconds.
      */
@@ -99,9 +106,26 @@ public class MonitoringDataProvisionService extends RESTService {
         if (this.databaseType == SQLDatabaseType.MySQL) {
             this.NODE_QUERY = "SELECT * FROM NODE";
             this.SERVICE_QUERY = "SELECT * FROM SERVICE";
+            this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM AGENT WHERE AGENT_ID = ?";
+            this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
+                    "FROM GROUP_INFORMATION " +
+                    "WHERE PUBLIC=1";
+            this.GROUP_QUERY_WITH_ID_PARAM = this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
+            this.GROUP_AGENT_INSERT = "INSERT INTO AGENT VALUES (?, \"GROUP\")";
+            this.GROUP_INFORMATION_INSERT = "INSERT INTO GROUP_INFORMATION VALUES (?, ?, ?, 1)";
+            this.GROUP_INFORMATION_UPDATE = "UPDATE GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
+
         } else {
             this.NODE_QUERY = "SELECT * FROM " + DB2Schema + ".NODE";
             this.SERVICE_QUERY = "SELECT * FROM " + DB2Schema + ".SERVICE";
+            this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM " + DB2Schema + ".AGENT WHERE AGENT_ID = ?";
+            this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
+                    "FROM " + DB2Schema + ".GROUP_INFORMATION " +
+                    "WHERE PUBLIC=1";
+            this.GROUP_QUERY_WITH_ID_PARAM = this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
+            this.GROUP_AGENT_INSERT = "INSERT INTO " + DB2Schema + ".AGENT VALUES (?, \"GROUP\")";
+            this.GROUP_INFORMATION_INSERT = "INSERT INTO " + DB2Schema + ".GROUP_INFORMATION VALUES (?, ?, ?, 1)";
+            this.GROUP_INFORMATION_UPDATE = "UPDATE " + DB2Schema + ".GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
         }
 
         try {
@@ -170,7 +194,7 @@ public class MonitoringDataProvisionService extends RESTService {
     }
 
     private List<String> getSuccessModels() throws FileBackendException {
-        return modelFileBackend.listFiles().stream().filter(s -> s.endsWith(".data")).collect(Collectors.toList());
+        return modelFileBackend.listFiles().stream().filter(s -> s.endsWith(".xml")).collect(Collectors.toList());
     }
 
     /**
@@ -247,7 +271,7 @@ public class MonitoringDataProvisionService extends RESTService {
         return returnStatement.toString();
     }
 
-    protected List<String> getRawMeasureData(Measure measure, String serviceId) {
+    List<String> getRawMeasureData(Measure measure, String serviceId) {
         List<String> result = new ArrayList<>();
         measure = insertService(measure, serviceId);
         try {
