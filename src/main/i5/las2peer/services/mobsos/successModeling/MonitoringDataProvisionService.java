@@ -2,6 +2,7 @@ package i5.las2peer.services.mobsos.successModeling;
 
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
+import i5.las2peer.api.execution.ServiceInvocationException;
 import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.AgentNotFoundException;
@@ -17,6 +18,7 @@ import i5.las2peer.services.mobsos.successModeling.files.FileBackend;
 import i5.las2peer.services.mobsos.successModeling.files.FileBackendException;
 import i5.las2peer.services.mobsos.successModeling.files.FileServiceFileBackend;
 import i5.las2peer.services.mobsos.successModeling.files.LocalFileBackend;
+import i5.las2peer.services.mobsos.successModeling.queryVisualizationService.QVConnector;
 import i5.las2peer.services.mobsos.successModeling.successModel.*;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Chart;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Chart.ChartType;
@@ -64,6 +66,8 @@ public class MonitoringDataProvisionService extends RESTService {
     private final String fileServicePrefix = "i5.las2peer.services.fileService.FileService@";
     private final String fileServiceVersion = "*";
     private final String fileServiceIdentifier = fileServicePrefix + fileServiceVersion;
+    private final String mobsosQVServiceIdentifier = "i5.las2peer.services.mobsos.queryVisualization.QueryVisualizationService@*";
+    private final String QV_MOBSOS_DB_KEY = "__mobsos";
     protected SQLDatabase database; // The database instance to write to.
     Boolean useFileService;
     String catalogFileLocation;
@@ -91,6 +95,7 @@ public class MonitoringDataProvisionService extends RESTService {
     private FileBackend measureFileBackend;
     private FileBackend modelFileBackend;
     private boolean measureUpdatingStarted = false;
+    boolean insertDatabaseCredentialsIntoQVService;
 
     /**
      * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.
@@ -365,6 +370,35 @@ public class MonitoringDataProvisionService extends RESTService {
     private void refreshMeasuresAndModels() {
         refreshMeasures();
         refreshModels();
+    }
+
+    void ensureMobSOSDatabaseIsAccessibleInQVService() {
+        QVConnector connector = new QVConnector(this.mobsosQVServiceIdentifier);
+        List<String> databaseKeys;
+        try {
+            databaseKeys = connector.getDatabaseKeys();
+            System.out.println("Checking DB keys");
+            if (databaseKeys.contains(this.QV_MOBSOS_DB_KEY)) {
+                System.out.println("Key already added");
+                return;
+            }
+        } catch (ServiceInvocationException e) {
+            System.out.println("ServiceInvocationException:"+e.getMessage());
+            e.printStackTrace();
+        }
+        QVConnector.SQLDatabaseType dbType;
+        if (this.databaseType == SQLDatabaseType.DB2) {
+            dbType = QVConnector.SQLDatabaseType.DB2;
+        } else {
+            dbType = QVConnector.SQLDatabaseType.MYSQL;
+        }
+        try {
+            System.out.println("Adding DB...");
+            connector.grantUserAccessToDatabase(this.QV_MOBSOS_DB_KEY, dbType, this.databaseUser, this.databasePassword,
+                    this.databaseName, this.databaseHost, this.databasePort);
+        } catch (Exception e) {
+            System.out.println("Could not access the MobSOS QV Service: " + e);
+        }
     }
 
     /**
@@ -743,6 +777,5 @@ public class MonitoringDataProvisionService extends RESTService {
                 }
             });
         }
-
     }
 }

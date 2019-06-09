@@ -1,1 +1,45 @@
-<SuccessModel name="Chat Service Success Model" service="i5.las2peer.services.chatService.ChatService"> 	 	<dimension name="System Quality"> 		<factor name="Performance"> 			<measure name="Average Time to send Message in Milliseconds"/> 			<measure name="Average Time to fetch Chatroom Information in Milliseconds"/> 		</factor> 	</dimension> 	 	<dimension name="Information Quality"> 		<factor name="Quantity"> 			<measure name="Number of public Chatrooms over Time"/> 			<measure name="Number of private Chatrooms over Time"/> 		</factor> 		<factor name="Quality"> 			<measure name="Average Number of Users per public Chatroom"/> 			<measure name="Average Number of Users per private Chatroom"/> 		</factor> 	</dimension> 	 	<dimension name="Use"> 		<factor name="Active Use"> 			<measure name="Number of send Messages over Time"/> 			<measure name="Average Number of Messages send per User"/> 			<measure name="Average Number of created Chatrooms per User"/> 		</factor> 		<factor name="Passive Use"> 			<measure name="Number of Received Messages over Time"/> 			<measure name="Average Number of Messages received per User"/> 		</factor> 	</dimension> 	 	<dimension name="User Satisfaction"> 		<factor name="Time"> 			<measure name="Average Time spend in Chatroom in Seconds"/> 		</factor> 	</dimension> 	 	<dimension name="Individual Impact"> 		<factor name="No Factors or Measures yet"> 		</factor> 	</dimension> 	 	<dimension name="Community Impact"> 		<factor name="Total Information Shared"> 			<measure name="Total Number of Messages shared"/> 		</factor> 		<factor name="Total Time Spend"> 			<measure name="Total Time spend in Chatroom in Minutes"/> 		</factor> 	</dimension> 	 </SuccessModel>
+<SuccessModel name="Chat Service Success Model" service="i5.las2peer.services.chatService.ChatService">
+    <dimension name="System Quality">
+        <factor name="Performance">
+            <measure name="Average Time to send Message in Milliseconds"/>
+            <measure name="Average Time to fetch Chatroom Information in Milliseconds"/>
+        </factor>
+    </dimension>
+    <dimension name="Information Quality">
+        <factor name="Quantity">
+            <measure name="Number of public Chatrooms over Time"/>
+            <measure name="Number of private Chatrooms over Time"/>
+        </factor>
+        <factor name="Quality">
+            <measure name="Average Number of Users per public Chatroom"/>
+            <measure name="Average Number of Users per private Chatroom"/>
+        </factor>
+    </dimension>
+    <dimension name="Use">
+        <factor name="Active Use">
+            <measure name="Number of send Messages over Time"/>
+            <measure name="Average Number of Messages send per User"/>
+            <measure name="Average Number of created Chatrooms per User"/>
+        </factor>
+        <factor name="Passive Use">
+            <measure name="Number of Received Messages over Time"/>
+            <measure name="Average Number of Messages received per User"/>
+        </factor>
+    </dimension>
+    <dimension name="User Satisfaction">
+        <factor name="Time">
+            <measure name="Average Time spend in Chatroom in Seconds"/>
+        </factor>
+    </dimension>
+    <dimension name="Individual Impact">
+        <factor name="No Factors or Measures yet"></factor>
+    </dimension>
+    <dimension name="Community Impact">
+        <factor name="Total Information Shared">
+            <measure name="Total Number of Messages shared"/>
+        </factor>
+        <factor name="Total Time Spend">
+            <measure name="Total Time spend in Chatroom in Minutes"/>
+        </factor>
+    </dimension>
+</SuccessModel>
