@@ -20,9 +20,7 @@ public class PrematchingRequestFilter implements ContainerRequestFilter {
         MonitoringDataProvisionService service = (MonitoringDataProvisionService) Context.getCurrent()
                 .getService();
         service.startUpdatingMeasures();
-        System.out.println("Checking if DB credentials need to be inserted");
         if (service.insertDatabaseCredentialsIntoQVService) {
-            System.out.println("insertDatabaseCredentialsIntoQVService = TRUE");
             service.ensureMobSOSDatabaseIsAccessibleInQVService();
         }
     }
