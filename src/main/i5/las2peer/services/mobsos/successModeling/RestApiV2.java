@@ -14,8 +14,6 @@ import io.swagger.annotations.*;
 import io.swagger.jaxrs.Reader;
 import io.swagger.models.Swagger;
 import io.swagger.util.Json;
-import net.minidev.json.parser.JSONParser;
-import net.minidev.json.parser.ParseException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONObject;
 
@@ -73,13 +71,13 @@ public class RestApiV2 {
         }
         try {
             while (resultSet.next()) {
-                services.put(resultSet.getString(1),
-                        new JSONParser(JSONParser.MODE_PERMISSIVE).parse(resultSet.getString(2)));
+                JSONObject serviceInfo = new JSONObject();
+                serviceInfo.put("serviceName", resultSet.getString(2));
+                serviceInfo.put("serviceAlias", resultSet.getString(3));
+                services.put(resultSet.getString(1), serviceInfo);
             }
         } catch (SQLException e) {
             System.out.println("Problems reading result set: " + e);
-        } catch (ParseException e) {
-            System.out.println("Problems parsing service JSON: " + e);
         }
         return Response.status(Response.Status.OK)
                 .entity(services)

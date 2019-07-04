@@ -110,7 +110,7 @@ public class MonitoringDataProvisionService extends RESTService {
 
         if (this.databaseType == SQLDatabaseType.MySQL) {
             this.NODE_QUERY = "SELECT * FROM NODE";
-            this.SERVICE_QUERY = "SELECT * FROM SERVICE";
+            this.SERVICE_QUERY = "SELECT AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH FROM SERVICE";
             this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM AGENT WHERE AGENT_ID = ?";
             this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
                     "FROM GROUP_INFORMATION " +
@@ -122,7 +122,7 @@ public class MonitoringDataProvisionService extends RESTService {
 
         } else {
             this.NODE_QUERY = "SELECT * FROM " + DB2Schema + ".NODE";
-            this.SERVICE_QUERY = "SELECT * FROM " + DB2Schema + ".SERVICE";
+            this.SERVICE_QUERY = "SELECT AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH FROM " + DB2Schema + ".SERVICE";
             this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM " + DB2Schema + ".AGENT WHERE AGENT_ID = ?";
             this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
                     "FROM " + DB2Schema + ".GROUP_INFORMATION " +
@@ -377,9 +377,7 @@ public class MonitoringDataProvisionService extends RESTService {
         List<String> databaseKeys;
         try {
             databaseKeys = connector.getDatabaseKeys();
-            System.out.println("Checking DB keys");
             if (databaseKeys.contains(this.QV_MOBSOS_DB_KEY)) {
-                System.out.println("Key already added");
                 return;
             }
         } catch (ServiceInvocationException e) {
