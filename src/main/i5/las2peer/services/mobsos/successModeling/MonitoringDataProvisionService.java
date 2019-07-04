@@ -577,7 +577,8 @@ public class MonitoringDataProvisionService extends RESTService {
         NodeList children = root.getChildNodes();
         ArrayList<Element> elements = new ArrayList<>();
         for (int dimensionNumber = 0; dimensionNumber < children.getLength(); dimensionNumber++) {
-            if (children.item(dimensionNumber).getNodeType() == Node.ELEMENT_NODE) {
+            if (children.item(dimensionNumber).getNodeType() == Node.ELEMENT_NODE
+                    && children.item(dimensionNumber).getNodeName().equals("dimension")) {
                 elements.add((Element) children.item(dimensionNumber));
             }
         }
