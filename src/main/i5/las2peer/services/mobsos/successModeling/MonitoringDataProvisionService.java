@@ -731,6 +731,15 @@ public class MonitoringDataProvisionService extends RESTService {
         refreshMeasuresAndModels();
     }
 
+    Map<String, String> getCustomMessageDescriptionsForService(String serviceID) {
+        try {
+            return (Map<String, String>) Context.get().invoke(serviceID, "getCustomMessageDescriptions");
+        } catch (ServiceInvocationException e) {
+            System.out.println(serviceID + ": " + e.getMessage());
+            return new HashMap<>();
+        }
+    }
+
     public String getSuccessModelFile(String file) {
         try {
             return modelFileBackend.getFile(file);

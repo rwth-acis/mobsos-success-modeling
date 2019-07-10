@@ -72,8 +72,10 @@ public class RestApiV2 {
         try {
             while (resultSet.next()) {
                 JSONObject serviceInfo = new JSONObject();
-                serviceInfo.put("serviceName", resultSet.getString(2));
+                String serviceName = resultSet.getString(2);
+                serviceInfo.put("serviceName", serviceName);
                 serviceInfo.put("serviceAlias", resultSet.getString(3));
+                serviceInfo.put("serviceMessageDescriptions", this.service.getCustomMessageDescriptionsForService(serviceName));
                 services.put(resultSet.getString(1), serviceInfo);
             }
         } catch (SQLException e) {
