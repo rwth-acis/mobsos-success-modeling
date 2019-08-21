@@ -252,29 +252,27 @@ public class RestApiV1 {
      * @return an array of service agent id
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/services")
-    public Response getServices() {
-        List<String> monitoredServices = new ArrayList<>();
-
-        ResultSet resultSet;
-        try {
-            service.reconnect();
-            resultSet = service.database.query(service.SERVICE_QUERY);
-        } catch (SQLException e) {
-            System.out.println("(getServiceIds) The query has lead to an error: " + e);
-            return null;
-        }
-        try {
-            while (resultSet.next()) {
-                monitoredServices.add(resultSet.getString(2));
-            }
-        } catch (SQLException e) {
-            System.out.println("Problems reading result set: " + e);
-        }
-        return Response.status(Status.OK).entity(monitoredServices.toArray(new String[monitoredServices.size()]))
-                .build();
-    }
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/services")
+	public Response getServices() {
+		JSONObject monitoredServices = new JSONObject();
+		ResultSet resultSet;
+		try {
+			service.reconnect();
+			resultSet = service.database.query(service.SERVICE_QUERY);
+		} catch (SQLException e) {
+			System.out.println("(getServiceIds) The query has lead to an error: " + e);
+			return null;
+		}
+		try {
+			while (resultSet.next()) {
+				monitoredServices.put(resultSet.getString(2), resultSet.getString(3));
+			}
+		} catch (SQLException e) {
+			System.out.println("Problems reading result set: " + e);
+		}
+		return Response.status(Status.OK).entity(monitoredServices.toJSONString()).build();
+	}
 
     /**
      * Returns the name of all stored success models for the given service.
@@ -322,5 +320,23 @@ public class RestApiV1 {
         }
         return Response.status(Status.OK).entity(catalogs.toJSONString()).build();
     }
+    
+    @GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/trainingSet/{unitId}")
+	public Response getTrainingSet(@QueryParam("service") String serviceName, @PathParam("unitId") String unit,
+			@QueryParam("messageType") String logMessageType) {
+		net.minidev.json.JSONArray resultList = service.getTrainingDataSet(serviceName, unit, logMessageType);
+		return Response.status(Status.OK).entity(resultList.toJSONString()).build();
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/trainingUnits")
+	public Response getTrainingSetUnits(@QueryParam("service") String serviceName,
+			@QueryParam("messageType") String logMessageType) {
+		net.minidev.json.JSONArray resultList = service.getTrainingDataUnits(serviceName, logMessageType);
+		return Response.status(Status.OK).entity(resultList.toJSONString()).build();
+	}
 
 }

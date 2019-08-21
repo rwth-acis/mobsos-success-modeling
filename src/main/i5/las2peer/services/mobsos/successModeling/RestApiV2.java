@@ -387,8 +387,10 @@ public class RestApiV2 {
             if (successModelExists(group, serviceName) && catalog != null && catalog.getMeasures().containsKey(measureName)) {
                 SuccessModel groupModelForService = service.knownModelsV2.get(group).get(serviceName);
                 Measure measure = catalog.getMeasures().get(measureName);
-                measure = this.service.insertService(measure, serviceName);
-                List<String> dbResult = this.service.getRawMeasureData(measure, serviceName);
+                ArrayList<String> serviceList = new ArrayList<String>();
+                serviceList.add(serviceName);
+                measure = this.service.insertService(measure, serviceList);
+                List<String> dbResult = this.service.getRawMeasureData(measure, serviceList);
                 return Response.status(Response.Status.OK)
                         .entity(new MeasureDataDTO())
                         .build();

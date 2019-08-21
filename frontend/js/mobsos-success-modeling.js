@@ -108,7 +108,7 @@ MobSOSSuccessModelingClient.prototype.getServices = function(callback){
 		"text/html",
 		{"Accept":"application/json"},
 		function(data, type){
-			callback(data);
+			callback(Object.keys(data));
 		},
 		function(error){
 			callback("Error! Message: " + error)

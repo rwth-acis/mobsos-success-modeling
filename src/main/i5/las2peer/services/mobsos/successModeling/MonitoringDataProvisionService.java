@@ -1,5 +1,30 @@
 package i5.las2peer.services.mobsos.successModeling;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.api.execution.ServiceInvocationException;
@@ -202,6 +227,26 @@ public class MonitoringDataProvisionService extends RESTService {
         return modelFileBackend.listFiles().stream().filter(s -> s.endsWith(".xml")).collect(Collectors.toList());
     }
 
+    public ArrayList<String> getServiceIds(String service) {
+		ArrayList<String> serviceId = null;
+
+		ResultSet resultSet;
+		try {
+			reconnect();
+			resultSet = database.query(SERVICE_QUERY);
+			serviceId = new ArrayList<String>();
+			while (resultSet.next()) {
+				if (resultSet.getString(2).equals(service)) {
+					serviceId.add(resultSet.getString(1));
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
+			return new ArrayList<String>();
+		}
+		return serviceId;
+	}
+    
     /**
      * Visualizes a given success model.
      *
@@ -221,21 +266,22 @@ public class MonitoringDataProvisionService extends RESTService {
             return "Success Model not known!";
         }
         // Find the Service Agent
-        String serviceId = null;
+		ArrayList<String> serviceId = null;
         if (model.getServiceName() != null) {
             ResultSet resultSet;
             try {
-                reconnect();
-                resultSet = database.query(SERVICE_QUERY);
-                while (resultSet.next()) {
-                    if (resultSet.getString(2).equals(model.getServiceName())) {
-                        serviceId = resultSet.getString(1);
-                    }
-                }
-            } catch (SQLException e) {
-                System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
-                return "Problems getting service agent!";
-            }
+				reconnect();
+				resultSet = database.query(SERVICE_QUERY);
+				serviceId = new ArrayList<String>();
+				while (resultSet.next()) {
+					if (resultSet.getString(2).equals(model.getServiceName())) {
+						serviceId.add(resultSet.getString(1));
+					}
+				}
+			} catch (SQLException e) {
+				System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
+				return "Problems getting service agent!";
+			}
             if (serviceId == null) {
                 return "Requested Service: " + model.getServiceName() + " is not monitored!";
             }
@@ -246,7 +292,6 @@ public class MonitoringDataProvisionService extends RESTService {
         String[] dimensionNames = SuccessModel.Dimension.getDimensionNames();
         List<Factor> factorsOfDimension;
         List<Measure> measuresOfFactor;
-
         StringBuilder returnStatement = new StringBuilder("<div id = '" + modelName + "'>\n");
         for (int i = 0; i < dimensions.length; i++) {
             returnStatement.append("<div id = '").append(dimensions[i]).append("'>\n");
@@ -276,7 +321,7 @@ public class MonitoringDataProvisionService extends RESTService {
         return returnStatement.toString();
     }
 
-    List<String> getRawMeasureData(Measure measure, String serviceId) {
+    List<String> getRawMeasureData(Measure measure, ArrayList<String> serviceId) {
         List<String> result = new ArrayList<>();
         measure = insertService(measure, serviceId);
         try {
@@ -474,7 +519,7 @@ public class MonitoringDataProvisionService extends RESTService {
 
         return new MeasureCatalog(measures, measureXML);
     }
-
+    
     /**
      * Helper method that reads a visualization object of the catalog file.
      *
@@ -588,7 +633,6 @@ public class MonitoringDataProvisionService extends RESTService {
         List<Factor> factors = new ArrayList<>();
 
         for (Element dimensionElement : elements) {
-
             String dimensionName = dimensionElement.getAttribute("name");
             SuccessModel.Dimension dimension;
             switch (dimensionName) {
@@ -618,7 +662,6 @@ public class MonitoringDataProvisionService extends RESTService {
                 if (dChildren.item(factorNumber).getNodeType() == Node.ELEMENT_NODE) {
                     Element factorElement = (Element) dChildren.item(factorNumber);
                     String factorName = factorElement.getAttribute("name");
-
                     List<Measure> factorMeasures = new ArrayList<>();
                     NodeList fChildren = factorElement.getChildNodes();
                     for (int measureNumber = 0; measureNumber < fChildren.getLength(); measureNumber++) {
@@ -659,18 +702,55 @@ public class MonitoringDataProvisionService extends RESTService {
         Pattern pattern = Pattern.compile("\\$NODE\\$");
         return insertQueryVariable(measure, nodeId, pattern);
     }
-
     /**
      * Inserts the service id into the queries of a measure.
      *
      * @param measure
      * @param serviceId
      * @return the measure with inserted serviceId
-     */
+    */
+    /*
     protected Measure insertService(Measure measure, String serviceId) {
         Pattern pattern = Pattern.compile("\\$SERVICE\\$");
         return insertQueryVariable(measure, serviceId, pattern);
     }
+    */
+    protected Measure insertService(Measure measure, ArrayList<String> serviceId) {
+  		String[] ps = new String[2];
+  		ps[0] = "SOURCE";
+  		ps[1] = "DESTINATION";
+  		Pattern[] pattern = new Pattern[ps.length];
+  		for (int i = 0; i < ps.length; i++) {
+  			pattern[i] = Pattern.compile("\\$" + ps[i] + "_AGENT\\$");
+  		}
+
+  		pattern[1] = Pattern.compile("\\$DESTINATION_AGENT\\$");
+  		Map<String, String> insertedQueries = new HashMap<>();
+
+  		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
+  		while (queries.hasNext()) {
+  			Map.Entry<String, String> entry = queries.next();
+  			String[] r = new String[ps.length];
+  			for (int i = 0; i < ps.length; i++) {
+  				r[i] = "(";
+  			}
+  			for (String s : serviceId) {
+  				for (int i = 0; i < ps.length; i++) {
+  					r[i] += ps[i] + "_AGENT = '" + s + "' OR ";
+  				}
+  			}
+  			for (int i = 0; i < ps.length; i++) {
+  				r[i] = r[i].substring(0, r[i].length() - 3) + ")";
+  			}
+  			String toReplace = entry.getValue();
+  			for (int i = 0; i < ps.length; i++) {
+  				toReplace = pattern[i].matcher(toReplace).replaceAll(r[i]);
+  			}
+  			insertedQueries.put(entry.getKey(), toReplace);
+  		}
+  		measure.setInsertedQueries(insertedQueries);
+  		return measure;
+  	}
 
     private Measure insertQueryVariable(Measure measure, String serviceId, Pattern pattern) {
         Map<String, String> insertedQueries = new HashMap<>();
@@ -731,6 +811,7 @@ public class MonitoringDataProvisionService extends RESTService {
         refreshMeasuresAndModels();
     }
 
+
     Map<String, String> getCustomMessageDescriptionsForService(String serviceID) {
         try {
             return (Map<String, String>) Context.get().invoke(serviceID, "getCustomMessageDescriptions");
@@ -763,6 +844,69 @@ public class MonitoringDataProvisionService extends RESTService {
         return false;
     }
 
+
+	public net.minidev.json.JSONArray getTrainingDataUnits(String serviceName, String logMessageType) {
+		net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
+		try {
+			// GET SERVICE AGENT
+			ArrayList<String> sa = getServiceIds(serviceName);
+			// GET MESSAGE FOR SERVICE AGENT
+			String q = "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE (SOURCE_AGENT='" + sa.get(0) + "'";
+			if (sa.size() > 1) {
+				for (int i = 1; i < sa.size(); ++i) {
+					q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
+				}
+			}
+			q += ") AND EVENT='" + logMessageType + "' GROUP BY REMARKS->>\"$.unit\"";
+			reconnect();
+			ResultSet resultSet = database.query(q);
+			while (resultSet.next()) {
+				String u = resultSet.getString(1);
+				resultList.add(u);
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+		}
+		return resultList;
+	}
+
+	public net.minidev.json.JSONArray getTrainingDataSet(String serviceName, String unit, String logMessageType) {
+		net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
+		try {
+			// GET SERVICE AGENT
+			ArrayList<String> sa = getServiceIds(serviceName);
+			// GET MESSAGE FOR SERVICE AGENT
+			String q = "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE (SOURCE_AGENT='"
+					+ sa.get(0) + "'";
+			if (sa.size() > 1) {
+				for (int i = 1; i < sa.size(); ++i) {
+					q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
+				}
+			}
+			q += ") AND EVENT='" + logMessageType + "'";
+			if (unit != null && unit.length() > 0) {
+				q += " AND JSON_EXTRACT(REMARKS,'$.unit')='" + unit + "'";
+			}
+			reconnect();
+			ResultSet resultSet = database.query(q);
+			while (resultSet.next()) {
+				String from = resultSet.getString(1);
+				String to = resultSet.getString(2);
+				net.minidev.json.JSONObject j = new net.minidev.json.JSONObject();
+				j.put("from", from);
+				j.put("to", to);
+				resultList.add(j);
+			}
+		} catch (Exception e) {
+			// one may want to handle some exceptions differently
+			e.printStackTrace();
+			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+		}
+		return resultList;
+	}
+    
     @Override
     protected void initResources() {
         getResourceConfig().register(PrematchingRequestFilter.class);
@@ -786,4 +930,5 @@ public class MonitoringDataProvisionService extends RESTService {
             });
         }
     }
+
 }
