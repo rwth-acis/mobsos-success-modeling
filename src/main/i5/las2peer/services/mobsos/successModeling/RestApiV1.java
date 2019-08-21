@@ -184,10 +184,9 @@ public class RestApiV1 {
                         for (File f : filesInFolder) {
                             try {
                                 if (f.getName().endsWith(".xml")) {
-                                    service.updateMeasures(f.toString());
+                                    service.updateMeasures(f.toString().substring(service.catalogFileLocation.length()));
                                 }
                             } catch (MalformedXMLException e) {
-                                System.out.println("Measure Catalog seems broken: " + e.getMessage());
                                 System.out.println("Measure Catalog seems broken: " + e.getMessage());
                             }
                         }
@@ -227,7 +226,7 @@ public class RestApiV1 {
                 for (File f : filesInFolder) {
                     try {
                         if (f.getName().endsWith(".xml")) {
-                            service.measureCatalogs.put(catalog, service.updateMeasures(f.getName()));
+                            service.measureCatalogs.put(catalog, service.updateMeasures(f.toString().substring(service.catalogFileLocation.length())));
                         }
                     } catch (MalformedXMLException e) {
                         System.out.println("Measure Catalog seems broken: " + e.getMessage());

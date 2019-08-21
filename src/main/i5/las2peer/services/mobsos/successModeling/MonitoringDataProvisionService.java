@@ -449,7 +449,6 @@ public class MonitoringDataProvisionService extends RESTService {
      *
      * @return a map with the measures
      * @throws MalformedXMLException
-     * @throws IOException           if the catalog file does not exist
      */
     protected MeasureCatalog updateMeasures(String measureFile)
             throws MalformedXMLException {

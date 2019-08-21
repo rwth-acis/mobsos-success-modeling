@@ -43,13 +43,12 @@ public class MonitoringDataProvisionServiceTest {
 
 	private static final String adamsPass = "adamspass";
 	private static final ServiceNameVersion testServiceClass = new ServiceNameVersion(
-			MonitoringDataProvisionService.class.getCanonicalName(), "0.1");
+			MonitoringDataProvisionService.class.getCanonicalName(), "0.8.0");
 
 	@Before
 	public void startServer() throws Exception {
 		// start Node
 		node = TestSuite.launchNetwork(1).get(0);
-
 		user1 = MockAgentFactory.getAdam();
 		user1.unlock(adamsPass);
 		node.storeAgent(user1);
@@ -97,7 +96,7 @@ public class MonitoringDataProvisionServiceTest {
 		try {
 			// Login
 			ClientResponse result = c1.sendRequest("GET",
-					"mobsos-success-modeling/measures?catalog=measure_catalog/measure_catalog-mysql.xml&update=true",
+					"mobsos-success-modeling/measures?catalog=myGroupID/measure_catalog-mysql.xml&update=true",
 					"", "*/*", "application/json", new HashMap<>());
 
             Assert.assertEquals(200, result.getHttpCode());
@@ -124,7 +123,7 @@ public class MonitoringDataProvisionServiceTest {
 				JSONObject serviceInformation = (JSONObject) parser.parse((String) resultObject3.get(0));
 				System.out.println("Calling getModels with service: " + serviceInformation.get("serviceName"));
 				String path = "mobsos-success-modeling/models?service=" + serviceInformation.get("serviceName")
-						+ "&update=true&catalog=measure_catalog/measure_catalog-mysql.xml";
+						+ "&update=true&catalog=myGroupID/measure_catalog-mysql.xml";
 				ClientResponse result4 = c1.sendRequest("GET",
 						path,
 						"", "*/*", "application/json", new HashMap<>());
@@ -155,7 +154,7 @@ public class MonitoringDataProvisionServiceTest {
 
 				System.out.println("Calling Node Success Model with node " + knownNode);
 				String params = "{\"nodeName\":\"" + knownNode + "\"," + "\"updateMeasures\":\"true\","
-						+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
+						+ "\"updateModels\":\"true\"," + "\"catalog\":\"myGroupID/measure_catalog-mysql.xml\"}";
 				ClientResponse result2 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/nodeSuccessModel",
 						params, "application/json", "text/html", new HashMap<String, String>());
 				Assert.assertTrue(result2.getHttpCode() == 200);
@@ -164,7 +163,7 @@ public class MonitoringDataProvisionServiceTest {
 				System.out.println("No monitored nodes, no node success model visualization possible!");
 
 			String params = "{\"modelName\":\"Chat Service Success Model\"," + "\"updateMeasures\":\"true\","
-					+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
+					+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalog-mysql.xml\"}";
 			ClientResponse result3 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/serviceSuccessModel",
 					params, "application/json", "text/html", new HashMap<String, String>());
 			Assert.assertTrue(result3.getHttpCode() == 200);
