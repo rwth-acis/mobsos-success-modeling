@@ -167,7 +167,6 @@ public class SQLDatabase{
 	 *
 	 * @param SQLStatment A SQL statement with questionmarks where the parameters should go.
 	 * @param params      List of parameters as string.
-	 * @return a ResultSet
 	 */
 	public void queryWithDataManipulation(String SQLStatment, List<String> params) throws SQLException {
 		// make sure one is connected to a database
