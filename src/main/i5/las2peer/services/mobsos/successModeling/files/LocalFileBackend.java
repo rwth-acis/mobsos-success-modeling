@@ -20,7 +20,7 @@ public class LocalFileBackend implements FileBackend {
 
     @Override
     public String getFile(String path) throws FileBackendException {
-        Path realPath = Paths.get(basePath, path);
+        Path realPath = path.startsWith(basePath) ? Paths.get(path) : Paths.get(basePath, path);
         try {
             return Files.lines(realPath, Charset.defaultCharset()).collect(Collectors.joining());
         } catch (IOException e) {
@@ -55,9 +55,9 @@ public class LocalFileBackend implements FileBackend {
         Path realPath = Paths.get(basePath, path);
         try {
             return Files.walk(realPath)
-                    .filter(Files::isRegularFile).map(java.nio.file.Path::toFile).map(File::getPath)
-                    .map(s -> Paths.get(basePath).relativize(Paths.get(s)).toString())
-                    .collect(Collectors.toList());
+                .filter(Files::isRegularFile).map(java.nio.file.Path::toFile).map(File::getPath)
+                .map(s -> Paths.get(basePath).relativize(Paths.get(s)).toString())
+                .collect(Collectors.toList());
         } catch (IOException e) {
             throw new FileBackendException(e);
         }

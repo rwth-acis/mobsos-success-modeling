@@ -1,30 +1,5 @@
 package i5.las2peer.services.mobsos.successModeling;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.api.execution.ServiceInvocationException;
@@ -131,15 +106,15 @@ public class MonitoringDataProvisionService extends RESTService {
         this.databaseType = SQLDatabaseType.getSQLDatabaseType(databaseTypeInt);
 
         this.database = new SQLDatabase(this.databaseType, this.databaseUser, this.databasePassword, this.databaseName,
-                this.databaseHost, this.databasePort);
+            this.databaseHost, this.databasePort);
 
         if (this.databaseType == SQLDatabaseType.MySQL) {
             this.NODE_QUERY = "SELECT * FROM NODE";
             this.SERVICE_QUERY = "SELECT SERVICE.AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH,REGISTRATION_DATE FROM SERVICE LEFT JOIN REGISTERED_AT ON SERVICE.AGENT_ID = REGISTERED_AT.AGENT_ID ORDER BY REGISTRATION_DATE";
             this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM AGENT WHERE AGENT_ID = ?";
             this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
-                    "FROM GROUP_INFORMATION " +
-                    "WHERE PUBLIC=1";
+                "FROM GROUP_INFORMATION " +
+                "WHERE PUBLIC=1";
             this.GROUP_QUERY_WITH_ID_PARAM = this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
             this.GROUP_AGENT_INSERT = "INSERT INTO AGENT VALUES (?, \"GROUP\")";
             this.GROUP_INFORMATION_INSERT = "INSERT INTO GROUP_INFORMATION VALUES (?, ?, ?, 1)";
@@ -150,8 +125,8 @@ public class MonitoringDataProvisionService extends RESTService {
             this.SERVICE_QUERY = "SELECT SERVICE.AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH FROM " + DB2Schema + ".SERVICE LEFT OUTER JOIN REGISTERED_AT ON SERVICE.AGENT_ID = REGISTERED_AT.AGENT_ID ORDER BY REGISTRATION_DATE";
             this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM " + DB2Schema + ".AGENT WHERE AGENT_ID = ?";
             this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
-                    "FROM " + DB2Schema + ".GROUP_INFORMATION " +
-                    "WHERE PUBLIC=1";
+                "FROM " + DB2Schema + ".GROUP_INFORMATION " +
+                "WHERE PUBLIC=1";
             this.GROUP_QUERY_WITH_ID_PARAM = this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
             this.GROUP_AGENT_INSERT = "INSERT INTO " + DB2Schema + ".AGENT VALUES (?, \"GROUP\")";
             this.GROUP_INFORMATION_INSERT = "INSERT INTO " + DB2Schema + ".GROUP_INFORMATION VALUES (?, ?, ?, 1)";
@@ -228,25 +203,25 @@ public class MonitoringDataProvisionService extends RESTService {
     }
 
     public ArrayList<String> getServiceIds(String service) {
-		ArrayList<String> serviceId = null;
+        ArrayList<String> serviceId = null;
 
-		ResultSet resultSet;
-		try {
-			reconnect();
-			resultSet = database.query(SERVICE_QUERY);
-			serviceId = new ArrayList<String>();
-			while (resultSet.next()) {
-				if (resultSet.getString(2).equals(service)) {
-					serviceId.add(resultSet.getString(1));
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
-			return new ArrayList<String>();
-		}
-		return serviceId;
-	}
-    
+        ResultSet resultSet;
+        try {
+            reconnect();
+            resultSet = database.query(SERVICE_QUERY);
+            serviceId = new ArrayList<String>();
+            while (resultSet.next()) {
+                if (resultSet.getString(2).equals(service)) {
+                    serviceId.add(resultSet.getString(1));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
+            return new ArrayList<String>();
+        }
+        return serviceId;
+    }
+
     /**
      * Visualizes a given success model.
      *
@@ -266,22 +241,22 @@ public class MonitoringDataProvisionService extends RESTService {
             return "Success Model not known!";
         }
         // Find the Service Agent
-		ArrayList<String> serviceId = null;
-        if (model.getServiceName() != null) {
+        ArrayList<String> serviceId = null;
+        if (model.getServiceName() != null && model.getServiceName() != "node") {
             ResultSet resultSet;
             try {
-				reconnect();
-				resultSet = database.query(SERVICE_QUERY);
-				serviceId = new ArrayList<String>();
-				while (resultSet.next()) {
-					if (resultSet.getString(2).equals(model.getServiceName())) {
-						serviceId.add(resultSet.getString(1));
-					}
-				}
-			} catch (SQLException e) {
-				System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
-				return "Problems getting service agent!";
-			}
+                reconnect();
+                resultSet = database.query(SERVICE_QUERY);
+                serviceId = new ArrayList<String>();
+                while (resultSet.next()) {
+                    if (resultSet.getString(2).equals(model.getServiceName())) {
+                        serviceId.add(resultSet.getString(1));
+                    }
+                }
+            } catch (SQLException e) {
+                System.out.println("(Visualize Success Model) The query has lead to an error: " + e);
+                return "Problems getting service agent!";
+            }
             if (serviceId == null) {
                 return "Requested Service: " + model.getServiceName() + " is not monitored!";
             }
@@ -438,7 +413,7 @@ public class MonitoringDataProvisionService extends RESTService {
         try {
             System.out.println("Adding DB...");
             connector.grantUserAccessToDatabase(this.QV_MOBSOS_DB_KEY, dbType, this.databaseUser, this.databasePassword,
-                    this.databaseName, this.databaseHost, this.databasePort);
+                this.databaseName, this.databaseHost, this.databasePort);
         } catch (Exception e) {
             System.out.println("Could not access the MobSOS QV Service: " + e);
         }
@@ -451,7 +426,7 @@ public class MonitoringDataProvisionService extends RESTService {
      * @throws MalformedXMLException
      */
     protected MeasureCatalog updateMeasures(String measureFile)
-            throws MalformedXMLException {
+        throws MalformedXMLException {
 
 
         String measureXML = getMeasureFile(measureFile);
@@ -490,17 +465,17 @@ public class MonitoringDataProvisionService extends RESTService {
                             // does not do
                             // that)
                             query = query.replaceAll("&amp;&", "&").replaceAll("&lt;", "<").replaceAll("&lt;", "<")
-                                    .replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+                                .replaceAll("&gt;", ">").replaceAll("&lt;", "<");
                             queries.put(queryName, query);
                         } else if (childType.equals("visualization")) {
                             if (visualization != null) {
                                 throw new MalformedXMLException(
-                                        "Measure " + measureName + " is broken, duplicate 'Visualization' entry!");
+                                    "Measure " + measureName + " is broken, duplicate 'Visualization' entry!");
                             }
                             visualization = readVisualization(measureChild);
                         } else {
                             throw new MalformedXMLException(
-                                    "Measure " + measureName + " is broken, illegal node " + childType + "!");
+                                "Measure " + measureName + " is broken, illegal node " + childType + "!");
                         }
                     }
                 }
@@ -518,7 +493,7 @@ public class MonitoringDataProvisionService extends RESTService {
 
         return new MeasureCatalog(measures, measureXML);
     }
-    
+
     /**
      * Helper method that reads a visualization object of the catalog file.
      *
@@ -594,7 +569,7 @@ public class MonitoringDataProvisionService extends RESTService {
      * @throws MalformedXMLException
      */
     private SuccessModel readSuccessModelFile(String successModelXml, String measureFilePath)
-            throws MalformedXMLException {
+        throws MalformedXMLException {
         Element root;
         try {
             root = XmlTools.getRootElement(successModelXml, "SuccessModel");
@@ -622,7 +597,7 @@ public class MonitoringDataProvisionService extends RESTService {
         ArrayList<Element> elements = new ArrayList<>();
         for (int dimensionNumber = 0; dimensionNumber < children.getLength(); dimensionNumber++) {
             if (children.item(dimensionNumber).getNodeType() == Node.ELEMENT_NODE
-                    && children.item(dimensionNumber).getNodeName().equals("dimension")) {
+                && children.item(dimensionNumber).getNodeName().equals("dimension")) {
                 elements.add((Element) children.item(dimensionNumber));
             }
         }
@@ -707,7 +682,7 @@ public class MonitoringDataProvisionService extends RESTService {
      * @param measure
      * @param serviceId
      * @return the measure with inserted serviceId
-    */
+     */
     /*
     protected Measure insertService(Measure measure, String serviceId) {
         Pattern pattern = Pattern.compile("\\$SERVICE\\$");
@@ -715,41 +690,41 @@ public class MonitoringDataProvisionService extends RESTService {
     }
     */
     protected Measure insertService(Measure measure, ArrayList<String> serviceId) {
-  		String[] ps = new String[2];
-  		ps[0] = "SOURCE";
-  		ps[1] = "DESTINATION";
-  		Pattern[] pattern = new Pattern[ps.length];
-  		for (int i = 0; i < ps.length; i++) {
-  			pattern[i] = Pattern.compile("\\$" + ps[i] + "_AGENT\\$");
-  		}
+        String[] ps = new String[2];
+        ps[0] = "SOURCE";
+        ps[1] = "DESTINATION";
+        Pattern[] pattern = new Pattern[ps.length];
+        for (int i = 0; i < ps.length; i++) {
+            pattern[i] = Pattern.compile("\\$" + ps[i] + "_AGENT\\$");
+        }
 
-  		pattern[1] = Pattern.compile("\\$DESTINATION_AGENT\\$");
-  		Map<String, String> insertedQueries = new HashMap<>();
+        pattern[1] = Pattern.compile("\\$DESTINATION_AGENT\\$");
+        Map<String, String> insertedQueries = new HashMap<>();
 
-  		Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
-  		while (queries.hasNext()) {
-  			Map.Entry<String, String> entry = queries.next();
-  			String[] r = new String[ps.length];
-  			for (int i = 0; i < ps.length; i++) {
-  				r[i] = "(";
-  			}
-  			for (String s : serviceId) {
-  				for (int i = 0; i < ps.length; i++) {
-  					r[i] += ps[i] + "_AGENT = '" + s + "' OR ";
-  				}
-  			}
-  			for (int i = 0; i < ps.length; i++) {
-  				r[i] = r[i].substring(0, r[i].length() - 3) + ")";
-  			}
-  			String toReplace = entry.getValue();
-  			for (int i = 0; i < ps.length; i++) {
-  				toReplace = pattern[i].matcher(toReplace).replaceAll(r[i]);
-  			}
-  			insertedQueries.put(entry.getKey(), toReplace);
-  		}
-  		measure.setInsertedQueries(insertedQueries);
-  		return measure;
-  	}
+        Iterator<Map.Entry<String, String>> queries = measure.getQueries().entrySet().iterator();
+        while (queries.hasNext()) {
+            Map.Entry<String, String> entry = queries.next();
+            String[] r = new String[ps.length];
+            for (int i = 0; i < ps.length; i++) {
+                r[i] = "(";
+            }
+            for (String s : serviceId) {
+                for (int i = 0; i < ps.length; i++) {
+                    r[i] += ps[i] + "_AGENT = '" + s + "' OR ";
+                }
+            }
+            for (int i = 0; i < ps.length; i++) {
+                r[i] = r[i].substring(0, r[i].length() - 3) + ")";
+            }
+            String toReplace = entry.getValue();
+            for (int i = 0; i < ps.length; i++) {
+                toReplace = pattern[i].matcher(toReplace).replaceAll(r[i]);
+            }
+            insertedQueries.put(entry.getKey(), toReplace);
+        }
+        measure.setInsertedQueries(insertedQueries);
+        return measure;
+    }
 
     private Measure insertQueryVariable(Measure measure, String serviceId, Pattern pattern) {
         Map<String, String> insertedQueries = new HashMap<>();
@@ -804,7 +779,7 @@ public class MonitoringDataProvisionService extends RESTService {
         SuccessModel successModel = readSuccessModelFile(xml, measureFilePath);
         if (!successModel.getServiceName().equals(expectedServiceName)) {
             throw new MalformedXMLException("Service name is " + successModel.getServiceName() + " and not "
-                    + expectedServiceName);
+                + expectedServiceName);
         }
         modelFileBackend.writeFile(Paths.get(group, successModel.getServiceName() + ".xml").toString(), xml, group);
         refreshMeasuresAndModels();
@@ -844,68 +819,68 @@ public class MonitoringDataProvisionService extends RESTService {
     }
 
 
-	public net.minidev.json.JSONArray getTrainingDataUnits(String serviceName, String logMessageType) {
-		net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
-		try {
-			// GET SERVICE AGENT
-			ArrayList<String> sa = getServiceIds(serviceName);
-			// GET MESSAGE FOR SERVICE AGENT
-			String q = "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE (SOURCE_AGENT='" + sa.get(0) + "'";
-			if (sa.size() > 1) {
-				for (int i = 1; i < sa.size(); ++i) {
-					q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
-				}
-			}
-			q += ") AND EVENT='" + logMessageType + "' GROUP BY REMARKS->>\"$.unit\"";
-			reconnect();
-			ResultSet resultSet = database.query(q);
-			while (resultSet.next()) {
-				String u = resultSet.getString(1);
-				resultList.add(u);
-			}
-		} catch (Exception e) {
-			// one may want to handle some exceptions differently
-			e.printStackTrace();
-			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
-		}
-		return resultList;
-	}
+    public net.minidev.json.JSONArray getTrainingDataUnits(String serviceName, String logMessageType) {
+        net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
+        try {
+            // GET SERVICE AGENT
+            ArrayList<String> sa = getServiceIds(serviceName);
+            // GET MESSAGE FOR SERVICE AGENT
+            String q = "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE (SOURCE_AGENT='" + sa.get(0) + "'";
+            if (sa.size() > 1) {
+                for (int i = 1; i < sa.size(); ++i) {
+                    q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
+                }
+            }
+            q += ") AND EVENT='" + logMessageType + "' GROUP BY REMARKS->>\"$.unit\"";
+            reconnect();
+            ResultSet resultSet = database.query(q);
+            while (resultSet.next()) {
+                String u = resultSet.getString(1);
+                resultList.add(u);
+            }
+        } catch (Exception e) {
+            // one may want to handle some exceptions differently
+            e.printStackTrace();
+            Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+        }
+        return resultList;
+    }
 
-	public net.minidev.json.JSONArray getTrainingDataSet(String serviceName, String unit, String logMessageType) {
-		net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
-		try {
-			// GET SERVICE AGENT
-			ArrayList<String> sa = getServiceIds(serviceName);
-			// GET MESSAGE FOR SERVICE AGENT
-			String q = "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE (SOURCE_AGENT='"
-					+ sa.get(0) + "'";
-			if (sa.size() > 1) {
-				for (int i = 1; i < sa.size(); ++i) {
-					q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
-				}
-			}
-			q += ") AND EVENT='" + logMessageType + "'";
-			if (unit != null && unit.length() > 0) {
-				q += " AND JSON_EXTRACT(REMARKS,'$.unit')='" + unit + "'";
-			}
-			reconnect();
-			ResultSet resultSet = database.query(q);
-			while (resultSet.next()) {
-				String from = resultSet.getString(1);
-				String to = resultSet.getString(2);
-				net.minidev.json.JSONObject j = new net.minidev.json.JSONObject();
-				j.put("from", from);
-				j.put("to", to);
-				resultList.add(j);
-			}
-		} catch (Exception e) {
-			// one may want to handle some exceptions differently
-			e.printStackTrace();
-			Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
-		}
-		return resultList;
-	}
-    
+    public net.minidev.json.JSONArray getTrainingDataSet(String serviceName, String unit, String logMessageType) {
+        net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
+        try {
+            // GET SERVICE AGENT
+            ArrayList<String> sa = getServiceIds(serviceName);
+            // GET MESSAGE FOR SERVICE AGENT
+            String q = "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE (SOURCE_AGENT='"
+                + sa.get(0) + "'";
+            if (sa.size() > 1) {
+                for (int i = 1; i < sa.size(); ++i) {
+                    q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
+                }
+            }
+            q += ") AND EVENT='" + logMessageType + "'";
+            if (unit != null && unit.length() > 0) {
+                q += " AND JSON_EXTRACT(REMARKS,'$.unit')='" + unit + "'";
+            }
+            reconnect();
+            ResultSet resultSet = database.query(q);
+            while (resultSet.next()) {
+                String from = resultSet.getString(1);
+                String to = resultSet.getString(2);
+                net.minidev.json.JSONObject j = new net.minidev.json.JSONObject();
+                j.put("from", from);
+                j.put("to", to);
+                resultList.add(j);
+            }
+        } catch (Exception e) {
+            // one may want to handle some exceptions differently
+            e.printStackTrace();
+            Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+        }
+        return resultList;
+    }
+
     @Override
     protected void initResources() {
         getResourceConfig().register(PrematchingRequestFilter.class);
