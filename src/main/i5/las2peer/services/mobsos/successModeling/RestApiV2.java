@@ -75,7 +75,7 @@ public class RestApiV2 {
                 String serviceName = resultSet.getString(2);
                 serviceInfo.put("serviceName", serviceName);
                 serviceInfo.put("serviceAlias", resultSet.getString(3));
-                serviceInfo.put("serviceMessageDescriptions", this.service.getCustomMessageDescriptionsForService(serviceName));
+                serviceInfo.put("registrationTime", resultSet.getTimestamp(4));
                 services.put(resultSet.getString(1), serviceInfo);
             }
         } catch (SQLException e) {
@@ -402,6 +402,15 @@ public class RestApiV2 {
                 .entity(new ErrorDTO("No measure " + measureName + " found for group " + group +
                         " and service " + serviceName))
                 .build();
+    }
+
+    @GET
+    @Path("/messageDescriptions/{service}")
+    public Response getMessageDescriptions(@PathParam("service") String serviceName) {
+        Map<String, String> messageDescriptions = this.service.getCustomMessageDescriptionsForService(serviceName);
+        return Response.status(Response.Status.OK)
+            .entity(messageDescriptions)
+            .build();
     }
 
     private void checkGroupMembership(String group) {
