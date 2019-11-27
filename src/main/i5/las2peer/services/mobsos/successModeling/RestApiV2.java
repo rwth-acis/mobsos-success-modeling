@@ -392,7 +392,7 @@ public class RestApiV2 {
                 measure = this.service.insertService(measure, serviceList);
                 List<String> dbResult = this.service.getRawMeasureData(measure, serviceList);
                 return Response.status(Response.Status.OK)
-                        .entity(new MeasureDataDTO())
+                        .entity(new MeasureDataDTO(dbResult))
                         .build();
             }
         } catch (Exception e) {
