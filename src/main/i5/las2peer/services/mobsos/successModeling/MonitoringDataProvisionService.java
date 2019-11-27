@@ -311,8 +311,10 @@ public class MonitoringDataProvisionService extends RESTService {
 		try {
 			reconnect();
 			for (String query : measure.getInsertedQueries().values()) {
+				System.out.println("[RAW SQL] running raw measurement query: " + query);
 				ResultSet resultSet = database.query(query);
 				MethodResult methodResult = new MethodResult(resultSet);
+				System.out.println("[RAW SQL] got result: " + methodResult.toString());
 				result.add(methodResult.toString());
 			}
 		} catch (Exception e) {
