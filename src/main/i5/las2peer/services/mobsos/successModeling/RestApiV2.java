@@ -282,7 +282,12 @@ public class RestApiV2 {
 
     @GET
     @Path("/models")
-    public Response getSuccessModels() {
+    public Response handleGetSuccessModels() {
+        JSONObject models = getSuccessModels();
+        return Response.status(Response.Status.OK).entity(models.toJSONString()).build();
+    }
+
+    public JSONObject getSuccessModels() {
         JSONObject models = new JSONObject();
         try {
             for (String group : service.knownModelsV2.keySet()) {
@@ -293,33 +298,50 @@ public class RestApiV2 {
             e.printStackTrace();
             Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
         }
-        return Response.status(Response.Status.OK).entity(models.toJSONString()).build();
+        return models;
     }
 
 
     @GET
     @Path("/models/{group}")
-    public Response getSuccessModelsForGroup(@PathParam("group") String group) {
+    public Response handleGetSuccessModelsForGroup(@PathParam("group") String group) 
+    {
+        String models = "";
         try {
-            if (service.knownModelsV2.containsKey(group)) {
-                Map<String, SuccessModel> groupModels = service.knownModelsV2.get(group);
-                JSONObject models = new JSONObject();
-                for (String serviceName : groupModels.keySet()) {
-                    SuccessModel model = groupModels.get(serviceName);
-                    models.put(model.getServiceName(), getGroupModelsUriForService(group, serviceName));
-                }
-                return Response.status(Response.Status.OK).entity(models.toJSONString()).build();
-            }
-        } catch (Exception e) {
+            models = getSuccessModelsForGroup(group);
+        }
+        catch( Exception e )
+        {
             // one may want to handle some exceptions differently
             e.printStackTrace();
             Context.get().monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
         }
-        return Response.status(Response.Status.NOT_FOUND)
+        if ( models == "{}" )
+        {
+            return Response.status(Response.Status.NOT_FOUND)
                 .entity(new ErrorDTO("No catalog found for group " + group))
                 .build();
+        }
+        else
+        {
+            return Response.status(Response.Status.OK)
+                .entity(models)
+                .build();
+        }
     }
 
+    public String getSuccessModelsForGroup(String group) throws Exception
+    {
+        JSONObject models = new JSONObject();
+        if (service.knownModelsV2.containsKey(group)) {
+            Map<String, SuccessModel> groupModels = service.knownModelsV2.get(group);
+            for (String serviceName : groupModels.keySet()) {
+                SuccessModel model = groupModels.get(serviceName);
+                models.put(model.getServiceName(), getGroupModelsUriForService(group, serviceName));
+            } 
+        }
+        return models.toJSONString();
+    }
 
     @GET
     @Path("/models/{group}/{service}")
@@ -379,18 +401,13 @@ public class RestApiV2 {
 
     @GET
     @Path("/models/{group}/{service}/{measure}")
-    public Response getMeasureDataForSuccessModelsAndGroupAndService(@PathParam("group") String group,
+    public Response handleGetMeasureDataForSuccessModelsAndGroupAndService(@PathParam("group") String group,
                                                                      @PathParam("service") String serviceName,
                                                                      @PathParam("measure") String measureName) {
         try {
-            MeasureCatalog catalog = service.getMeasureCatalogByGroup(group);
-            if (successModelExists(group, serviceName) && catalog != null && catalog.getMeasures().containsKey(measureName)) {
-                SuccessModel groupModelForService = service.knownModelsV2.get(group).get(serviceName);
-                Measure measure = catalog.getMeasures().get(measureName);
-                ArrayList<String> serviceList = new ArrayList<String>();
-                serviceList.add(serviceName);
-                measure = this.service.insertService(measure, serviceList);
-                List<String> dbResult = this.service.getRawMeasureData(measure, serviceList);
+            List<String> dbResult = getMeasureDataForSuccessModelsAndGroupAndService( group, serviceName, measureName );
+            if ( dbResult.size() != 0 )
+            {
                 return Response.status(Response.Status.OK)
                         .entity(new MeasureDataDTO(dbResult))
                         .build();
@@ -404,6 +421,22 @@ public class RestApiV2 {
                 .entity(new ErrorDTO("No measure " + measureName + " found for group " + group +
                         " and service " + serviceName))
                 .build();
+    }
+
+    public List<String> getMeasureDataForSuccessModelsAndGroupAndService( String group, String serviceName, String measureName )
+        throws Exception
+    {
+        List<String> dbResult = new ArrayList<>();
+        MeasureCatalog catalog = service.getMeasureCatalogByGroup(group);
+        if (successModelExists(group, serviceName) && catalog != null && catalog.getMeasures().containsKey(measureName)) {
+            SuccessModel groupModelForService = service.knownModelsV2.get(group).get(serviceName);
+            Measure measure = catalog.getMeasures().get(measureName);
+            ArrayList<String> serviceList = new ArrayList<String>();
+            serviceList.add(serviceName);
+            measure = this.service.insertService(measure, serviceList);
+            dbResult = this.service.getRawMeasureData(measure, serviceList);
+        }
+        return dbResult;
     }
 
     @GET
