@@ -18,4 +18,4 @@ RUN ant jar
 EXPOSE $HTTP_PORT
 EXPOSE $HTTPS_PORT
 EXPOSE $LAS2PEER_PORT
-ENTRYPOINT ["/sbin/tini", "--" "/src/docker-entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/src/docker-entrypoint.sh"]
