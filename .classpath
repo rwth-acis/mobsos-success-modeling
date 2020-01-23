@@ -9,7 +9,8 @@
 	<classpathentry kind="lib" path="lib/Javaluator-1.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.12.jar"/>
 	<classpathentry kind="lib" path="lib/json-simple-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/mysql-connector-java-6.0.6.jar"/>
-	<classpathentry kind="lib" path="lib/las2peer-bundle-0.7-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.10.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-8.0.15.jar"/>
+	<classpathentry kind="lib" path="lib/las2peer-bundle-0.8.2.jar"/>
 	<classpathentry kind="output" path="output"/>
 </classpath>

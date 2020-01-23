@@ -24,10 +24,10 @@ import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.testing.TestSuite;
 
 /**
- * 
+ *
  * Tests for the Monitoring Data Provision Service. Mostly just prints out results of method invocations, since it is
  * not predictable which data is stored at the time these tests are run.
- * 
+ *
  * @author Peter de Lange
  *
  */
@@ -43,13 +43,12 @@ public class MonitoringDataProvisionServiceTest {
 
 	private static final String adamsPass = "adamspass";
 	private static final ServiceNameVersion testServiceClass = new ServiceNameVersion(
-			MonitoringDataProvisionService.class.getCanonicalName(), "0.1");
+		MonitoringDataProvisionService.class.getCanonicalName(), "0.8.0");
 
 	@Before
 	public void startServer() throws Exception {
 		// start Node
 		node = TestSuite.launchNetwork(1).get(0);
-
 		user1 = MockAgentFactory.getAdam();
 		user1.unlock(adamsPass);
 		node.storeAgent(user1);
@@ -97,38 +96,39 @@ public class MonitoringDataProvisionServiceTest {
 		try {
 			// Login
 			ClientResponse result = c1.sendRequest("GET",
-					"mobsos-success-modeling/measures?catalog=measure_catalog/measure_catalog-mysql.xml&update=true",
-					"", "*/*", "application/json", new HashMap<String, String>());
+				"mobsos-success-modeling/measures?catalog=myGroupID/measure_catalog-mysql.xml&update=true",
+				"", "*/*", "application/json", new HashMap<>());
 
-			Assert.assertTrue(result.getHttpCode() == 200);
+			Assert.assertEquals(200, result.getHttpCode());
 			JSONParser parser = new JSONParser();
 			JSONArray resultObject = (JSONArray) parser.parse(result.getResponse());
 			for (Object measureName : resultObject)
 				System.out.println("Result of asking for all measures: " + (String) measureName);
 			ClientResponse result2 = c1.sendRequest("GET", "mobsos-success-modeling/nodes", "", "*/*",
-					"application/json", new HashMap<String, String>());
-			Assert.assertTrue(result2.getHttpCode() == 200);
+				"application/json", new HashMap<>());
+			Assert.assertEquals(200, result2.getHttpCode());
 			JSONObject resultObject2 = (JSONObject) parser.parse(result2.getResponse());
 
 			for (Object node : resultObject2.keySet())
 				System.out.println("Result of asking for all nodes: " + (String) node);
 
 			ClientResponse result3 = c1.sendRequest("GET", "mobsos-success-modeling/services", "", "*/*",
-					"application/json", new HashMap<String, String>());
+				"application/json", new HashMap<String, String>());
 			Assert.assertTrue(result3.getHttpCode() == 200);
-			JSONArray resultObject3 = (JSONArray) parser.parse(result3.getResponse());
-			for (Object service : resultObject3)
+			JSONObject resultObject3 = (JSONObject) parser.parse(result3.getResponse());
+			for (Object service : resultObject3.keySet())
 				System.out.println("Result of asking for all monitored service names: " + (String) service);
 
 			if (resultObject3.size() != 0) {
 				String serviceName = (String) resultObject3.get(0);
 				System.out.println("Calling getModels with service: " + serviceName);
+				String path = "mobsos-success-modeling/models?service=" + serviceName
+					+ "&update=true&catalog=myGroupID/measure_catalog-mysql.xml";
 				ClientResponse result4 = c1.sendRequest("GET",
-						"mobsos-success-modeling/models?service=" + serviceName
-								+ "&update=true&catalog=measure_catalog/measure_catalog-mysql.xml",
-						"", "*/*", "application/json", new HashMap<String, String>());
+					path,
+					"", "*/*", "application/json", new HashMap<>());
 
-				Assert.assertTrue(result4.getHttpCode() == 200);
+				Assert.assertEquals(200, result4.getHttpCode());
 				JSONArray resultObject4 = (JSONArray) parser.parse(result4.getResponse());
 				for (Object service : resultObject4)
 					System.out.println("Result of asking for all models: " + (String) service);
@@ -144,7 +144,7 @@ public class MonitoringDataProvisionServiceTest {
 	public void testGetMeasuresAndModels() {
 		try {
 			ClientResponse result = c1.sendRequest("GET", "mobsos-success-modeling/nodes", "", "*/*",
-					"application/json", new HashMap<String, String>());
+				"application/json", new HashMap<String, String>());
 			Assert.assertTrue(result.getHttpCode() == 200);
 			JSONParser parser = new JSONParser();
 			JSONObject resultObject = (JSONObject) parser.parse(result.getResponse());
@@ -154,18 +154,18 @@ public class MonitoringDataProvisionServiceTest {
 
 				System.out.println("Calling Node Success Model with node " + knownNode);
 				String params = "{\"nodeName\":\"" + knownNode + "\"," + "\"updateMeasures\":\"true\","
-						+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
+					+ "\"updateModels\":\"true\"," + "\"catalog\":\"myGroupID/measure_catalog-mysql.xml\"}";
 				ClientResponse result2 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/nodeSuccessModel",
-						params, "application/json", "text/html", new HashMap<String, String>());
+					params, "application/json", "text/html", new HashMap<String, String>());
 				Assert.assertTrue(result2.getHttpCode() == 200);
 				System.out.println("Visualizing Node Success Model Result:\n" + result2.getResponse());
 			} else
 				System.out.println("No monitored nodes, no node success model visualization possible!");
 
 			String params = "{\"modelName\":\"Chat Service Success Model\"," + "\"updateMeasures\":\"true\","
-					+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalogs/measure_catalog-mysql.xml\"}";
+				+ "\"updateModels\":\"true\"," + "\"catalog\":\"measure_catalog-mysql.xml\"}";
 			ClientResponse result3 = c1.sendRequest("POST", "mobsos-success-modeling/visualize/serviceSuccessModel",
-					params, "application/json", "text/html", new HashMap<String, String>());
+				params, "application/json", "text/html", new HashMap<String, String>());
 			Assert.assertTrue(result3.getHttpCode() == 200);
 			System.out.println("Visualizing Chat Service Success Model Result:\n" + result3.getResponse());
 

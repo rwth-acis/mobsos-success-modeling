@@ -1,11 +1,8 @@
 package i5.las2peer.services.mobsos.successModeling.database;
 
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.List;
 
 
 /**
@@ -144,7 +141,51 @@ public class SQLDatabase{
 		Statement statement = connection.createStatement();
 		ResultSet resultSet = statement.executeQuery(SQLStatment);
 		return resultSet;
-		
+	}
+
+	/**
+	 * Query method for untrusted user input. Uses a prepared statement to prevent SQL injection.
+	 *
+	 * @param SQLStatment A SQL statement with questionmarks where the parameters should go.
+	 * @param params      List of parameters as string.
+	 * @return a ResultSet
+	 */
+	public ResultSet query(String SQLStatment, List<String> params) throws SQLException {
+		// make sure one is connected to a database
+		if (!isConnected())
+			throw new SQLException("Not connected!");
+		PreparedStatement statement = connection.prepareStatement(SQLStatment);
+		for (int i = 1; i <= params.size(); i++) {
+			statement.setString(i, params.get(i - 1));
+		}
+		return statement.executeQuery();
+	}
+
+	/**
+	 * Query method for untrusted user input. Uses a prepared statement to prevent SQL injection.
+	 * This query is used for insert/update/delete queries.
+	 *
+	 * @param SQLStatment A SQL statement with questionmarks where the parameters should go.
+	 * @param params      List of parameters as string.
+	 */
+	public void queryWithDataManipulation(String SQLStatment, List<String> params) throws SQLException {
+		// make sure one is connected to a database
+		if (!isConnected())
+			throw new SQLException("Not connected!");
+		PreparedStatement statement = connection.prepareStatement(SQLStatment);
+		for (int i = 1; i <= params.size(); i++) {
+			statement.setString(i, params.get(i - 1));
+		}
+		statement.executeUpdate();
+	}
+
+	public int getRowCount(ResultSet resultSet) throws SQLException {
+		int rowcount = 0;
+		if (resultSet.last()) {
+			rowcount = resultSet.getRow();
+			resultSet.beforeFirst();
+		}
+		return rowcount;
 	}
 	
 	
