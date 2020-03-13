@@ -100,10 +100,31 @@ if [[ ! -z "${BOOTSTRAP}" ]]; then
     LAUNCH_COMMAND="${LAUNCH_COMMAND} -b ${BOOTSTRAP}"
 fi
 
+# it's realistic for different nodes to use different accounts (i.e., to have
+# different node operators). this function echos the N-th mnemonic if the
+# hostname is "something-something-N". if not, first mnemonic is used
+function selectMnemonic {
+    PEER_NUM=$(hostname | cut -d'-' -f3) # get N out of las2peer-peer-N
+    declare -a mnemonics=("differ employ cook sport clinic wedding melody column pave stuff oak price" "memory wrist half aunt shrug elbow upper anxiety maximum valve finish stay" "alert sword real code safe divorce firm detect donate cupboard forward other" "pair stem change april else stage resource accident will divert voyage lawn" "lamp elbow happy never cake very weird mix episode either chimney episode" "cool pioneer toe kiwi decline receive stamp write boy border check retire" "obvious lady prize shrimp taste position abstract promote market wink silver proof" "tired office manage bird scheme gorilla siren food abandon mansion field caution" "resemble cattle regret priority hen six century hungry rice grape patch family" "access crazy can job volume utility dial position shaft stadium soccer seven")
+    if [[ $PEER_NUM =~ ^[0-9]+$ && $PEER_NUM -lt ${#mnemonics[@]} ]]; then
+        echo "${mnemonics[$PEER_NUM]}"
+    else
+        # note: zsh and others use 1-based indexing. this requires bash
+        echo "${mnemonics[0]}"
+    fi
+}
+
+#prepare pastry properties
+echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/pastry.properties
+
 # start the service within a las2peer node
 if [[ -z "${@}" ]]
 then
-  exec ${LAUNCH_COMMAND} startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector
+    if [ -n "$LAS2PEER_ETH_HOST" ]; then
+        exec ${LAUNCH_COMMAND} --observer --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
+    else
+        exec ${LAUNCH_COMMAND} --observer uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector
+    fi
 else
   exec ${LAUNCH_COMMAND} ${@}
 fi
