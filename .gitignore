@@ -10,3 +10,5 @@
 .DS_Store*
 /.idea
 etc/launcher-configuration.ini
+etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
+etc/launcher-configuration.ini
