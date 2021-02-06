@@ -168,11 +168,13 @@ public class RestApiV2 {
       return null;
     }
     try {
+      resultSet.next(); //Select the first result
       String groupID = resultSet.getString(1);
       String groupAlias = resultSet.getString(2);
       boolean member = Context.get().hasAccess(groupID);
       groupInformation = new GroupDTO(groupID, groupAlias, member);
     } catch (SQLException e) {
+      e.printStackTrace();
       System.out.println("Problems reading result set: " + e);
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     } catch (AgentOperationFailedException | AgentNotFoundException e) {
