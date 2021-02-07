@@ -14,6 +14,11 @@ import io.swagger.annotations.*;
 import io.swagger.jaxrs.Reader;
 import io.swagger.models.Swagger;
 import io.swagger.util.Json;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -22,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+import net.minidev.json.parser.JSONParser;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONObject;
 
@@ -45,6 +51,9 @@ import org.json.simple.JSONObject;
   )
 )
 public class RestApiV2 {
+
+  private String defaultDatabase = "las2peer";
+  private String defaultDatabaseSchema = "las2peermon";
 
   @javax.ws.rs.core.Context
   UriInfo uri;
@@ -645,6 +654,233 @@ public class RestApiV2 {
 
     ErrorDTO(String message) {
       this.message = message;
+    }
+  }
+
+  /**
+   * Bot function to get a visualization
+   * @param body jsonString containing the query, the Chart type and other optional parameters
+   * @return image to be displayed in chat
+   */
+  @Path("/getSuccessModel")
+  @POST
+  @ApiOperation(value = "Processes GraphQL request.")
+  @ApiResponses(
+    value = {
+      @ApiResponse(code = 200, message = "Executed request successfully."),
+      @ApiResponse(
+        code = 400,
+        message = "GraphQL call is not in correct syntax."
+      ),
+      @ApiResponse(code = 415, message = "Request is missing GraphQL call."),
+      @ApiResponse(code = 512, message = "Response is not in correct format."),
+      @ApiResponse(code = 513, message = "Internal GraphQL server error."),
+      @ApiResponse(code = 514, message = "Schemafile error."),
+    }
+  )
+  public Response getSuccessModel(String body) {
+    Response res = null;
+    net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+    try {
+      res =
+        getSuccessModelsForGroupAndService(
+          "default",
+          "i5.las2peer.services.mensaService.MensaService"
+        );
+
+      SuccessModelDTO sModel = (SuccessModelDTO) res.getEntity();
+      System.out.println(res.getEntity());
+      chatResponse.put("text", sModel.xml);
+      res = Response.ok(chatResponse.toJSONString()).build();
+    } catch (Exception e) { // } //   res = Response.ok(chatResponse.toString()).build(); //   chatResponse.put("text", e.getMessage()); //   e.printStackTrace(); // catch (ChatException e) {
+      chatResponse.put("text", "An error occured 😦");
+      res = Response.ok(chatResponse.toString()).build();
+      e.printStackTrace();
+    }
+    return res;
+  }
+
+  /**
+   * Bot function to get a visualization
+   * @param body jsonString containing the query, the Chart type and other optional parameters
+   * @return image to be displayed in chat
+   */
+  @Path("/visualize")
+  @POST
+  @ApiOperation(value = "Processes GraphQL request.")
+  @ApiResponses(
+    value = {
+      @ApiResponse(code = 200, message = "Executed request successfully."),
+      @ApiResponse(
+        code = 400,
+        message = "GraphQL call is not in correct syntax."
+      ),
+      @ApiResponse(code = 415, message = "Request is missing GraphQL call."),
+      @ApiResponse(code = 512, message = "Response is not in correct format."),
+      @ApiResponse(code = 513, message = "Internal GraphQL server error."),
+      @ApiResponse(code = 514, message = "Schemafile error."),
+    }
+  )
+  public Response visualizeRequest(String body) {
+    JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+    Response res = null;
+    net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+
+    try {
+      net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+        body
+      );
+      String chartType = json.getAsString("chartType");
+      String chartTitle = json.getAsString("chartTitle");
+
+      InputStream graphQLResponse = graphQLQuery(json);
+
+      json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
+
+      String imagebase64 = getImage(json, chartType, chartTitle);
+
+      chatResponse.put("fileBody", imagebase64);
+      chatResponse.put("fileName", "chart.png");
+      chatResponse.put("fileType", "image/png");
+      res = Response.ok(chatResponse.toString()).build();
+    } catch (ChatException e) {
+      e.printStackTrace();
+      chatResponse.put("text", e.getMessage());
+      res = Response.ok(chatResponse.toString()).build();
+    } catch (Exception e) {
+      chatResponse.put("text", "An error occured 😦");
+      res = Response.ok(chatResponse.toString()).build();
+      e.printStackTrace();
+    }
+    return res;
+  }
+
+  /**
+   * Makes a request to the GraphQl service
+   * @param json contains dbName: name if the db, dbSchema: name of the db schema and query sql query
+   * @return the requested data
+   * @throws ChatException
+   */
+  private InputStream graphQLQuery(net.minidev.json.JSONObject json)
+    throws ChatException {
+    String queryString = prepareGQLQueryString(json);
+
+    try {
+      String urlString = service.grapqhlURL + "/graphql?query=" + queryString;
+      URL url = new URL(urlString);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+      return con.getInputStream();
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new ChatException("Sorry the graphQL request has failed 😶");
+    }
+  }
+
+  /**
+   * Prepares the string to the customQuery query of the graphql schema
+   * @param json contains dbName: name if the db, dbSchema: name of the db schema and query sql query
+   * @return query which can be used as the query parameter in the graphql http request
+   * @throws ChatException
+   */
+  private String prepareGQLQueryString(net.minidev.json.JSONObject json)
+    throws ChatException {
+    String dbName = json.getAsString("dbName");
+    String dbSchema = json.getAsString("dbSchema");
+    String queryString = json.getAsString("query");
+
+    if (dbSchema == null) {
+      dbSchema = this.defaultDatabaseSchema;
+    }
+    if (dbName == null) {
+      dbName = this.defaultDatabase;
+    }
+    if (queryString == null) {
+      queryString = json.getAsString("msg");
+      if (queryString == null) {
+        throw new ChatException("Please provide a query");
+      }
+    }
+
+    return (
+      "{customQuery(dbName: \"" +
+      dbName +
+      "\",dbSchema: \"" +
+      dbSchema +
+      "\",query: \"" +
+      queryString +
+      "\")}"
+    );
+  }
+
+  /**
+   * Makes a call to the visulization service to create a chart as png
+   * @param data Data which should be visualized
+   * @param type type of (Google Charts) chart
+   * @param title title of the chart
+   * @return chart as base64 encoded string
+   * @throws ChatException
+   */
+  private String getImage(
+    net.minidev.json.JSONObject data,
+    String type,
+    String title
+  )
+    throws ChatException {
+    if (type == null) {
+      type = "PieChart";
+    }
+    data.put("chartType", type);
+    if (title != null) {
+      data.put("options", "{'title':" + title + "}");
+    }
+
+    try {
+      String urlString = service.data2chartURL + "/customQuery";
+      URL url = new URL(urlString);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+      con.setRequestProperty("Content-Type", "application/json");
+      con.setRequestMethod("POST");
+      con.setDoOutput(true);
+      DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+      wr.writeBytes(data.toJSONString());
+      wr.flush();
+      wr.close();
+
+      InputStream response = con.getInputStream();
+
+      return toBase64(response);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new ChatException("Sorry the visualization has failed 😶");
+    }
+  }
+
+  /**
+   * Transforms an Input stream into a base64 encoded string
+   * @param is Input stream of a connection
+   * @return base64 encoded string
+   */
+  private String toBase64(InputStream is) {
+    try {
+      byte[] bytes = org.apache.commons.io.IOUtils.toByteArray(is);
+
+      String chunky = Base64.getEncoder().encodeToString(bytes);
+
+      return chunky;
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  /** Exceptions ,with messages, that should be returned in Chat */
+  protected static class ChatException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+
+    protected ChatException(String message) {
+      super(message);
     }
   }
 }
