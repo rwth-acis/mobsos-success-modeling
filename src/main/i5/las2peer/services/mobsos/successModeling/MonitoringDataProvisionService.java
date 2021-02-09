@@ -107,7 +107,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private FileBackend modelFileBackend;
   private boolean measureUpdatingStarted = false;
   boolean insertDatabaseCredentialsIntoQVService;
-  protected String grapqhlURL = "http://127.0.0.1:8080/graphql";
+  protected String grapqhlURL = "127.0.0.1:8090";
   protected String data2chartURL = "http://localhost:3000";
 
   /**

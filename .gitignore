@@ -14,3 +14,4 @@ etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.p
 etc/launcher-configuration.ini
 measure_catalogs/*
 success_models/*
+junit*.properties

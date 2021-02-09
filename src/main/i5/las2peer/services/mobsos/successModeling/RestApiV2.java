@@ -19,6 +19,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,6 +36,7 @@ import net.minidev.json.parser.JSONParser;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -736,53 +739,97 @@ public class RestApiV2 {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         body
       );
-      String chartType = json.getAsString("chartType");
-      String chartTitle = json.getAsString("chartTitle");
+
       String measureName = json.getAsString("measureName");
 
       Object response = getMeasureCatalogForGroup("default").getEntity();
-      try {
-        String xmlString =
-          ((net.minidev.json.JSONObject) response).getAsString("xml");
-        Document xml = loadXMLFromString(xmlString);
-        NodeList measures = xml.getElementsByTagName("measure");
-        Node desiredNode = null;
-        for (int i = 0; i < measures.getLength(); i++) {
-          Node measure = measures.item(i);
-          String name = measure
-            .getAttributes()
-            .getNamedItem("name")
-            .getNodeName();
-          System.out.println(name);
-          if (measureName.equals(name)) {
-            desiredNode = measure;
+
+      json = (net.minidev.json.JSONObject) parser.parse((String) response);
+      String xmlString =
+        ((net.minidev.json.JSONObject) json).getAsString("xml");
+      Document xml = loadXMLFromString(xmlString);
+
+      NodeList measures = xml.getElementsByTagName("measure");
+      Element desiredNode = null;
+      for (int i = 0; i < measures.getLength(); i++) {
+        Node measure = measures.item(i);
+        if (measure.getNodeType() == Node.ELEMENT_NODE) {
+          String name = ((Element) measure).getAttribute("name").toLowerCase(); //get the name of the measure
+
+          if (measureName.toLowerCase().equals(name)) {
+            desiredNode = (Element) measure;
             break;
           }
         }
-        if (desiredNode == null) {
-          throw new ChatException("Node not found");
-        }
-        //get queries as a List
-        //make a graphql request for each query
-
-        //check the visualization type
-        //  if chart call getImage
-        //  else if KPI calculate result
-        //  else if value return the value
-      } catch (Exception e) {
-        e.printStackTrace();
+      }
+      if (desiredNode == null) {
+        throw new ChatException("Node not found");
       }
 
-      InputStream graphQLResponse = graphQLQuery(json);
+      Element visualization = (Element) desiredNode
+        .getElementsByTagName("visualization")
+        .item(
+          desiredNode.getElementsByTagName("visualization").getLength() - 1
+        );
+      System.out.println(
+        (
+          (Element) desiredNode.getElementsByTagName("query").item(0)
+        ).getAttribute("name")
+      );
+      NodeList queries = desiredNode.getElementsByTagName("query");
+      //check the visualization type
+      switch (visualization.getAttribute("type")) {
+        case "Chart":
+          System.out.println(desiredNode.toString());
 
-      json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
+          String sqlQueryString = java.net.URLEncoder.encode(
+            ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
+            "UTF-8"
+          );
+          System.out.println(sqlQueryString);
+          InputStream graphQLResponse = graphQLQuery(sqlQueryString);
+          json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
+          String chartType = visualization
+            .getElementsByTagName("chartType")
+            .item(0)
+            .getTextContent();
+          String chartTitle = visualization
+            .getElementsByTagName("title")
+            .item(0)
+            .getTextContent();
+          String imagebase64 = getImage(json, chartType, chartTitle);
 
-      String imagebase64 = getImage(json, chartType, chartTitle);
+          chatResponse.put("fileBody", imagebase64);
 
-      chatResponse.put("fileBody", imagebase64);
-      chatResponse.put("fileName", "chart.png");
-      chatResponse.put("fileType", "image/png");
-      res = Response.ok(chatResponse.toString()).build();
+          chatResponse.put("fileName", "chart.png");
+          chatResponse.put("fileType", "image/png");
+          res = Response.ok(chatResponse.toString()).build();
+          break;
+        case "KPI":
+          //get queries as a List
+          Number[] operands = new Number[queries.getLength()];
+          for (int i = 0; i < queries.getLength(); i++) {
+            sqlQueryString = ((Element) queries.item(i)).getNodeValue();
+            graphQLResponse = graphQLQuery(sqlQueryString);
+            json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
+            System.out.println(json.getAsNumber("customQuery"));
+            operands[i] = json.getAsNumber("customQuery");
+          }
+
+          //make a graphql request for each query
+          break;
+        case "Value": //Value
+          //get query
+          sqlQueryString = ((Element) queries.item(0)).getNodeValue();
+          graphQLResponse = graphQLQuery(sqlQueryString);
+          json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
+          System.out.println(json.getAsNumber("customQuery"));
+          chatResponse.put("text", json.getAsString("customQuery"));
+          res = Response.ok(chatResponse.toString()).build();
+          break;
+      }
+      //make a graphql request for each query
+
     } catch (ChatException e) {
       e.printStackTrace();
       chatResponse.put("text", e.getMessage());
@@ -816,11 +863,40 @@ public class RestApiV2 {
 
     try {
       String urlString = service.grapqhlURL + "/graphql?query=" + queryString;
+
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
       return con.getInputStream();
     } catch (IOException e) {
+      e.printStackTrace();
+      throw new ChatException("Sorry the graphQL request has failed 😶");
+    }
+  }
+
+  /**
+   * Makes a request to the GraphQl service
+   * @param json contains dbName: name if the db, dbSchema: name of the db schema and query sql query
+   * @return the requested data
+   * @throws ChatException
+   */
+  private InputStream graphQLQuery(String query) throws ChatException {
+    String queryString = prepareGQLQueryString(query);
+
+    try {
+      URL url = new URI(
+        "http",
+        service.grapqhlURL,
+        "/graphql/graphql",
+        "query=" + queryString,
+        null
+      )
+        .toURL();
+      System.out.println(url);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+      return con.getInputStream();
+    } catch (IOException | URISyntaxException e) {
       e.printStackTrace();
       throw new ChatException("Sorry the graphQL request has failed 😶");
     }
@@ -858,6 +934,24 @@ public class RestApiV2 {
       dbSchema +
       "\",query: \"" +
       queryString +
+      "\")}"
+    );
+  }
+
+  /**
+   * Prepares the string to the customQuery query of the graphql schema
+   * @param query  sql query
+   * @return query which can be used as the query parameter in the graphql http request
+   * @throws ChatException
+   */
+  private String prepareGQLQueryString(String query) {
+    return (
+      "{customQuery(dbName: \"" +
+      defaultDatabase +
+      "\",dbSchema: \"" +
+      defaultDatabaseSchema +
+      "\",query: \"" +
+      query +
       "\")}"
     );
   }

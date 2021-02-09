@@ -61,7 +61,7 @@
         </visualization>
     </measure>
     <measure name="Distribution of requests" tags="">
-        <query name="ReqDistro">       SELECT REMARKS->"$.msg" as type, COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'MESSAGE_RECEIVED' GROUP BY REMARKS->"$.msg";   </query>
+        <query name="ReqDistro">       SELECT JSON_EXTRACT(REMARKS,"msg") as type, COUNT(*) FROM LAS2PEERMON.MESSAGE WHERE EVENT = 'MESSAGE_RECEIVED' GROUP BY JSON_EXTRACT(REMARKS,"msg");   </query>
         <visualization type="Chart">
             <chartType>PieChart</chartType>
             <nodeId>chartNode</nodeId>
