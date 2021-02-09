@@ -14,6 +14,7 @@ import io.swagger.annotations.*;
 import io.swagger.jaxrs.Reader;
 import io.swagger.models.Swagger;
 import io.swagger.util.Json;
+import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,9 +28,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import net.minidev.json.parser.JSONParser;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 @Path("/apiv2")
 @Api
@@ -732,6 +738,40 @@ public class RestApiV2 {
       );
       String chartType = json.getAsString("chartType");
       String chartTitle = json.getAsString("chartTitle");
+      String measureName = json.getAsString("measureName");
+
+      Object response = getMeasureCatalogForGroup("default").getEntity();
+      try {
+        String xmlString =
+          ((net.minidev.json.JSONObject) response).getAsString("xml");
+        Document xml = loadXMLFromString(xmlString);
+        NodeList measures = xml.getElementsByTagName("measure");
+        Node desiredNode = null;
+        for (int i = 0; i < measures.getLength(); i++) {
+          Node measure = measures.item(i);
+          String name = measure
+            .getAttributes()
+            .getNamedItem("name")
+            .getNodeName();
+          System.out.println(name);
+          if (measureName.equals(name)) {
+            desiredNode = measure;
+            break;
+          }
+        }
+        if (desiredNode == null) {
+          throw new ChatException("Node not found");
+        }
+        //get queries as a List
+        //make a graphql request for each query
+
+        //check the visualization type
+        //  if chart call getImage
+        //  else if KPI calculate result
+        //  else if value return the value
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
 
       InputStream graphQLResponse = graphQLQuery(json);
 
@@ -753,6 +793,15 @@ public class RestApiV2 {
       e.printStackTrace();
     }
     return res;
+  }
+
+  public Document loadXMLFromString(String xml) throws Exception {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+
+    return builder.parse(new ByteArrayInputStream(xml.getBytes()));
   }
 
   /**
