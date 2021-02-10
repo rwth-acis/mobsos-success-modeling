@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,6 +33,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import net.minidev.json.JSONArray;
 import net.minidev.json.parser.JSONParser;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONObject;
@@ -741,6 +743,7 @@ public class RestApiV2 {
       );
 
       String measureName = json.getAsString("measureName");
+      String tag = json.getAsString("tag");
 
       Object response = getMeasureCatalogForGroup("default").getEntity();
 
@@ -749,55 +752,47 @@ public class RestApiV2 {
         ((net.minidev.json.JSONObject) json).getAsString("xml");
       Document xml = loadXMLFromString(xmlString);
 
-      NodeList measures = xml.getElementsByTagName("measure");
-      Element desiredNode = null;
-      for (int i = 0; i < measures.getLength(); i++) {
-        Node measure = measures.item(i);
-        if (measure.getNodeType() == Node.ELEMENT_NODE) {
-          String name = ((Element) measure).getAttribute("name").toLowerCase(); //get the name of the measure
+      Element desiredMeasure = findMeasureByName(xml, measureName);
 
-          if (measureName.toLowerCase().equals(name)) {
-            desiredNode = (Element) measure;
-            break;
+      if (desiredMeasure == null) { //try to find measure using tag search
+        Set<Node> list = findMeasuresByTag(xml, tag);
+        if (list.isEmpty()) {
+          throw new ChatException("Node not found");
+        }
+        if (list.size() == 1) { //only one result->use this as the desired measure
+          desiredMeasure = (Element) list.iterator().next();
+        } else {
+          String respString =
+            "I found the following measures, matching " + tag + ":\n";
+          Iterator<Node> it = list.iterator();
+
+          for (int j = 0; it.hasNext(); j++) {
+            respString +=
+              j + ". " + ((Element) it.next()).getAttribute("name") + "\n";
           }
+          respString += "Please specify your measure 💁";
+          throw new ChatException(respString);
         }
       }
-      if (desiredNode == null) {
-        throw new ChatException("Node not found");
-      }
 
-      Element visualization = (Element) desiredNode
+      Element visualization = (Element) desiredMeasure
         .getElementsByTagName("visualization")
         .item(
-          desiredNode.getElementsByTagName("visualization").getLength() - 1
+          desiredMeasure.getElementsByTagName("visualization").getLength() - 1
         );
-      System.out.println(
-        (
-          (Element) desiredNode.getElementsByTagName("query").item(0)
-        ).getAttribute("name")
-      );
-      NodeList queries = desiredNode.getElementsByTagName("query");
-      //check the visualization type
+      // System.out.println(
+      //   (
+      //     (Element) desiredMeasure.getElementsByTagName("query").item(0)
+      //   ).getAttribute("name")
+      // );
+
       switch (visualization.getAttribute("type")) {
         case "Chart":
-          System.out.println(desiredNode.toString());
-
-          String sqlQueryString = java.net.URLEncoder.encode(
-            ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
-            "UTF-8"
+          String imagebase64 = getChartFromMeasure(
+            desiredMeasure,
+            parser,
+            visualization
           );
-          System.out.println(sqlQueryString);
-          InputStream graphQLResponse = graphQLQuery(sqlQueryString);
-          json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
-          String chartType = visualization
-            .getElementsByTagName("chartType")
-            .item(0)
-            .getTextContent();
-          String chartTitle = visualization
-            .getElementsByTagName("title")
-            .item(0)
-            .getTextContent();
-          String imagebase64 = getImage(json, chartType, chartTitle);
 
           chatResponse.put("fileBody", imagebase64);
 
@@ -806,30 +801,16 @@ public class RestApiV2 {
           res = Response.ok(chatResponse.toString()).build();
           break;
         case "KPI":
-          //get queries as a List
-          Number[] operands = new Number[queries.getLength()];
-          for (int i = 0; i < queries.getLength(); i++) {
-            sqlQueryString = ((Element) queries.item(i)).getNodeValue();
-            graphQLResponse = graphQLQuery(sqlQueryString);
-            json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
-            System.out.println(json.getAsNumber("customQuery"));
-            operands[i] = json.getAsNumber("customQuery");
-          }
-
-          //make a graphql request for each query
+          String kpi = getKPIFromMeasure(desiredMeasure, parser, visualization);
+          chatResponse.put("text", kpi);
+          res = Response.ok(chatResponse.toString()).build();
           break;
-        case "Value": //Value
-          //get query
-          sqlQueryString = ((Element) queries.item(0)).getNodeValue();
-          graphQLResponse = graphQLQuery(sqlQueryString);
-          json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
-          System.out.println(json.getAsNumber("customQuery"));
-          chatResponse.put("text", json.getAsString("customQuery"));
+        case "Value":
+          String value = getValueFromMeasure(desiredMeasure, parser);
+          chatResponse.put("text", value);
           res = Response.ok(chatResponse.toString()).build();
           break;
       }
-      //make a graphql request for each query
-
     } catch (ChatException e) {
       e.printStackTrace();
       chatResponse.put("text", e.getMessage());
@@ -875,8 +856,8 @@ public class RestApiV2 {
   }
 
   /**
-   * Makes a request to the GraphQl service
-   * @param json contains dbName: name if the db, dbSchema: name of the db schema and query sql query
+   * Makes a request to the GraphQl service uses default database and schema
+   * @param query sql query
    * @return the requested data
    * @throws ChatException
    */
@@ -1015,6 +996,171 @@ public class RestApiV2 {
       e.printStackTrace();
     }
     return null;
+  }
+
+  /**
+   * Returns the first occurence of an element in the document that matches its name attribute with key
+   * @param xml the document to search in
+   * @param key the key by which to search
+   * @return first occurence
+   */
+  private Element findMeasureByName(Document xml, String key) {
+    Element desiredNode = null;
+
+    NodeList measures = xml.getElementsByTagName("measure");
+
+    for (int i = 0; i < measures.getLength(); i++) {
+      Node measure = measures.item(i);
+      if (measure.getNodeType() == Node.ELEMENT_NODE) {
+        String name = ((Element) measure).getAttribute("name").toLowerCase(); //get the name of the measure
+
+        if (key != null && key.toLowerCase().equals(name)) {
+          desiredNode = (Element) measure;
+          break;
+        }
+      }
+    }
+    return desiredNode;
+  }
+
+  /**
+   * find all elements that match key on the tag attribute
+   * @param xml the document to search in
+   * @param tag the tag by which to search
+   * @return
+   */
+  private Set<Node> findMeasuresByTag(Document xml, String tag) {
+    Set<Node> list = new HashSet<Node>();
+    NodeList measures = xml.getElementsByTagName("measure");
+
+    for (int i = 0; i < measures.getLength(); i++) {
+      Node measure = measures.item(i);
+      if (measure.getNodeType() == Node.ELEMENT_NODE) {
+        String[] tags =
+          ((Element) measure).getAttribute("tag").toLowerCase().split(","); //get the name of the measure
+        for (int j = 0; j < tags.length; j++) {
+          if (tags[j].toLowerCase().equals(tag)) {
+            list.add(measure);
+            break;
+          }
+        }
+      }
+    }
+
+    return list;
+  }
+
+  /**
+   * Get the chart from a measure
+   * @param measure measure as xml node
+   * @param parser json parser to parse response from api calls
+   * @param visualization //the visualization xml node
+   * @return chart as base64 encoded string
+   * @throws Exception
+   */
+  private String getChartFromMeasure(
+    Element measure,
+    JSONParser parser,
+    Element visualization
+  )
+    throws Exception {
+    String b64 = null;
+    System.out.println(measure.toString());
+    NodeList queries = measure.getElementsByTagName("query");
+    String sqlQueryString = java.net.URLEncoder.encode(
+      ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
+      "UTF-8"
+    );
+    System.out.println(sqlQueryString);
+    InputStream graphQLResponse = graphQLQuery(sqlQueryString);
+    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+      graphQLResponse
+    );
+    String chartType = visualization
+      .getElementsByTagName("chartType")
+      .item(0)
+      .getTextContent();
+    String chartTitle = visualization
+      .getElementsByTagName("title")
+      .item(0)
+      .getTextContent();
+
+    b64 = getImage(json, chartType, chartTitle);
+    return b64;
+  }
+
+  /**
+   * Visualizes a KPI from a measure
+   * @param measure measure as xml node
+   * @param parser json parser to parse response from api calls
+   * @return
+   * @throws Exception
+   */
+  private String getKPIFromMeasure(
+    Element measure,
+    JSONParser parser,
+    Element visualization
+  )
+    throws Exception {
+    String kpi = null;
+    NodeList queries = measure.getElementsByTagName("query");
+    HashMap<String, String> operands = new HashMap<String, String>();
+    String sqlQueryString;
+    InputStream graphQLResponse;
+    for (int i = 0; i < queries.getLength(); i++) {
+      sqlQueryString = ((Element) queries.item(i)).getNodeValue();
+      graphQLResponse = graphQLQuery(sqlQueryString);
+      net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+        graphQLResponse
+      );
+      String value = extractValue(json, parser);
+      operands.put(((Element) queries.item(i)).getAttribute("name"), value);
+    }
+    //TODO:make some calculations and format string
+    return "Sorry not implemented yet 💁";
+  }
+
+  /**
+   * Returns the value from a measure
+   * @param measure measure as xml node
+   * @param parser json parser to parse response from api calls
+   * @return
+   * @throws Exception
+   */
+  private String getValueFromMeasure(Element measure, JSONParser parser)
+    throws Exception {
+    String value = null;
+
+    NodeList queries = measure.getElementsByTagName("query");
+    String sqlQueryString = java.net.URLEncoder.encode(
+      ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
+      "UTF-8"
+    );
+    InputStream graphQLResponse = graphQLQuery(sqlQueryString);
+    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+      graphQLResponse
+    );
+    value = extractValue(json, parser);
+    return value;
+  }
+
+  private String extractValue(
+    net.minidev.json.JSONObject jsonObject,
+    JSONParser p
+  ) {
+    JSONArray jsonArray;
+    if (jsonObject.get("customQuery") instanceof String) {
+      String arr = ((String) jsonObject.get("customQuery"));
+      try {
+        jsonArray = (JSONArray) p.parse(arr);
+      } catch (Exception e) {
+        jsonArray = (JSONArray) jsonObject.get("customQuery");
+      }
+    } else {
+      jsonArray = (JSONArray) jsonObject.get("customQuery");
+    }
+    return ((net.minidev.json.JSONObject) jsonArray.get(0)).values()
+      .toArray()[0].toString();
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */
