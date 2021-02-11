@@ -757,7 +757,7 @@ public class RestApiV2 {
       if (desiredMeasure == null) { //try to find measure using tag search
         Set<Node> list = findMeasuresByTag(xml, tag);
         if (list.isEmpty()) {
-          throw new ChatException("Node not found");
+          throw new ChatException("No nodes found matching your input💁");
         }
         if (list.size() == 1) { //only one result->use this as the desired measure
           desiredMeasure = (Element) list.iterator().next();
@@ -1006,15 +1006,17 @@ public class RestApiV2 {
    */
   private Element findMeasureByName(Document xml, String key) {
     Element desiredNode = null;
-
+    if (key == null) {
+      return null;
+    }
     NodeList measures = xml.getElementsByTagName("measure");
 
     for (int i = 0; i < measures.getLength(); i++) {
       Node measure = measures.item(i);
       if (measure.getNodeType() == Node.ELEMENT_NODE) {
-        String name = ((Element) measure).getAttribute("name").toLowerCase(); //get the name of the measure
+        String name = ((Element) measure).getAttribute("name"); //get the name of the measure
 
-        if (key != null && key.toLowerCase().equals(name)) {
+        if (key.toLowerCase().equals(name.toLowerCase())) {
           desiredNode = (Element) measure;
           break;
         }
@@ -1113,10 +1115,17 @@ public class RestApiV2 {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         graphQLResponse
       );
-      String value = extractValue(json, parser);
+      String value = null;
+      try {
+        value = extractValue(json, parser);
+      } catch (ChatException e) {
+        e.printStackTrace();
+        //TODO: handle exception
+      }
+
       operands.put(((Element) queries.item(i)).getAttribute("name"), value);
     }
-    //TODO:make some calculations and format string
+    //TODO:make  calculations and format string
     return "Sorry not implemented yet 💁";
   }
 
@@ -1130,7 +1139,7 @@ public class RestApiV2 {
   private String getValueFromMeasure(Element measure, JSONParser parser)
     throws Exception {
     String value = null;
-
+    String measureName = measure.getAttribute("name");
     NodeList queries = measure.getElementsByTagName("query");
     String sqlQueryString = java.net.URLEncoder.encode(
       ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
@@ -1141,13 +1150,20 @@ public class RestApiV2 {
       graphQLResponse
     );
     value = extractValue(json, parser);
-    return value;
+    return measureName + ": " + value;
   }
 
+  /**
+   * Extracts a single value from the graphql response
+   * @param jsonObject contains the desired data under customQuery
+   * @param p used to parse the data
+   * @return
+   */
   private String extractValue(
     net.minidev.json.JSONObject jsonObject,
     JSONParser p
-  ) {
+  )
+    throws ChatException {
     JSONArray jsonArray;
     if (jsonObject.get("customQuery") instanceof String) {
       String arr = ((String) jsonObject.get("customQuery"));
@@ -1159,8 +1175,12 @@ public class RestApiV2 {
     } else {
       jsonArray = (JSONArray) jsonObject.get("customQuery");
     }
-    return ((net.minidev.json.JSONObject) jsonArray.get(0)).values()
-      .toArray()[0].toString();
+    Object[] values =
+      ((net.minidev.json.JSONObject) jsonArray.get(0)).values().toArray();
+    if (values.length == 0) {
+      throw new ChatException("No data has been collected for this measure");
+    }
+    return values[0].toString();
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */

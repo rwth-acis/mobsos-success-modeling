@@ -2,6 +2,5 @@ POST  http://localhost:8080/mobsos-success-modeling/apiv2/visualize
 Content-Type: application/json
 
 {
-    "measureName":"Number of unsuccessfull menu retrievals",
-    "tag":"TimeToReview"
+  "measureName":"Number of unhandled exceptions",
 }
