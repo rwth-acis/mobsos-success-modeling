@@ -1071,7 +1071,7 @@ public class RestApiV2 {
   )
     throws Exception {
     String b64 = null;
-    System.out.println(measure.toString());
+
     NodeList queries = measure.getElementsByTagName("query");
     String sqlQueryString = java.net.URLEncoder.encode(
       ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
@@ -1082,6 +1082,11 @@ public class RestApiV2 {
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
+    if (json.get("customQuery") == null) {
+      throw new ChatException(
+        "No data has been collected for this measure yet"
+      );
+    }
     String chartType = visualization
       .getElementsByTagName("chartType")
       .item(0)
