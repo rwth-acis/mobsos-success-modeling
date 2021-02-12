@@ -806,7 +806,11 @@ public class RestApiV2 {
           res = Response.ok(chatResponse.toString()).build();
           break;
         case "Value":
-          String value = getValueFromMeasure(desiredMeasure, parser);
+          String value = getValueFromMeasure(
+            desiredMeasure,
+            parser,
+            visualization
+          );
           chatResponse.put("text", value);
           res = Response.ok(chatResponse.toString()).build();
           break;
@@ -1136,10 +1140,17 @@ public class RestApiV2 {
    * @return
    * @throws Exception
    */
-  private String getValueFromMeasure(Element measure, JSONParser parser)
+  private String getValueFromMeasure(
+    Element measure,
+    JSONParser parser,
+    Element visualization
+  )
     throws Exception {
     String value = null;
     String measureName = measure.getAttribute("name");
+
+    NodeList units = visualization.getElementsByTagName("unit");
+    String unit = units.getLength() > 0 ? units.item(0).getTextContent() : null;
     NodeList queries = measure.getElementsByTagName("query");
     String sqlQueryString = java.net.URLEncoder.encode(
       ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
@@ -1150,7 +1161,9 @@ public class RestApiV2 {
       graphQLResponse
     );
     value = extractValue(json, parser);
-    return measureName + ": " + value;
+    return unit != null
+      ? measureName + ": " + value + unit
+      : measureName + ": " + value;
   }
 
   /**
