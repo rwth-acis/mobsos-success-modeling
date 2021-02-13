@@ -1038,14 +1038,16 @@ public class RestApiV2 {
   private Set<Node> findMeasuresByTag(Document xml, String tag) {
     Set<Node> list = new HashSet<Node>();
     NodeList measures = xml.getElementsByTagName("measure");
-
+    if (tag == null) {
+      return null;
+    }
     for (int i = 0; i < measures.getLength(); i++) {
       Node measure = measures.item(i);
       if (measure.getNodeType() == Node.ELEMENT_NODE) {
         String[] tags =
-          ((Element) measure).getAttribute("tag").toLowerCase().split(","); //get the name of the measure
+          ((Element) measure).getAttribute("tags").toLowerCase().split(","); //get the name of the measure
         for (int j = 0; j < tags.length; j++) {
-          if (tags[j].toLowerCase().equals(tag)) {
+          if (tags[j].toLowerCase().equals(tag.toLowerCase())) {
             list.add(measure);
             break;
           }
