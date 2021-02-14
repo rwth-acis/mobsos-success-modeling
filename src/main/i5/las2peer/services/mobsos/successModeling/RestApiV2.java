@@ -1115,29 +1115,68 @@ public class RestApiV2 {
     Element visualization
   )
     throws Exception {
-    String kpi = null;
+    String kpi = "";
     NodeList queries = measure.getElementsByTagName("query");
-    HashMap<String, String> operands = new HashMap<String, String>();
-    String sqlQueryString;
-    InputStream graphQLResponse;
+    String measureName = measure.getAttribute("name");
+
+    kpi += measureName + ": \n";
+
+    HashMap<Integer, String> operationInfo = new HashMap<Integer, String>(); //holds the childs of visualization
+    for (int i = 0; i < visualization.getChildNodes().getLength(); i++) {
+      Node node = visualization.getChildNodes().item(i);
+      if (node instanceof Element) {
+        int index = Integer.parseInt(((Element) node).getAttribute("index"));
+        String name = ((Element) node).getAttribute("name");
+        kpi += name;
+        operationInfo.put(index, name); //operands might not be sorted by index}
+      }
+    }
+    kpi += "=";
+
+    HashMap<String, Number> values = new HashMap<String, Number>();
     for (int i = 0; i < queries.getLength(); i++) {
-      sqlQueryString = ((Element) queries.item(i)).getNodeValue();
-      graphQLResponse = graphQLQuery(sqlQueryString);
+      String queryName = ((Element) queries.item(i)).getAttribute("name");
+      String sqlQueryString = java.net.URLEncoder.encode(
+        ((Element) queries.item(i)).getTextContent().replaceAll("\"", "'"),
+        "UTF-8"
+      );
+
+      System.out.println(sqlQueryString);
+      InputStream graphQLResponse = graphQLQuery(sqlQueryString);
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         graphQLResponse
       );
       String value = null;
-      try {
-        value = extractValue(json, parser);
-      } catch (ChatException e) {
-        e.printStackTrace();
-        //TODO: handle exception
-      }
 
-      operands.put(((Element) queries.item(i)).getAttribute("name"), value);
+      value = extractValue(json, parser);
+      values.put(queryName, Float.valueOf(value)); //save as floats idk
     }
-    //TODO:make  calculations and format string
-    return "Sorry not implemented yet 💁";
+
+    float accu = 0; //saves the result
+    float curr = 0; //current value which accu will be operated on
+    for (int i = 0; i < operationInfo.size(); i++) {
+      if (i == 0) {
+        accu = (Float) values.get(operationInfo.get(i));
+      } else if (i % 2 == 1) {
+        curr = (Float) values.get(operationInfo.get(i + 1));
+        switch (operationInfo.get(i)) {
+          case "/":
+            if (curr == 0) return "Division by 0"; else accu = accu / curr;
+            break;
+          case "*":
+            accu = accu * curr;
+            break;
+          case "-":
+            accu = accu - curr;
+            break;
+          case "+":
+            accu = accu + curr;
+            break;
+        }
+      }
+    }
+    kpi += String.valueOf(accu);
+    return kpi;
   }
 
   /**
