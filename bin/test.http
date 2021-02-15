@@ -2,5 +2,5 @@ POST  http://localhost:8080/mobsos-success-modeling/apiv2/visualize
 Content-Type: application/json
 
 {
-  "tag":"BotRequest",
+  "measureName":"Avergae process time per uri",
 }

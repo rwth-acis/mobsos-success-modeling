@@ -763,7 +763,7 @@ public class RestApiV2 {
           desiredMeasure = (Element) list.iterator().next();
         } else {
           String respString =
-            "I found the following measures, matching " + tag + ":\n";
+            "I found the following measures, matching \"" + tag + "\":\n";
           Iterator<Node> it = list.iterator();
 
           for (int j = 0; it.hasNext(); j++) {
@@ -780,11 +780,6 @@ public class RestApiV2 {
         .item(
           desiredMeasure.getElementsByTagName("visualization").getLength() - 1
         );
-      // System.out.println(
-      //   (
-      //     (Element) desiredMeasure.getElementsByTagName("query").item(0)
-      //   ).getAttribute("name")
-      // );
 
       switch (visualization.getAttribute("type")) {
         case "Chart":
@@ -960,7 +955,9 @@ public class RestApiV2 {
     }
     data.put("chartType", type);
     if (title != null) {
-      data.put("options", "{'title':" + title + "}");
+      JSONObject titleObj = new JSONObject();
+      titleObj.put("title", title);
+      data.put("options", titleObj.toJSONString());
     }
 
     try {
@@ -1161,7 +1158,10 @@ public class RestApiV2 {
         curr = (Float) values.get(operationInfo.get(i + 1));
         switch (operationInfo.get(i)) {
           case "/":
-            if (curr == 0) return "Division by 0"; else accu = accu / curr;
+            if (
+              curr == 0
+            ) return "You are trying to divide something by 0 😅"; else accu =
+              accu / curr;
             break;
           case "*":
             accu = accu * curr;
