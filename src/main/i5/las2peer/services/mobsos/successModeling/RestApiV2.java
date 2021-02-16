@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -842,7 +843,7 @@ public class RestApiV2 {
     String queryString = prepareGQLQueryString(json);
 
     try {
-      String urlString = service.grapqhlURL + "/graphql?query=" + queryString;
+      String urlString = service.GRAPHQ_HOST + "/graphql?query=" + queryString;
 
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -864,9 +865,27 @@ public class RestApiV2 {
     String queryString = prepareGQLQueryString(query);
 
     try {
+      // try {
+      //   Object res = Context
+      //     .get()
+      //     .invoke(
+      //       "i5.las2peer.services.mediabaseAPI.MediabaseGraphQLAPI@1.0.0",
+      //       "queryExecute",
+      //       queryString
+      //     );
+      //   if (res instanceof String) {
+      //     System.out.println("ETZSTSADF");
+      //     System.out.println();
+      //   } else {
+      //     System.out.println("TYEPPEof" + res.getClass());
+      //   }
+      // } catch (Exception e) {
+      //   e.printStackTrace();
+      // }
+
       URL url = new URI(
         "http",
-        service.grapqhlURL,
+        service.GRAPHQ_HOST,
         "/graphql/graphql",
         "query=" + queryString,
         null
@@ -961,7 +980,7 @@ public class RestApiV2 {
     }
 
     try {
-      String urlString = service.data2chartURL + "/customQuery";
+      String urlString = service.CHART_API_ENDPOINT + "/customQuery";
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
       con.setRequestProperty("Content-Type", "application/json");
@@ -1223,13 +1242,16 @@ public class RestApiV2 {
     JSONParser p
   )
     throws ChatException {
-    JSONArray jsonArray;
+    JSONArray jsonArray = null;
     if (jsonObject.get("customQuery") instanceof String) {
-      String arr = ((String) jsonObject.get("customQuery"));
+      String result = (String) jsonObject.get("customQuery");
       try {
-        jsonArray = (JSONArray) p.parse(arr);
+        jsonArray =
+          (JSONArray) ((net.minidev.json.JSONObject) p.parse(result)).get(
+              "result"
+            );
       } catch (Exception e) {
-        jsonArray = (JSONArray) jsonObject.get("customQuery");
+        e.printStackTrace();
       }
     } else {
       jsonArray = (JSONArray) jsonObject.get("customQuery");

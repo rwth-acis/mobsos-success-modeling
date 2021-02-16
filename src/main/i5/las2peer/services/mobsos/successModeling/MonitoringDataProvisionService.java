@@ -107,8 +107,8 @@ public class MonitoringDataProvisionService extends RESTService {
   private FileBackend modelFileBackend;
   private boolean measureUpdatingStarted = false;
   boolean insertDatabaseCredentialsIntoQVService;
-  protected String grapqhlURL = "127.0.0.1:8090";
-  protected String data2chartURL = "http://localhost:3000";
+  protected String GRAPHQ_HOST = "127.0.0.1:8090";
+  protected String CHART_API_ENDPOINT = "http://localhost:3000";
 
   /**
    * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.
