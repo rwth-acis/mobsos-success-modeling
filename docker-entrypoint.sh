@@ -55,6 +55,8 @@ set_in_service_config databasePort ${MYSQL_PORT}
 set_in_service_config useFileService ${USE_FILE_SERVICE}
 set_in_service_config catalogFileLocation ${CATALOG_FILE_LOCATION}
 set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATION}
+set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
+set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
 
 # configure web connector properties
 
