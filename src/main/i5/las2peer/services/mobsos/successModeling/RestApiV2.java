@@ -1358,14 +1358,23 @@ public class RestApiV2 {
     res += dimension.getAttribute("name") + ":\n";
     NodeList factors = dimension.getElementsByTagName("factor");
     for (int i = 0; i < factors.getLength(); i++) {
-      res += "  " + ((Element) factors.item(i)).getAttribute("name") + ":\n";
-      NodeList measures =
-        ((Element) factors.item(i)).getElementsByTagName("measure");
-      for (int j = 0; j < measures.getLength(); j++) {
-        res += "•" + ((Element) measures.item(i)).getAttribute("name") + ":\n";
-      }
+      res += "  " + factorToText((Element) factors.item(i));
     }
     return res;
+  }
+
+  private String factorToText(Element factor) {
+    String res = "";
+    res += factor.getAttribute("name") + ":\n";
+    NodeList measures = ((Element) factor).getElementsByTagName("measure");
+    for (int j = 0; j < measures.getLength(); j++) {
+      res += "•" + measureToText((Element) measures.item(j));
+    }
+    return res;
+  }
+
+  private String measureToText(Element measure) {
+    return measure.getAttribute("name") + ":\n";
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */
