@@ -717,6 +717,79 @@ public class RestApiV2 {
    * @param body jsonString containing the query, the Chart type and other optional parameters
    * @return image to be displayed in chat
    */
+  @Path("/listMeasures")
+  @POST
+  @ApiOperation(value = "Processes GraphQL request.")
+  @ApiResponses(
+    value = {
+      @ApiResponse(code = 200, message = "Executed request successfully."),
+      @ApiResponse(
+        code = 400,
+        message = "GraphQL call is not in correct syntax."
+      ),
+      @ApiResponse(code = 415, message = "Request is missing GraphQL call."),
+      @ApiResponse(code = 512, message = "Response is not in correct format."),
+      @ApiResponse(code = 513, message = "Internal GraphQL server error."),
+      @ApiResponse(code = 514, message = "Schemafile error."),
+    }
+  )
+  public Response listMeasures(String body) {
+    JSONParser p = new JSONParser(JSONParser.MODE_PERMISSIVE);
+
+    net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+    String chatResponseText = "";
+    try {
+      net.minidev.json.JSONObject requestObject = (net.minidev.json.JSONObject) p.parse(
+        body
+      );
+      String groupName = requestObject.getAsString("groupName");
+      String serviceName = requestObject.getAsString("serviceName");
+      String dimension = requestObject.getAsString("dimension");
+      // String serviceName= requestObject.getAsString("serviceName");
+      if (groupName == null) {
+        chatResponseText +=
+          "No group name was defined so the default group is used\n";
+        groupName = "default";
+        if (serviceName == null) {
+          chatResponseText +=
+            "No service name was defined so the mensa service is used\n";
+          serviceName = "i5.las2peer.services.mensaService.MensaService";
+        }
+      } else {
+        GroupDTO group = (GroupDTO) this.getGroup(groupName).getEntity();
+        if (!group.isMember) {
+          throw new ChatException(
+            "Sorry I am not part of the group " +
+            groupName +
+            "😱. Contact your admin to add me to the group "
+          );
+        }
+      }
+      SuccessModelDTO success = (SuccessModelDTO) this.getSuccessModelsForGroupAndService(
+          groupName,
+          serviceName
+        )
+        .getEntity();
+
+      chatResponseText += SuccessModelToText(success.xml, null);
+      chatResponse.put("text", chatResponseText);
+    } catch (ChatException e) {
+      e.printStackTrace();
+      chatResponse.put("text", e.getMessage());
+      chatResponse.put("closeContext", false);
+    } catch (Exception e) {
+      e.printStackTrace();
+      chatResponse.put("text", "Sorry an error occured 💁");
+      chatResponse.put("closeContext", false);
+    }
+    return Response.ok(chatResponse).build();
+  }
+
+  /**
+   * Bot function to get a visualization
+   * @param body jsonString containing the query, the Chart type and other optional parameters
+   * @return image to be displayed in chat
+   */
   @Path("/visualize")
   @POST
   @ApiOperation(value = "Processes GraphQL request.")
@@ -771,7 +844,7 @@ public class RestApiV2 {
             respString +=
               j + ". " + ((Element) it.next()).getAttribute("name") + "\n";
           }
-          respString += "Please specify your measure 💁";
+          respString += "Please specify your measure";
           throw new ChatException(respString);
         }
       }
@@ -1262,6 +1335,37 @@ public class RestApiV2 {
       throw new ChatException("No data has been collected for this measure");
     }
     return values[0].toString();
+  }
+
+  private String SuccessModelToText(String xml, String dimension)
+    throws Exception {
+    String res = "";
+    Document model = loadXMLFromString(xml);
+    NodeList dimensions = model.getElementsByTagName("dimension");
+    for (int i = 0; i < dimensions.getLength(); i++) {
+      if (
+        dimension == null ||
+        dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
+      ) {
+        res += dimensionToText((Element) dimensions.item(i));
+      }
+    }
+    return res;
+  }
+
+  private String dimensionToText(Element dimension) {
+    String res = "";
+    res += dimension.getAttribute("name") + ":\n";
+    NodeList factors = dimension.getElementsByTagName("factor");
+    for (int i = 0; i < factors.getLength(); i++) {
+      res += "  " + ((Element) factors.item(i)).getAttribute("name") + ":\n";
+      NodeList measures =
+        ((Element) factors.item(i)).getElementsByTagName("measure");
+      for (int j = 0; j < measures.getLength(); j++) {
+        res += "•" + ((Element) measures.item(i)).getAttribute("name") + ":\n";
+      }
+    }
+    return res;
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */

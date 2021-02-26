@@ -14,7 +14,7 @@ COPY --chown=las2peer:las2peer . /src
 WORKDIR /src
 
 RUN dos2unix docker-entrypoint.sh
-RUN etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
+RUN  dos2unix etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
 # run the rest as unprivileged user
 USER las2peer
 RUN ant jar
