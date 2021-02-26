@@ -3,6 +3,7 @@ package i5.las2peer.services.mobsos.successModeling;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import i5.las2peer.api.Context;
 import i5.las2peer.api.logging.MonitoringEvent;
+import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.AgentNotFoundException;
 import i5.las2peer.api.security.AgentOperationFailedException;
 import i5.las2peer.serialization.MalformedXMLException;
@@ -669,48 +670,34 @@ public class RestApiV2 {
     }
   }
 
-  /**
-   * Bot function to get a visualization
-   * @param body jsonString containing the query, the Chart type and other optional parameters
-   * @return image to be displayed in chat
-   */
-  @Path("/getSuccessModel")
-  @POST
-  @ApiOperation(value = "Processes GraphQL request.")
-  @ApiResponses(
-    value = {
-      @ApiResponse(code = 200, message = "Executed request successfully."),
-      @ApiResponse(
-        code = 400,
-        message = "GraphQL call is not in correct syntax."
-      ),
-      @ApiResponse(code = 415, message = "Request is missing GraphQL call."),
-      @ApiResponse(code = 512, message = "Response is not in correct format."),
-      @ApiResponse(code = 513, message = "Internal GraphQL server error."),
-      @ApiResponse(code = 514, message = "Schemafile error."),
-    }
-  )
-  public Response getSuccessModel(String body) {
-    Response res = null;
-    net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
-    try {
-      res =
-        getSuccessModelsForGroupAndService(
-          "default",
-          "i5.las2peer.services.mensaService.MensaService"
-        );
+  // /**
+  //  * Bot function to get a visualization
+  //  * @param body jsonString containing the query, the Chart type and other optional parameters
+  //  * @return image to be displayed in chat
+  //  */
+  // @Path("/getSuccessModel")
+  // @POST
+  // public Response getSuccessModel(String body) {
+  //   Response res = null;
+  //   net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+  //   try {
+  //     res =
+  //       getSuccessModelsForGroupAndService(
+  //         "default",
+  //         "i5.las2peer.services.mensaService.MensaService"
+  //       );
 
-      SuccessModelDTO sModel = (SuccessModelDTO) res.getEntity();
-      System.out.println(res.getEntity());
-      chatResponse.put("text", sModel.xml);
-      res = Response.ok(chatResponse.toJSONString()).build();
-    } catch (Exception e) { // } //   res = Response.ok(chatResponse.toString()).build(); //   chatResponse.put("text", e.getMessage()); //   e.printStackTrace(); // catch (ChatException e) {
-      chatResponse.put("text", "An error occured 😦");
-      res = Response.ok(chatResponse.toString()).build();
-      e.printStackTrace();
-    }
-    return res;
-  }
+  //     SuccessModelDTO sModel = (SuccessModelDTO) res.getEntity();
+  //     System.out.println(res.getEntity());
+  //     chatResponse.put("text", sModel.xml);
+  //     res = Response.ok(chatResponse.toJSONString()).build();
+  //   } catch (Exception e) { // } //   res = Response.ok(chatResponse.toString()).build(); //   chatResponse.put("text", e.getMessage()); //   e.printStackTrace(); // catch (ChatException e) {
+  //     chatResponse.put("text", "An error occured 😦");
+  //     res = Response.ok(chatResponse.toString()).build();
+  //     e.printStackTrace();
+  //   }
+  //   return res;
+  // }
 
   /**
    * Bot function to get a visualization
@@ -745,7 +732,7 @@ public class RestApiV2 {
       String groupName = requestObject.getAsString("groupName");
       String serviceName = requestObject.getAsString("serviceName");
       String dimension = requestObject.getAsString("dimension");
-      // String serviceName= requestObject.getAsString("serviceName");
+      String email = requestObject.getAsString("email");
       if (groupName == null) {
         chatResponseText +=
           "No group name was defined so the default group is used\n";
@@ -761,17 +748,26 @@ public class RestApiV2 {
           throw new ChatException(
             "Sorry I am not part of the group " +
             groupName +
-            "😱. Contact your admin to add me to the group "
+            "😱. Contact your admin to add me to the group"
+          );
+        }
+        String agentId = Context.get().getUserAgentIdentifierByEmail(email);
+        if (
+          !Context.get().hasAccess(agentId, Context.get().getServiceAgent())
+        ) {
+          throw new ChatException(
+            "Sorry you are not a member of this group 😓. Contact your admin to be added to the group"
           );
         }
       }
+
       SuccessModelDTO success = (SuccessModelDTO) this.getSuccessModelsForGroupAndService(
           groupName,
           serviceName
         )
         .getEntity();
 
-      chatResponseText += SuccessModelToText(success.xml, null);
+      chatResponseText += SuccessModelToText(success.xml, dimension);
       chatResponse.put("text", chatResponseText);
     } catch (ChatException e) {
       e.printStackTrace();
