@@ -818,6 +818,14 @@ public class RestApiV2 {
       Object response = getMeasureCatalogForGroup("default").getEntity();
 
       json = (net.minidev.json.JSONObject) parser.parse((String) response);
+
+      if (!(response instanceof String)) {
+        System.out.println(response);
+        throw new ChatException(
+          "I could not get the measure catalog for your group 😔"
+        );
+      }
+
       String xmlString =
         ((net.minidev.json.JSONObject) json).getAsString("xml");
       Document xml = loadXMLFromString(xmlString);
@@ -827,7 +835,9 @@ public class RestApiV2 {
       if (desiredMeasure == null) { //try to find measure using tag search
         Set<Node> list = findMeasuresByTag(xml, tag);
         if (list.isEmpty()) {
-          throw new ChatException("No nodes found matching your input💁");
+          throw new ChatException(
+            "No nodes found matching your input💁\n you can add them yourself by following this link: https://monitor.tech4comp.dbis.rwth-aachen.de/ \n or create a requirement by following this link: https://requirements-bazaar.org/"
+          );
         }
         if (list.size() == 1) { //only one result->use this as the desired measure
           desiredMeasure = (Element) list.iterator().next();
