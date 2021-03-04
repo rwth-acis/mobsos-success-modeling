@@ -895,9 +895,9 @@ public class RestApiV2 {
       chatResponse.put("text", e.getMessage());
       res = Response.ok(chatResponse.toString()).build();
     } catch (Exception e) {
+      e.printStackTrace();
       chatResponse.put("text", "An error occured 😦");
       res = Response.ok(chatResponse.toString()).build();
-      e.printStackTrace();
     }
     return res;
   }
@@ -920,9 +920,11 @@ public class RestApiV2 {
   private InputStream graphQLQuery(net.minidev.json.JSONObject json)
     throws ChatException {
     String queryString = prepareGQLQueryString(json);
+    String protocol = service.GRAPHQL_PROTOCOL + "//";
 
     try {
-      String urlString = service.GRAPHQ_HOST + "/graphql?query=" + queryString;
+      String urlString =
+        protocol + service.GRAPHQ_HOST + "/graphql?query=" + queryString;
 
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -963,7 +965,7 @@ public class RestApiV2 {
       // }
 
       URL url = new URI(
-        "http",
+        service.GRAPHQL_PROTOCOL,
         service.GRAPHQ_HOST,
         "/graphql/graphql",
         "query=" + queryString,
