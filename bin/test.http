@@ -1,6 +1,7 @@
-POST http://localhost:8080/mobsos-success-modeling/apiv2/visualize
+POST https://git.tech4comp.dbis.rwth-aachen.de/mobsos-success-modeling/apiv2/groups
 Content-Type: application/json
+Authorization: Basic YWxpY2U6cHdhbGljZQ==
 
 {
-  "measureName":"Top contributors"
+  "groupID":"groupA"
 }

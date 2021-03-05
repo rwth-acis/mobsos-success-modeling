@@ -919,7 +919,10 @@ public class RestApiV2 {
    */
   private InputStream graphQLQuery(net.minidev.json.JSONObject json)
     throws ChatException {
-    String queryString = prepareGQLQueryString(json);
+    String dbName = json.getAsString("dbName");
+    String dbSchema = json.getAsString("dbSchema");
+    String query = json.getAsString("query");
+    String queryString = prepareGQLQueryString(dbName, dbSchema, query);
     String protocol = service.GRAPHQL_PROTOCOL + "//";
 
     try {
@@ -946,24 +949,6 @@ public class RestApiV2 {
     String queryString = prepareGQLQueryString(query);
 
     try {
-      // try {
-      //   Object res = Context
-      //     .get()
-      //     .invoke(
-      //       "i5.las2peer.services.mediabaseAPI.MediabaseGraphQLAPI@1.0.0",
-      //       "queryExecute",
-      //       queryString
-      //     );
-      //   if (res instanceof String) {
-      //     System.out.println("ETZSTSADF");
-      //     System.out.println();
-      //   } else {
-      //     System.out.println("TYEPPEof" + res.getClass());
-      //   }
-      // } catch (Exception e) {
-      //   e.printStackTrace();
-      // }
-
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
         service.GRAPHQ_HOST,
@@ -984,27 +969,26 @@ public class RestApiV2 {
 
   /**
    * Prepares the string to the customQuery query of the graphql schema
-   * @param json contains dbName: name if the db, dbSchema: name of the db schema and query sql query
-   * @return query which can be used as the query parameter in the graphql http request
+   * @param dbName name of the database. This name uniquelly identifies the datase on the graphql service
+   * @param dbSchema name of the database schema
+   * @param query query which can be used as the query parameter in the graphql http request
+   * @return
    * @throws ChatException
    */
-  private String prepareGQLQueryString(net.minidev.json.JSONObject json)
+  private String prepareGQLQueryString(
+    String dbName,
+    String dbSchema,
+    String query
+  )
     throws ChatException {
-    String dbName = json.getAsString("dbName");
-    String dbSchema = json.getAsString("dbSchema");
-    String queryString = json.getAsString("query");
-
     if (dbSchema == null) {
       dbSchema = this.defaultDatabaseSchema;
     }
     if (dbName == null) {
       dbName = this.defaultDatabase;
     }
-    if (queryString == null) {
-      queryString = json.getAsString("msg");
-      if (queryString == null) {
-        throw new ChatException("Please provide a query");
-      }
+    if (query == null) {
+      throw new ChatException("Please provide a query");
     }
 
     return (
@@ -1013,13 +997,13 @@ public class RestApiV2 {
       "\",dbSchema: \"" +
       dbSchema +
       "\",query: \"" +
-      queryString +
+      query +
       "\")}"
     );
   }
 
   /**
-   * Prepares the string to the customQuery query of the graphql schema
+   * Prepares the string to the customQuery query of the graphql schema. Will use the default database and schema
    * @param query  sql query
    * @return query which can be used as the query parameter in the graphql http request
    * @throws ChatException
