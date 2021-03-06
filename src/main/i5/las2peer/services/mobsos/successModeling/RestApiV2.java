@@ -20,6 +20,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -28,6 +29,7 @@ import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -35,9 +37,16 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import net.minidev.json.JSONArray;
 import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.glassfish.jersey.server.ParamException;
 import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -67,6 +76,18 @@ public class RestApiV2 {
 
   private String defaultDatabase = "las2peer";
   private String defaultDatabaseSchema = "las2peermon";
+  private String defaultGroup = "default";
+  private String defaultServiceName =
+    "i5.las2peer.services.mensaService.MensaService";
+  private List<String> successDimensions = Arrays.asList(
+    "System Quality",
+    "Information Quality",
+    "Use",
+    "User Satisfaction",
+    "Individual Impact",
+    "Community Impact"
+  );
+  private static HashMap<String, net.minidev.json.JSONObject> userContext = new HashMap<String, net.minidev.json.JSONObject>();
 
   @javax.ws.rs.core.Context
   UriInfo uri;
@@ -736,11 +757,11 @@ public class RestApiV2 {
       if (groupName == null) {
         chatResponseText +=
           "No group name was defined so the default group is used\n";
-        groupName = "default";
+        groupName = defaultGroup;
         if (serviceName == null) {
           chatResponseText +=
             "No service name was defined so the mensa service is used\n";
-          serviceName = "i5.las2peer.services.mensaService.MensaService";
+          serviceName = defaultServiceName;
         }
       } else {
         GroupDTO group = (GroupDTO) this.getGroup(groupName).getEntity();
@@ -788,20 +809,6 @@ public class RestApiV2 {
    */
   @Path("/visualize")
   @POST
-  @ApiOperation(value = "Processes GraphQL request.")
-  @ApiResponses(
-    value = {
-      @ApiResponse(code = 200, message = "Executed request successfully."),
-      @ApiResponse(
-        code = 400,
-        message = "GraphQL call is not in correct syntax."
-      ),
-      @ApiResponse(code = 415, message = "Request is missing GraphQL call."),
-      @ApiResponse(code = 512, message = "Response is not in correct format."),
-      @ApiResponse(code = 513, message = "Internal GraphQL server error."),
-      @ApiResponse(code = 514, message = "Schemafile error."),
-    }
-  )
   public Response visualizeRequest(String body) {
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
     Response res = null;
@@ -813,22 +820,11 @@ public class RestApiV2 {
       );
 
       String measureName = json.getAsString("measureName");
+      String groupName = json.getAsString("groupName");
+      if (groupName == null) groupName = defaultGroup;
       String tag = json.getAsString("tag");
 
-      Object response = getMeasureCatalogForGroup("default").getEntity();
-
-      json = (net.minidev.json.JSONObject) parser.parse((String) response);
-
-      if (!(response instanceof String)) {
-        System.out.println(response);
-        throw new ChatException(
-          "I could not get the measure catalog for your group 😔"
-        );
-      }
-
-      String xmlString =
-        ((net.minidev.json.JSONObject) json).getAsString("xml");
-      Document xml = loadXMLFromString(xmlString);
+      Document xml = getMeasureCatalogForGroup(groupName, parser);
 
       Element desiredMeasure = findMeasureByName(xml, measureName);
 
@@ -900,6 +896,318 @@ public class RestApiV2 {
       res = Response.ok(chatResponse.toString()).build();
     }
     return res;
+  }
+
+  @Path("/updateSuccessModel")
+  @POST
+  public Response updateSuccessModel(String body) {
+    Document catalog;
+    Document model;
+    JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+    Response res = null;
+    net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+
+    try {
+      net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+        body
+      );
+      String email = json.getAsString("email");
+      net.minidev.json.JSONObject context = userContext.get(email);
+      if (context == null) {
+        context = new net.minidev.json.JSONObject();
+      }
+      net.minidev.json.JSONObject newContext = updateContext(context, json);
+      userContext.put(email, newContext);
+
+      String groupName = newContext.getAsString("groupName");
+      String serviceName = newContext.getAsString("serviceName");
+      String dimensionName = newContext.getAsString("dimensionName");
+      String measureName = newContext.getAsString("measureName");
+      String factorName = newContext.getAsString("factorName");
+      Integer userSelection = null;
+
+      if (groupName == null) groupName = defaultGroup;
+      if (serviceName == null) serviceName = defaultServiceName;
+
+      String intent = json.getAsString("intent");
+
+      if ("number_selection".equals(intent)) {
+        //if this intent is recognized the user chose an item from a list. We determine the intent from the old context. The new intent will be one step further in the process
+        switch (context.getAsString("intent")) {
+          case "startUpdatingModel":
+            intent = "provideDimension";
+            break;
+          case "provideDimension":
+            intent = "provideFactor";
+            break;
+          case "provideFactor":
+            intent = "provideMeasure";
+            break;
+        }
+        userSelection = (Integer) json.getAsNumber("number");
+      }
+
+      switch (intent) {
+        case "startUpdatingModel":
+          chatResponse.put("text", formatSuccessDimensions(newContext));
+          break;
+        case "provideDimension":
+          if (userSelection == null) {
+            if (dimensionName == null) {
+              throw new ChatException("Please provide a dimension");
+            }
+          } else {
+            dimensionName = successDimensions.get(userSelection);
+          }
+          System.out.println(
+            "User selected the " + dimensionName + " dimension"
+          );
+          model =
+            getSuccessModelForGroupAndService(groupName, serviceName, parser);
+
+          chatResponse.put(
+            "text",
+            formatSuccesFactorsForDimension(model, dimensionName, newContext)
+          );
+          break;
+        case "provideFactor":
+          if (userSelection == null) {
+            if (factorName == null) {
+              throw new ChatException("Please provide a factor");
+            }
+          } else {
+            NodeList factors = (NodeList) context.get("currentSelection");
+            factorName =
+              ((Element) factors.item(userSelection)).getAttribute("name");
+          }
+          System.out.println("User selected the " + factorName + " factor");
+          catalog = getMeasureCatalogForGroup(groupName, parser);
+          chatResponse.put(
+            "text",
+            formatMeasuresFromCatalog(catalog, newContext)
+          );
+          break;
+        case "provideMeasure":
+          if (userSelection == null) {
+            if (measureName == null) {
+              throw new ChatException("Please provide a measure");
+            }
+          } else {
+            NodeList measures = (NodeList) context.get("currentSelection");
+            measureName =
+              ((Element) measures.item(userSelection)).getAttribute("name");
+          }
+          System.out.println("User selected the " + measureName + " measure");
+          catalog = getMeasureCatalogForGroup(groupName, parser);
+          model =
+            getSuccessModelForGroupAndService(groupName, serviceName, parser);
+          Element measureElement = extractElementByName(measureName, catalog);
+          Element factorElement = extractElementByName(factorName, model);
+          if (factorElement == null) {
+            throw new Exception("Adding factors not yet supported");
+          }
+          factorElement.appendChild(measureElement);
+          SuccessModelDTO successModel = new SuccessModelDTO();
+          successModel.xml = toXMLString(model);
+          Response response = updateSuccessModelsForGroupAndService(
+            groupName,
+            serviceName,
+            successModel
+          );
+          // newContext.put("newModel", model);
+          if (response.getStatus() == 200) {
+            chatResponse.put(
+              "text",
+              "Your measure was successfully added to the model"
+            );
+          } else {
+            throw new ChatException("The model could not be updated 😦");
+          }
+          break;
+        default:
+          System.out.println(
+            "Unexpected intent " +
+            intent +
+            " recognized. Choosing default response"
+          );
+          chatResponse.put("text", formatSuccessDimensions(newContext));
+          break;
+      }
+    } catch (ChatException e) {
+      e.printStackTrace();
+      chatResponse.put("text", e.getMessage());
+    } catch (Exception e) {
+      e.printStackTrace();
+      chatResponse.put("text", "An error occured 😦");
+    }
+    res = Response.ok(chatResponse.toString()).build();
+    return res;
+  }
+
+  private String toXMLString(Document doc) {
+    TransformerFactory tf = TransformerFactory.newInstance();
+    Transformer transformer;
+    try {
+      transformer = tf.newTransformer();
+      // below code to remove XML declaration
+      // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+      StringWriter writer = new StringWriter();
+      transformer.transform(new DOMSource(doc), new StreamResult(writer));
+      String output = writer.getBuffer().toString();
+      return output;
+    } catch (TransformerException e) {
+      e.printStackTrace();
+    }
+
+    return null;
+  }
+
+  private Element extractElementByName(String elementName, Document doc) {
+    Element desiredElement = null;
+    NodeList elements = doc.getElementsByTagName("factor");
+    for (int i = 0; i < elements.getLength(); i++) {
+      if (elements.item(i) instanceof Element) {
+        if (
+          elementName.equals(((Element) elements.item(i)).getAttribute("name"))
+        ) {
+          desiredElement = (Element) elements.item(i);
+          break;
+        }
+      }
+    }
+
+    return desiredElement;
+  }
+
+  private net.minidev.json.JSONObject updateContext(
+    net.minidev.json.JSONObject context,
+    net.minidev.json.JSONObject newinfo
+  ) {
+    net.minidev.json.JSONObject newContext = context;
+    Set<Entry<String, Object>> entries = newinfo.entrySet();
+    for (Entry<String, Object> entry : entries) {
+      if (entry.getValue() != null) newContext.put(
+        entry.getKey(),
+        entry.getValue()
+      );
+    }
+    return newContext;
+  }
+
+  private String formatMeasuresFromCatalog(
+    Document catalog,
+    net.minidev.json.JSONObject context
+  ) {
+    String response = "Please select one of the following measures";
+    NodeList measures = catalog.getElementsByTagName("measure");
+    context.put("currentSelection", measures);
+    for (int i = 0; i < measures.getLength(); i++) {
+      response += i + ". " + ((Element) measures.item(i)).getAttribute("name");
+    }
+    return response;
+  }
+
+  private String formatSuccesFactorsForDimension(
+    Document model,
+    String dimension,
+    net.minidev.json.JSONObject context
+  )
+    throws ChatException {
+    String response = "Which of the following factors do you want to edit?\n";
+    NodeList dimensions = model.getElementsByTagName("dimension");
+    Element desiredDimension = null;
+    for (int i = 0; i < dimensions.getLength(); i++) {
+      if (dimensions.item(i) instanceof Element) {
+        if (
+          dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
+        ) {
+          desiredDimension = (Element) dimensions.item(i);
+          break;
+        }
+      }
+    }
+    if (desiredDimension == null) {
+      throw new ChatException(
+        "The desired measure was not found in the success model"
+      );
+    }
+
+    NodeList factors = desiredDimension.getElementsByTagName("factor");
+    context.put("currentSelection", factors);
+
+    if (factors.getLength() == 0) {
+      return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
+    }
+    for (int i = 0; i < factors.getLength(); i++) {
+      response += i + ". " + ((Element) factors.item(i)).getAttribute("name");
+    }
+    response += "You can also add a factor by providing a name.";
+    return response;
+  }
+
+  private String formatSuccessDimensions(net.minidev.json.JSONObject context) {
+    String response =
+      "Which of the following dimensions do you want to edit?\n";
+    context.put("currentSelection", successDimensions);
+    for (int i = 0; i < successDimensions.size(); i++) {
+      String dimension = successDimensions.get(i);
+      response += i + ". " + dimension + "\n";
+    }
+    return response;
+  }
+
+  private Document getSuccessModelForGroupAndService(
+    String groupName,
+    String serviceName,
+    JSONParser parser
+  )
+    throws Exception {
+    Document model = null;
+
+    Object response = getSuccessModelsForGroupAndService(groupName, serviceName)
+      .getEntity();
+
+    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+      (String) response
+    );
+
+    if (!(response instanceof String)) {
+      System.out.println(response);
+      throw new ChatException(
+        "I could not get the success catalog for your group 😔"
+      );
+    }
+
+    String xmlString = ((net.minidev.json.JSONObject) json).getAsString("xml");
+    model = loadXMLFromString(xmlString);
+
+    return model;
+  }
+
+  private Document getMeasureCatalogForGroup(
+    String groupName,
+    JSONParser parser
+  )
+    throws Exception {
+    Document catalog = null;
+
+    Object response = getMeasureCatalogForGroup(groupName).getEntity();
+
+    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+      (String) response
+    );
+
+    if (!(response instanceof String)) {
+      System.out.println(response);
+      throw new ChatException(
+        "I could not get the measure catalog for your group 😔"
+      );
+    }
+
+    String xmlString = ((net.minidev.json.JSONObject) json).getAsString("xml");
+    catalog = loadXMLFromString(xmlString);
+
+    return catalog;
   }
 
   public Document loadXMLFromString(String xml) throws Exception {
