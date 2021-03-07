@@ -75,7 +75,7 @@ import org.w3c.dom.NodeList;
 public class RestApiV2 {
 
   private String defaultDatabase = "las2peer";
-  private String defaultDatabaseSchema = "las2peermon";
+  private String defaultDatabaseSchema = "LASPEERMON";
   private String defaultGroup =
     "951bf680284ec3d2c95629d25e0153d146d9599c2218c702c43b491d2841b5012b14a52ae1e7c8a47300d055edce219199fad49eef00dd33dd723afd7e998b12";
   private String defaultServiceName =
