@@ -110,6 +110,16 @@ public class RestApiV2 {
   }
 
   @GET
+  @Path("/swagger.json")
+  public Response getSwagger2() throws JsonProcessingException {
+    Swagger swagger = (new Reader(new Swagger())).read(this.getClass());
+    return Response
+      .status(Response.Status.OK)
+      .entity(Json.mapper().writeValueAsString(swagger))
+      .build();
+  }
+
+  @GET
   @Path("/services")
   public Response getServices() {
     JSONObject services = new JSONObject();
