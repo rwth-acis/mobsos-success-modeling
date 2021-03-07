@@ -1617,8 +1617,10 @@ public class RestApiV2 {
   )
     throws ChatException {
     JSONArray jsonArray = null;
+    System.out.println(jsonObject);
     if (jsonObject.get("customQuery") instanceof String) {
       String result = (String) jsonObject.get("customQuery");
+      System.out.println(result);
       try {
         jsonArray =
           (JSONArray) ((net.minidev.json.JSONObject) p.parse(result)).get(
@@ -1629,6 +1631,9 @@ public class RestApiV2 {
       }
     } else {
       jsonArray = (JSONArray) jsonObject.get("customQuery");
+    }
+    if (jsonArray == null) {
+      throw new ChatException("No data has been collected for this measure");
     }
     Object[] values =
       ((net.minidev.json.JSONObject) jsonArray.get(0)).values().toArray();
