@@ -829,15 +829,21 @@ public class RestApiV2 {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         body
       );
-
-      String measureName = json.getAsString("measureName");
+      String tag = json.getAsString("tag");
+      String measureName = json.getAsString("msg");
+      if (tag == null) {
+        if (measureName == null) throw new ChatException(
+          "Please provide a measure"
+        );
+      }
       String groupName = json.getAsString("groupName");
       if (groupName == null) groupName = defaultGroup;
-      String tag = json.getAsString("tag");
-
       Document xml = getMeasureCatalogForGroup(groupName, parser);
+      Element desiredMeasure = null;
 
-      Element desiredMeasure = findMeasureByName(xml, measureName);
+      if (!"search".equals(json.getAsString("intent"))) {
+        desiredMeasure = findMeasureByName(xml, measureName);
+      }
 
       if (desiredMeasure == null) { //try to find measure using tag search
         Set<Node> list = findMeasuresByTag(xml, tag);
