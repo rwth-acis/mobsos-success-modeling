@@ -1,8 +1,8 @@
-POST https://git.tech4comp.dbis.rwth-aachen.de/mobsos-success-modeling/apiv2/visualize
+POST http://localhost:8080/mobsos-success-modeling/apiv2/visualize
 Content-Type: application/json
 Authorization: Basic YWxpY2U6cHdhbGljZQ==
 
 {
-  "measureName":"Avergae time to process a request",
+  "measureName":"Avergae process time per uri",
   "groupName":"951bf680284ec3d2c95629d25e0153d146d9599c2218c702c43b491d2841b5012b14a52ae1e7c8a47300d055edce219199fad49eef00dd33dd723afd7e998b12"
 }
