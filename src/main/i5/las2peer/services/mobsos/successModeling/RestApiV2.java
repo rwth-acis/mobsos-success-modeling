@@ -753,6 +753,7 @@ public class RestApiV2 {
     }
   )
   public Response listMeasures(String body) {
+    System.out.println("User requesting a list of all measures");
     JSONParser p = new JSONParser(JSONParser.MODE_PERMISSIVE);
 
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
@@ -821,6 +822,7 @@ public class RestApiV2 {
   @Path("/visualize")
   @POST
   public Response visualizeRequest(String body) {
+    System.out.println("User requesting a visualization");
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
     Response res = null;
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
@@ -918,6 +920,7 @@ public class RestApiV2 {
   @Path("/updateSuccessModel")
   @POST
   public Response updateSuccessModel(String body) {
+    System.out.println("User requesting an update of the success model");
     Document catalog;
     Document model;
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
