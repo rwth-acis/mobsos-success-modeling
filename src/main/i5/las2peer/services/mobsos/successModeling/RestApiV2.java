@@ -966,7 +966,7 @@ public class RestApiV2 {
             intent = "provideMeasure";
             break;
         }
-        userSelection = (Integer) json.getAsNumber("number") - 1; // user list starts at 1
+        userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
       }
 
       switch (intent) {

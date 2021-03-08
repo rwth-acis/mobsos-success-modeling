@@ -11,7 +11,7 @@ RUN addgroup -g 1000 -S las2peer && \
     adduser -u 1000 -S las2peer -G las2peer
 
 COPY --chown=las2peer:las2peer . /src
-WORKDIR /src
+WORKDIR /src 
 
 RUN dos2unix docker-entrypoint.sh
 RUN  dos2unix etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
