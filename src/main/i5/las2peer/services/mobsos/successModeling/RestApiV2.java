@@ -953,7 +953,8 @@ public class RestApiV2 {
 
       String intent = json.getAsString("intent");
 
-      if ("number_selection".equals(intent)) {
+      if (intent.contains("number_selection")) {
+        System.out.println("Intent: " + intent);
         //if this intent is recognized the user chose an item from a list. We determine the intent from the old context. The new intent will be one step further in the process
         switch (context.getAsString("intent")) {
           case "startUpdatingModel":
@@ -965,7 +966,11 @@ public class RestApiV2 {
           case "provideFactor":
             intent = "provideMeasure";
             break;
+          default:
+            intent = "provideDimension";
+            break;
         }
+        System.out.println("Intent: " + intent);
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
       }
 
@@ -1296,9 +1301,8 @@ public class RestApiV2 {
    * @throws ChatException
    */
   private InputStream graphQLQuery(String query) throws ChatException {
-    String queryString = prepareGQLQueryString(query);
-
     try {
+      String queryString = prepareGQLQueryString(query);
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
         service.GRAPHQ_HOST,
@@ -1358,7 +1362,13 @@ public class RestApiV2 {
    * @return query which can be used as the query parameter in the graphql http request
    * @throws ChatException
    */
-  private String prepareGQLQueryString(String query) {
+  private String prepareGQLQueryString(String query)
+    throws UnsupportedEncodingException {
+    if (query.contains("\\")) {
+      query = java.net.URLEncoder.encode(query.replaceAll("\"", "'"), "UTF-8");
+    }
+
+    System.out.println("SQL: " + query);
     return (
       "{customQuery(dbName: \"" +
       defaultDatabase +
@@ -1506,15 +1516,15 @@ public class RestApiV2 {
     String b64 = null;
 
     NodeList queries = measure.getElementsByTagName("query");
-    String sqlQueryString = java.net.URLEncoder.encode(
-      ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
-      "UTF-8"
+
+    InputStream graphQLResponse = graphQLQuery(
+      ((Element) queries.item(0)).getTextContent()
     );
-    System.out.println(sqlQueryString);
-    InputStream graphQLResponse = graphQLQuery(sqlQueryString);
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
+    System.out.println("Raw gql response: " + graphQLResponse);
+
     if (json.get("customQuery") == null) {
       throw new ChatException(
         "No data has been collected for this measure yet"

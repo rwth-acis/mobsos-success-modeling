@@ -32,7 +32,7 @@
     </measure>
     <measure name='Number of unsuccessfull menu retrievals' tags=''>
         <query name='menuRetrieveFailures'>			SELECT COUNT(*) FROM			LAS2PEERMON.MESSAGE			WHERE EVENT = 'SERVICE_CUSTOM_ERROR_2' AND SOURCE_AGENT = '$SERVICE$'        </query>
-        <visualization type='Value'>
+        <visuali    zation type='Value'>
             <unit/>
         </visualization>
     </measure>
