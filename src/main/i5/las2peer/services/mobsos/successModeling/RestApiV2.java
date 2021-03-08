@@ -775,6 +775,7 @@ public class RestApiV2 {
             "No service name was defined so the mensa service is used\n";
           serviceName = defaultServiceName;
         }
+        chatResponseText += "\n";
       } else {
         GroupDTO group = (GroupDTO) this.getGroup(groupName).getEntity();
         if (!group.isMember) {
@@ -938,6 +939,7 @@ public class RestApiV2 {
       }
       net.minidev.json.JSONObject newContext = updateContext(context, json);
       userContext.put(email, newContext);
+      String msg = json.getAsString("msg");
 
       String groupName = newContext.getAsString("groupName");
       String serviceName = newContext.getAsString("serviceName");
@@ -970,6 +972,7 @@ public class RestApiV2 {
       switch (intent) {
         case "startUpdatingModel":
           chatResponse.put("text", formatSuccessDimensions(newContext));
+          chatResponse.put("closeContext", false);
           break;
         case "provideDimension":
           if (userSelection == null) {
@@ -989,9 +992,11 @@ public class RestApiV2 {
             "text",
             formatSuccesFactorsForDimension(model, dimensionName, newContext)
           );
+          chatResponse.put("closeContext", false);
           break;
         case "provideFactor":
           if (userSelection == null) {
+            factorName = msg; //in this case we suppose that the user wants typed a factorname instead of providing a number
             if (factorName == null) {
               throw new ChatException("Please provide a factor");
             }
@@ -1006,9 +1011,11 @@ public class RestApiV2 {
             "text",
             formatMeasuresFromCatalog(catalog, newContext)
           );
+          chatResponse.put("closeContext", false);
           break;
         case "provideMeasure":
           if (userSelection == null) {
+            measureName = msg; //we suppose that the user typed the measure name instead of providing a number
             if (measureName == null) {
               throw new ChatException("Please provide a measure");
             }
@@ -1021,10 +1028,17 @@ public class RestApiV2 {
           catalog = getMeasureCatalogForGroup(groupName, parser);
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
+
           Element measureElement = extractElementByName(measureName, catalog);
           Element factorElement = extractElementByName(factorName, model);
           if (factorElement == null) {
-            throw new Exception("Adding factors not yet supported");
+            Element dimensionElement = extractElementByName(
+              dimensionName,
+              model
+            );
+            factorElement = model.createElement("factor");
+            factorElement.setAttribute("name", factorName);
+            dimensionElement.appendChild(factorElement);
           }
           factorElement.appendChild(measureElement);
           SuccessModelDTO successModel = new SuccessModelDTO();
@@ -1672,7 +1686,7 @@ public class RestApiV2 {
         dimension == null ||
         dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
       ) {
-        res += dimensionToText((Element) dimensions.item(i));
+        res += i + ") " + dimensionToText((Element) dimensions.item(i));
       }
     }
     return res;
@@ -1683,7 +1697,7 @@ public class RestApiV2 {
     res += dimension.getAttribute("name") + ":\n";
     NodeList factors = dimension.getElementsByTagName("factor");
     for (int i = 0; i < factors.getLength(); i++) {
-      res += "  " + factorToText((Element) factors.item(i));
+      res += "    -" + factorToText((Element) factors.item(i));
     }
     return res;
   }
@@ -1693,13 +1707,13 @@ public class RestApiV2 {
     res += factor.getAttribute("name") + ":\n";
     NodeList measures = ((Element) factor).getElementsByTagName("measure");
     for (int j = 0; j < measures.getLength(); j++) {
-      res += "•" + measureToText((Element) measures.item(j));
+      res += "        •" + measureToText((Element) measures.item(j));
     }
     return res;
   }
 
   private String measureToText(Element measure) {
-    return measure.getAttribute("name") + ":\n";
+    return measure.getAttribute("name") + "\n";
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */
