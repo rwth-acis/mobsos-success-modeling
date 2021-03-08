@@ -966,7 +966,7 @@ public class RestApiV2 {
             intent = "provideMeasure";
             break;
         }
-        userSelection = (Integer) json.getAsNumber("number");
+        userSelection = (Integer) json.getAsNumber("number") - 1; // user list starts at 1
       }
 
       switch (intent) {
@@ -1135,8 +1135,10 @@ public class RestApiV2 {
     String response = "Please select one of the following measures";
     NodeList measures = catalog.getElementsByTagName("measure");
     context.put("currentSelection", measures);
+    userContext.put(context.getAsString("email"), context);
     for (int i = 0; i < measures.getLength(); i++) {
-      response += i + ". " + ((Element) measures.item(i)).getAttribute("name");
+      response +=
+        (i + 1) + ". " + ((Element) measures.item(i)).getAttribute("name");
     }
     return response;
   }
@@ -1168,24 +1170,30 @@ public class RestApiV2 {
 
     NodeList factors = desiredDimension.getElementsByTagName("factor");
     context.put("currentSelection", factors);
+    userContext.put(context.getAsString("email"), context);
 
     if (factors.getLength() == 0) {
       return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
     }
     for (int i = 0; i < factors.getLength(); i++) {
-      response += i + ". " + ((Element) factors.item(i)).getAttribute("name");
+      response +=
+        (i + 1) + ". " + ((Element) factors.item(i)).getAttribute("name");
     }
     response += "You can also add a factor by providing a name.";
     return response;
   }
 
   private String formatSuccessDimensions(net.minidev.json.JSONObject context) {
+    String email = context.getAsString("email");
+
     String response =
       "Which of the following dimensions do you want to edit?\n";
     context.put("currentSelection", successDimensions);
+    userContext.put(email, context);
+
     for (int i = 0; i < successDimensions.size(); i++) {
       String dimension = successDimensions.get(i);
-      response += i + ". " + dimension + "\n";
+      response += (i + 1) + ". " + dimension + "\n";
     }
     return response;
   }
