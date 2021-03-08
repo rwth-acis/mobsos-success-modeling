@@ -75,7 +75,7 @@ import org.w3c.dom.NodeList;
 public class RestApiV2 {
 
   private String defaultDatabase = "las2peer";
-  private String defaultDatabaseSchema = "LASPEERMON";
+  private String defaultDatabaseSchema = "LAS2PEERMON";
   private String defaultGroup =
     "951bf680284ec3d2c95629d25e0153d146d9599c2218c702c43b491d2841b5012b14a52ae1e7c8a47300d055edce219199fad49eef00dd33dd723afd7e998b12";
   private String defaultServiceName =
@@ -1311,7 +1311,7 @@ public class RestApiV2 {
         null
       )
         .toURL();
-      System.out.println(url);
+      System.out.println("Graphql request: " + url);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
       return con.getInputStream();
@@ -1364,9 +1364,9 @@ public class RestApiV2 {
    */
   private String prepareGQLQueryString(String query)
     throws UnsupportedEncodingException {
-    if (query.contains("\\")) {
-      query = java.net.URLEncoder.encode(query.replaceAll("\"", "'"), "UTF-8");
-    }
+    // if (query.contains("\\")) {
+    //   query = java.net.URLEncoder.encode(query.replaceAll("\"", "'"), "UTF-8");
+    // }
 
     System.out.println("SQL: " + query);
     return (
@@ -1523,7 +1523,7 @@ public class RestApiV2 {
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
-    System.out.println("Raw gql response: " + graphQLResponse);
+    System.out.println("gql response: " + json);
 
     if (json.get("customQuery") == null) {
       throw new ChatException(
