@@ -824,6 +824,7 @@ public class RestApiV2 {
   @POST
   public Response visualizeRequest(String body) {
     System.out.println("User requesting a visualization");
+    System.out.println("Message body: " + body);
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
     Response res = null;
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
@@ -832,6 +833,12 @@ public class RestApiV2 {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         body
       );
+      String email = json.getAsString("email");
+      net.minidev.json.JSONObject context = userContext.get(email);
+      if (context == null) {
+        context = new net.minidev.json.JSONObject();
+      }
+
       String tag = json.getAsString("tag");
       String measureName = json.getAsString("msg");
       if (tag == null) {
@@ -839,34 +846,61 @@ public class RestApiV2 {
           "Please provide a measure"
         );
       }
+      String intent = json.getAsString("intent");
       String groupName = json.getAsString("groupName");
-      if (groupName == null) groupName = defaultGroup;
+      if (groupName == null) {
+        groupName = context.getAsString("groupName");
+        if (groupName == null) {
+          groupName = defaultGroup;
+        }
+      }
       Document xml = getMeasureCatalogForGroup(groupName, parser);
       Element desiredMeasure = null;
 
-      if (!"search".equals(json.getAsString("intent"))) {
-        desiredMeasure = findMeasureByName(xml, measureName);
+      desiredMeasure = findMeasureByName(xml, measureName);
+      if (intent.equals("number_selection")) {
+        if (context.get("currentSelection") instanceof Set<?>) {
+          Set<Node> measures = (Set<Node>) context.get("currentSelection");
+
+          int userSelection =
+            ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
+          if (measures.size() > userSelection) {
+            desiredMeasure = (Element) measures.toArray()[userSelection];
+          }
+        }
       }
 
       if (desiredMeasure == null) { //try to find measure using tag search
-        Set<Node> list = findMeasuresByTag(xml, tag);
+        Set<Node> list = findMeasuresByTag(xml, measureName);
         if (list.isEmpty()) {
           throw new ChatException(
-            "No nodes found matching your input💁\n you can add them yourself by following this link: https://monitor.tech4comp.dbis.rwth-aachen.de/ \n or create a requirement by following this link: https://requirements-bazaar.org/"
+            "No nodes found matching your input💁\n " +
+            "you can add them yourself by following this link:\n" +
+            "https://monitor.tech4comp.dbis.rwth-aachen.de/ \n " +
+            "or create a requirement by following this link: \n" +
+            "https://requirements-bazaar.org/"
           );
         }
         if (list.size() == 1) { //only one result->use this as the desired measure
           desiredMeasure = (Element) list.iterator().next();
         } else {
+          context.put("currentSelection", list);
+          userContext.put(email, context);
           String respString =
-            "I found the following measures, matching \"" + tag + "\":\n";
+            "I found the following measures, matching \"" +
+            measureName +
+            "\":\n";
           Iterator<Node> it = list.iterator();
 
           for (int j = 0; it.hasNext(); j++) {
             respString +=
-              j + ". " + ((Element) it.next()).getAttribute("name") + "\n";
+              (j + 1) +
+              ". " +
+              ((Element) it.next()).getAttribute("name") +
+              "\n";
           }
           respString += "Please specify your measure";
+
           throw new ChatException(respString);
         }
       }
@@ -1406,6 +1440,9 @@ public class RestApiV2 {
 
     try {
       String urlString = service.CHART_API_ENDPOINT + "/customQuery";
+      // if (!urlString.contains("http")) {
+      //   urlString = "http://" + urlString;
+      // }
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
       con.setRequestProperty("Content-Type", "application/json");
