@@ -967,50 +967,42 @@ public class RestApiV2 {
         body
       );
       String email = json.getAsString("email");
+      String intent = json.getAsString("intent");
       net.minidev.json.JSONObject context = userContext.get(email);
+
       if (context == null) {
         context = new net.minidev.json.JSONObject();
       }
-      net.minidev.json.JSONObject newContext = updateContext(context, json);
-      userContext.put(email, newContext);
+      if (intent.contains("number_selection")) {
+        intent = determineNewIntent(context); //in this case figure out the new intent from the old context
+      }
+
+      net.minidev.json.JSONObject newContext = getNewContext(context, json);
+
       String msg = json.getAsString("msg");
 
+      //Some variables which might be usefull in the future...
       String groupName = newContext.getAsString("groupName");
       String serviceName = newContext.getAsString("serviceName");
       String dimensionName = newContext.getAsString("dimensionName");
       String measureName = newContext.getAsString("measureName");
       String factorName = newContext.getAsString("factorName");
+
       Integer userSelection = null;
+      if (intent.contains("number_selection")) {
+        userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
+      }
+
+      userContext.put(email, newContext); //better be safe than sorry...
 
       if (groupName == null) groupName = defaultGroup;
       if (serviceName == null) serviceName = defaultServiceName;
 
-      String intent = json.getAsString("intent");
-      String lastIntent = context.getAsString("intent");
-
-      if (intent.contains("number_selection")) {
-        System.out.println("Intent: " + intent);
-        //if this intent is recognized the user chose an item from a list. We determine the intent from the old context. The new intent will be one step further in the process
-        switch (lastIntent) {
-          case "startUpdatingModel":
-            intent = "provideDimension";
-            break;
-          case "provideDimension":
-            intent = "provideFactor";
-            break;
-          case "provideFactor":
-            intent = "provideMeasure";
-            break;
-          default:
-            intent = "provideDimension";
-            break;
-        }
-        System.out.println("Intent: " + intent);
-        newContext.put("intent", intent);
-        userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
-      }
-
       switch (intent) {
+        case "rejection":
+          chatResponse.put("text", "Alright, discarding changes...");
+          chatResponse.put("closeContext", true);
+          break;
         case "startUpdatingModel":
           chatResponse.put("text", formatSuccessDimensions(newContext));
           chatResponse.put("closeContext", false);
@@ -1137,6 +1129,27 @@ public class RestApiV2 {
     return null;
   }
 
+  private String determineNewIntent(net.minidev.json.JSONObject oldContext) {
+    String oldIntent = oldContext.getAsString("intent");
+    System.out.println("Intent: " + oldIntent);
+    System.out.println("Old Context: " + oldContext.toString());
+    String newIntent = null;
+
+    switch (oldIntent) {
+      case "startUpdatingModel":
+        newIntent = "provideDimension";
+        break;
+      case "provideDimension":
+        newIntent = "provideFactor";
+        break;
+      case "provideFactor":
+        newIntent = "provideMeasure";
+        break;
+    }
+    System.out.println("Intent is now: " + newIntent);
+    return newIntent;
+  }
+
   private Element extractElementByName(String elementName, Document doc) {
     Element desiredElement = null;
     NodeList elements = doc.getElementsByTagName("factor");
@@ -1154,7 +1167,7 @@ public class RestApiV2 {
     return desiredElement;
   }
 
-  private net.minidev.json.JSONObject updateContext(
+  private net.minidev.json.JSONObject getNewContext(
     net.minidev.json.JSONObject context,
     net.minidev.json.JSONObject newinfo
   ) {
@@ -1177,6 +1190,9 @@ public class RestApiV2 {
     NodeList measures = catalog.getElementsByTagName("measure");
     context.put("currentSelection", measures);
     userContext.put(context.getAsString("email"), context);
+    System.out.println(
+      "Saved context" + context + "\n intent should be provideFactor"
+    );
     for (int i = 0; i < measures.getLength(); i++) {
       response +=
         (i + 1) + ". " + ((Element) measures.item(i)).getAttribute("name");
@@ -1212,6 +1228,9 @@ public class RestApiV2 {
     NodeList factors = desiredDimension.getElementsByTagName("factor");
 
     context.put("currentSelection", factors);
+    System.out.println(
+      "Saved context" + context + "\n intent should be provideFactor"
+    );
     userContext.put(context.getAsString("email"), context);
 
     if (factors.getLength() == 0) {
@@ -1235,6 +1254,7 @@ public class RestApiV2 {
     String response =
       "Which of the following dimensions do you want to edit?\n";
     context.put("currentSelection", successDimensions);
+    System.out.println("Context is now: " + context);
     userContext.put(email, context);
 
     for (int i = 0; i < successDimensions.size(); i++) {
