@@ -1248,18 +1248,14 @@ public class RestApiV2 {
     Object response = getSuccessModelsForGroupAndService(groupName, serviceName)
       .getEntity();
 
-    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
-      (String) response
-    );
-
-    if (!(response instanceof String)) {
+    if (!(response instanceof SuccessModelDTO)) {
       System.out.println(response);
       throw new ChatException(
         "I could not get the success catalog for your group 😔"
       );
     }
 
-    String xmlString = ((net.minidev.json.JSONObject) json).getAsString("xml");
+    String xmlString = ((SuccessModelDTO) response).xml;
     model = loadXMLFromString(xmlString);
 
     return model;
