@@ -986,11 +986,12 @@ public class RestApiV2 {
       if (serviceName == null) serviceName = defaultServiceName;
 
       String intent = json.getAsString("intent");
+      String lastIntent = context.getAsString("intent");
 
       if (intent.contains("number_selection")) {
         System.out.println("Intent: " + intent);
         //if this intent is recognized the user chose an item from a list. We determine the intent from the old context. The new intent will be one step further in the process
-        switch (context.getAsString("intent")) {
+        switch (lastIntent) {
           case "startUpdatingModel":
             intent = "provideDimension";
             break;
@@ -1005,6 +1006,7 @@ public class RestApiV2 {
             break;
         }
         System.out.println("Intent: " + intent);
+        newContext.put("intent", intent);
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
       }
 
@@ -1188,7 +1190,7 @@ public class RestApiV2 {
     net.minidev.json.JSONObject context
   )
     throws ChatException {
-    String response = "Which of the following factors do you want to edit?\n";
+    String response = "";
     NodeList dimensions = model.getElementsByTagName("dimension");
     Element desiredDimension = null;
     for (int i = 0; i < dimensions.getLength(); i++) {
@@ -1208,15 +1210,20 @@ public class RestApiV2 {
     }
 
     NodeList factors = desiredDimension.getElementsByTagName("factor");
+
     context.put("currentSelection", factors);
     userContext.put(context.getAsString("email"), context);
 
     if (factors.getLength() == 0) {
       return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
     }
+    response = "Which of the following factors do you want to edit?\n";
     for (int i = 0; i < factors.getLength(); i++) {
       response +=
-        (i + 1) + ". " + ((Element) factors.item(i)).getAttribute("name");
+        (i + 1) +
+        ". " +
+        ((Element) factors.item(i)).getAttribute("name") +
+        "\n";
     }
     response += "You can also add a factor by providing a name.";
     return response;
@@ -1737,7 +1744,7 @@ public class RestApiV2 {
         dimension == null ||
         dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
       ) {
-        res += i + ") " + dimensionToText((Element) dimensions.item(i));
+        res += (i + 1) + ") " + dimensionToText((Element) dimensions.item(i));
       }
     }
     return res;
