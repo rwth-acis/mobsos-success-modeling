@@ -5,6 +5,8 @@ import i5.las2peer.api.Context;
 import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.api.security.AgentNotFoundException;
 import i5.las2peer.api.security.AgentOperationFailedException;
+import i5.las2peer.api.security.GroupAgent;
+import i5.las2peer.api.security.UserAgent;
 import i5.las2peer.serialization.MalformedXMLException;
 import i5.las2peer.services.mobsos.successModeling.files.FileBackendException;
 import i5.las2peer.services.mobsos.successModeling.successModel.Measure;
@@ -73,7 +75,7 @@ public class RestApiV2 {
   private String defaultDatabase = "las2peer";
   private String defaultDatabaseSchema = "LAS2PEERMON";
   private String defaultGroup =
-    "951bf680284ec3d2c95629d25e0153d146d9599c2218c702c43b491d2841b5012b14a52ae1e7c8a47300d055edce219199fad49eef00dd33dd723afd7e998b12";
+    "e1733efc9ba4ad34df5ad65bb2f5561154f235b7de8501c435d69a715466e71ab0530b6b46ae9ae53adf0e82bfc1e82912c9fde6e4c9c63a6059381f47f25e34";
   private String defaultServiceName =
     "i5.las2peer.services.mensaService.MensaService";
   private List<String> successDimensions = Arrays.asList(
@@ -734,18 +736,10 @@ public class RestApiV2 {
    */
   @Path("/listMeasures")
   @POST
-  @ApiOperation(value = "Processes GraphQL request.")
+  @ApiOperation(value = "Returns the measures in a success model to the user")
   @ApiResponses(
     value = {
       @ApiResponse(code = 200, message = "Executed request successfully."),
-      @ApiResponse(
-        code = 400,
-        message = "GraphQL call is not in correct syntax."
-      ),
-      @ApiResponse(code = 415, message = "Request is missing GraphQL call."),
-      @ApiResponse(code = 512, message = "Response is not in correct format."),
-      @ApiResponse(code = 513, message = "Internal GraphQL server error."),
-      @ApiResponse(code = 514, message = "Schemafile error."),
     }
   )
   public Response listMeasures(String body) {
@@ -781,14 +775,11 @@ public class RestApiV2 {
             "😱. Contact your admin to add me to the group"
           );
         }
-        String agentId = Context.get().getUserAgentIdentifierByEmail(email);
-        if (
-          !Context.get().hasAccess(agentId, Context.get().getServiceAgent())
-        ) {
-          throw new ChatException(
-            "Sorry you are not a member of this group 😓. Contact your admin to be added to the group"
-          );
-        }
+
+        GroupAgent groupAgent = (GroupAgent) Context
+          .get()
+          .fetchAgent(groupName);
+        checkGroupMembershipByEmail(email, groupAgent);
       }
 
       SuccessModelDTO success = (SuccessModelDTO) this.getSuccessModelsForGroupAndService(
@@ -820,7 +811,7 @@ public class RestApiV2 {
   @POST
   public Response visualizeRequest(String body) {
     System.out.println("User requesting a visualization");
-    System.out.println("Message body: " + body);
+    // System.out.println("Message body: " + body);
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
     Response res = null;
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
@@ -830,6 +821,7 @@ public class RestApiV2 {
         body
       );
       String email = json.getAsString("email");
+
       net.minidev.json.JSONObject context = userContext.get(email);
       if (context == null) {
         context = new net.minidev.json.JSONObject();
@@ -850,10 +842,13 @@ public class RestApiV2 {
           groupName = defaultGroup;
         }
       }
+      GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupName);
+      checkGroupMembershipByEmail(email, groupAgent);
+
       Document xml = getMeasureCatalogForGroup(groupName, parser);
       Element desiredMeasure = null;
 
-      desiredMeasure = findMeasureByName(xml, measureName);
+      desiredMeasure = extractElementByName(measureName, xml, "measure");
       if (intent.equals("number_selection")) {
         if (context.get("currentSelection") instanceof Set<?>) {
           Set<Node> measures = (Set<Node>) context.get("currentSelection");
@@ -903,10 +898,13 @@ public class RestApiV2 {
 
       Element visualization = (Element) desiredMeasure
         .getElementsByTagName("visualization")
-        .item(
-          desiredMeasure.getElementsByTagName("visualization").getLength() - 1
-        );
+        .item(0);
 
+      if (visualization == null) {
+        throw new ChatException(
+          "The measure is not formed correctly...\nIt does not include a visualization"
+        );
+      }
       switch (visualization.getAttribute("type")) {
         case "Chart":
           String imagebase64 = getChartFromMeasure(
@@ -914,9 +912,7 @@ public class RestApiV2 {
             parser,
             visualization
           );
-
           chatResponse.put("fileBody", imagebase64);
-
           chatResponse.put("fileName", "chart.png");
           chatResponse.put("fileType", "image/png");
           res = Response.ok(chatResponse.toString()).build();
@@ -974,17 +970,19 @@ public class RestApiV2 {
       net.minidev.json.JSONObject newContext = getNewContext(context, json);
       Integer userSelection = null;
       String msg = json.getAsString("msg");
-
-      //Some variables which might be usefull in the future...
       String groupName = newContext.getAsString("groupName");
       String serviceName = newContext.getAsString("serviceName");
       String dimensionName = newContext.getAsString("dimensionName");
-      String measureName = newContext.getAsString("measureName");
       String factorName = newContext.getAsString("factorName");
+      if (groupName == null) groupName = defaultGroup;
+      if (serviceName == null) serviceName = defaultServiceName;
+
+      GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupName);
+      checkGroupMembershipByEmail(email, groupAgent);
 
       if (intent.contains("number_selection")) {
         intent = determineNewIntent(context); //in this case figure out the new intent from the old context
-        newContext.put("intent", intent); // save intent in the new context for next call (make sure to make a copy of the string because depression)
+        newContext.put("intent", intent); // save intent in the new context for next call
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
         Object currentSelection = context.get("currentSelection");
         if (currentSelection instanceof Set<?>) {
@@ -996,13 +994,14 @@ public class RestApiV2 {
             (
               (Element) ((NodeList) currentSelection).item(userSelection)
             ).getAttribute("name");
+        } else if (currentSelection instanceof List<?>) {
+          if (((List<?>) currentSelection).size() > userSelection) msg =
+            (String) ((List<?>) currentSelection).get(userSelection);
         }
+        System.out.println("Resulting input: " + msg);
       }
 
       userContext.put(email, newContext); //better be safe than sorry...
-
-      if (groupName == null) groupName = defaultGroup;
-      if (serviceName == null) serviceName = defaultServiceName;
 
       switch (intent) {
         case "quit":
@@ -1019,6 +1018,7 @@ public class RestApiV2 {
           }
 
           System.out.println("User selected the " + msg + " dimension");
+
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
 
@@ -1035,6 +1035,7 @@ public class RestApiV2 {
 
           System.out.println("User selected the " + msg + " factor");
           catalog = getMeasureCatalogForGroup(groupName, parser);
+          newContext.put("factorName", msg); //save the factorname in context
           chatResponse.put(
             "text",
             formatMeasuresFromCatalog(catalog, newContext)
@@ -1046,48 +1047,90 @@ public class RestApiV2 {
             throw new ChatException("Please provide a measure");
           }
 
-          System.out.println("User selected the " + msg + " measure");
+          System.out.println("Dimension is: " + dimensionName);
+          System.out.println("Factor is: " + factorName);
+          System.out.println("Measure is: " + msg);
+
           catalog = getMeasureCatalogForGroup(groupName, parser);
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
 
-          Element measureElement = extractElementByName(msg, catalog);
-          Element factorElement = extractElementByName(factorName, model);
+          Element measureElement = extractElementByName(
+            msg,
+            catalog,
+            "measure"
+          );
+          Element factorElement = extractElementByName(
+            factorName,
+            model,
+            "factor"
+          );
+
+          if (measureElement == null) {
+            throw new ChatException("The measure was not found in the catalog");
+          }
+
           if (factorElement == null) {
+            System.out.println(
+              "Adding new factor " +
+              factorName +
+              ", because it did not exist before"
+            );
             Element dimensionElement = extractElementByName(
               dimensionName,
-              model
+              model,
+              "dimension"
             );
+            System.out.println("Create new factor");
             factorElement = model.createElement("factor");
+            System.out.println("Setting the factorname");
             factorElement.setAttribute("name", factorName);
+            System.out.println("Appending it to the dimension");
             dimensionElement.appendChild(factorElement);
           }
-          factorElement.appendChild(measureElement);
+
+          System.out.println("Appending the measure to the factor");
+          Node importNode = model.importNode(measureElement, true);
+          factorElement.appendChild(importNode);
           SuccessModelDTO successModel = new SuccessModelDTO();
+          System.out.println("Transforming model into xml string");
           successModel.xml = toXMLString(model);
-          Response response = updateSuccessModelsForGroupAndService(
-            groupName,
-            serviceName,
-            successModel
-          );
-          // newContext.put("newModel", model);
-          if (response.getStatus() == 200) {
-            chatResponse.put(
-              "text",
-              "Your measure was successfully added to the model"
+          System.out.println("Updating the success model");
+          try {
+            System.out.println(
+              "Main Agent is " + Context.get().getMainAgent().getIdentifier()
             );
-          } else {
-            throw new ChatException("The model could not be updated 😦");
+            Response response = updateSuccessModelsForGroupAndService(
+              groupName,
+              serviceName,
+              successModel
+            );
+            // newContext.put("newModel", model);
+            if (response.getStatus() == 200) {
+              chatResponse.put(
+                "text",
+                "Your measure was successfully added to the model"
+              );
+            } else {
+              throw new ChatException("The model could not be updated 😦");
+            }
+          } catch (ForbiddenException e) {
+            throw new ChatException(
+              "Sorry I am not part of the group " +
+              groupName +
+              "😱. Contact your admin to add me to the group"
+            );
           }
+
           break;
-        default:
-          System.out.println(
-            "Unexpected intent " +
-            intent +
-            " recognized. Choosing default response"
-          );
-          chatResponse.put("text", formatSuccessDimensions(newContext));
-          break;
+        // default:
+        //   System.out.println(
+        //     "Unexpected intent " +
+        //     intent +
+        //     " recognized. Choosing default response"
+        //   );
+        //   chatResponse.put("text", formatSuccessDimensions(newContext));
+        //   break;
       }
     } catch (ChatException e) {
       e.printStackTrace();
@@ -1098,6 +1141,25 @@ public class RestApiV2 {
     }
     res = Response.ok(chatResponse.toString()).build();
     return res;
+  }
+
+  private boolean checkGroupMembershipByEmail(
+    String email,
+    GroupAgent groupAgent
+  )
+    throws ChatException {
+    boolean hasAccess = false;
+    try {
+      String agentId = Context.get().getUserAgentIdentifierByEmail(email);
+      UserAgent userAgent = (UserAgent) Context.get().fetchAgent(agentId);
+      groupAgent.unlock(userAgent);
+      hasAccess = true;
+    } catch (Exception e) {
+      throw new ChatException(
+        "You are not a part of the group 😅. Contax your admin to be added to the group"
+      );
+    }
+    return hasAccess;
   }
 
   private String toXMLString(Document doc) {
@@ -1118,12 +1180,29 @@ public class RestApiV2 {
     return null;
   }
 
+  private net.minidev.json.JSONObject getNewContext(
+    net.minidev.json.JSONObject context,
+    net.minidev.json.JSONObject newinfo
+  ) {
+    net.minidev.json.JSONObject newContext = new net.minidev.json.JSONObject();
+    newContext.putAll(context); //copy the values from the old context
+    Set<Entry<String, Object>> entries = newinfo.entrySet();
+    for (Entry<String, Object> entry : entries) {
+      if (entry.getValue() != null) newContext.put(
+        entry.getKey(),
+        entry.getValue()
+      ); //overwrite or set new
+    }
+    return newContext;
+  }
+
   private String determineNewIntent(net.minidev.json.JSONObject oldContext) {
+    String newIntent = null;
+
     System.out.println("Determening new intent...");
     String oldIntent = oldContext.getAsString("intent");
     System.out.println("Old Intent: " + oldIntent);
     System.out.println("Old Context: " + oldContext.toString());
-    String newIntent = null;
 
     switch (oldIntent) {
       case "startUpdatingModel":
@@ -1140,13 +1219,21 @@ public class RestApiV2 {
     return newIntent;
   }
 
-  private Element extractElementByName(String elementName, Document doc) {
+  private Element extractElementByName(
+    String elementName,
+    Document doc,
+    String tagName
+  ) {
     Element desiredElement = null;
-    NodeList elements = doc.getElementsByTagName("factor");
+    NodeList elements = doc.getElementsByTagName(tagName);
     for (int i = 0; i < elements.getLength(); i++) {
       if (elements.item(i) instanceof Element) {
         if (
-          elementName.equals(((Element) elements.item(i)).getAttribute("name"))
+          elementName
+            .toLowerCase()
+            .equals(
+              ((Element) elements.item(i)).getAttribute("name").toLowerCase()
+            )
         ) {
           desiredElement = (Element) elements.item(i);
           break;
@@ -1157,27 +1244,11 @@ public class RestApiV2 {
     return desiredElement;
   }
 
-  private net.minidev.json.JSONObject getNewContext(
-    net.minidev.json.JSONObject context,
-    net.minidev.json.JSONObject newinfo
-  ) {
-    net.minidev.json.JSONObject newContext = new net.minidev.json.JSONObject();
-    newContext.putAll(context);
-    Set<Entry<String, Object>> entries = newinfo.entrySet();
-    for (Entry<String, Object> entry : entries) {
-      if (entry.getValue() != null) newContext.put(
-        entry.getKey(),
-        entry.getValue()
-      );
-    }
-    return newContext;
-  }
-
   private String formatMeasuresFromCatalog(
     Document catalog,
     net.minidev.json.JSONObject context
   ) {
-    String response = "Please select one of the following measures";
+    String response = "Please select one of the following measures\n";
     NodeList measures = catalog.getElementsByTagName("measure");
     context.put("currentSelection", measures);
     userContext.put(context.getAsString("email"), context);
@@ -1202,7 +1273,7 @@ public class RestApiV2 {
     throws ChatException {
     String response = "";
     NodeList dimensions = model.getElementsByTagName("dimension");
-
+    context.put("dimensionName", dimension); //save the dimensionname
     Element desiredDimension = null;
     for (int i = 0; i < dimensions.getLength(); i++) {
       if (dimensions.item(i) instanceof Element) {
@@ -1257,7 +1328,7 @@ public class RestApiV2 {
       response += (i + 1) + ". " + dimension + "\n";
     }
     response +=
-      "If you want to exit the update process, just let me know by typing quit";
+      "\nIf you want to exit the update process, just let me know by typing quit";
     return response;
   }
 
