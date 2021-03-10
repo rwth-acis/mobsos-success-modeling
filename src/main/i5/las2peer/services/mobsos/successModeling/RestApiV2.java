@@ -3,7 +3,6 @@ package i5.las2peer.services.mobsos.successModeling;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import i5.las2peer.api.Context;
 import i5.las2peer.api.logging.MonitoringEvent;
-import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.AgentNotFoundException;
 import i5.las2peer.api.security.AgentOperationFailedException;
 import i5.las2peer.serialization.MalformedXMLException;
@@ -19,7 +18,6 @@ import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -44,9 +42,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import net.minidev.json.JSONArray;
 import net.minidev.json.parser.JSONParser;
-import net.minidev.json.parser.ParseException;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.glassfish.jersey.server.ParamException;
 import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -973,11 +969,13 @@ public class RestApiV2 {
       if (context == null) {
         context = new net.minidev.json.JSONObject();
       }
+      System.out.println("context from the last call: " + context);
+      net.minidev.json.JSONObject newContext = getNewContext(context, json);
+
       if (intent.contains("number_selection")) {
         intent = determineNewIntent(context); //in this case figure out the new intent from the old context
+        newContext.put("intent", String.copyValueOf(intent.toCharArray())); // save intent in the new context for next call (make sure to make a copy of the string because depression)
       }
-
-      net.minidev.json.JSONObject newContext = getNewContext(context, json);
 
       String msg = json.getAsString("msg");
 
@@ -1130,8 +1128,9 @@ public class RestApiV2 {
   }
 
   private String determineNewIntent(net.minidev.json.JSONObject oldContext) {
+    System.out.println("Determening new intent...");
     String oldIntent = oldContext.getAsString("intent");
-    System.out.println("Intent: " + oldIntent);
+    System.out.println("Old Intent: " + oldIntent);
     System.out.println("Old Context: " + oldContext.toString());
     String newIntent = null;
 
@@ -1171,7 +1170,8 @@ public class RestApiV2 {
     net.minidev.json.JSONObject context,
     net.minidev.json.JSONObject newinfo
   ) {
-    net.minidev.json.JSONObject newContext = context;
+    net.minidev.json.JSONObject newContext = new net.minidev.json.JSONObject();
+    newContext.putAll(context);
     Set<Entry<String, Object>> entries = newinfo.entrySet();
     for (Entry<String, Object> entry : entries) {
       if (entry.getValue() != null) newContext.put(
