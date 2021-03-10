@@ -964,6 +964,7 @@ public class RestApiV2 {
       );
       String email = json.getAsString("email");
       String intent = json.getAsString("intent");
+
       net.minidev.json.JSONObject context = userContext.get(email);
 
       if (context == null) {
@@ -971,12 +972,7 @@ public class RestApiV2 {
       }
       System.out.println("context from the last call: " + context);
       net.minidev.json.JSONObject newContext = getNewContext(context, json);
-
-      if (intent.contains("number_selection")) {
-        intent = determineNewIntent(context); //in this case figure out the new intent from the old context
-        newContext.put("intent", String.copyValueOf(intent.toCharArray())); // save intent in the new context for next call (make sure to make a copy of the string because depression)
-      }
-
+      Integer userSelection = null;
       String msg = json.getAsString("msg");
 
       //Some variables which might be usefull in the future...
@@ -986,9 +982,21 @@ public class RestApiV2 {
       String measureName = newContext.getAsString("measureName");
       String factorName = newContext.getAsString("factorName");
 
-      Integer userSelection = null;
       if (intent.contains("number_selection")) {
+        intent = determineNewIntent(context); //in this case figure out the new intent from the old context
+        newContext.put("intent", intent); // save intent in the new context for next call (make sure to make a copy of the string because depression)
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
+        Object currentSelection = context.get("currentSelection");
+        if (currentSelection instanceof Set<?>) {
+          if (((Set<?>) currentSelection).size() > userSelection) {
+            msg = (String) ((Set<?>) currentSelection).toArray()[userSelection];
+          }
+        } else if (currentSelection instanceof NodeList) {
+          if (((NodeList) currentSelection).getLength() > userSelection) msg =
+            (
+              (Element) ((NodeList) currentSelection).item(userSelection)
+            ).getAttribute("name");
+        }
       }
 
       userContext.put(email, newContext); //better be safe than sorry...
@@ -997,7 +1005,7 @@ public class RestApiV2 {
       if (serviceName == null) serviceName = defaultServiceName;
 
       switch (intent) {
-        case "rejection":
+        case "quit":
           chatResponse.put("text", "Alright, discarding changes...");
           chatResponse.put("closeContext", true);
           break;
@@ -1006,37 +1014,26 @@ public class RestApiV2 {
           chatResponse.put("closeContext", false);
           break;
         case "provideDimension":
-          if (userSelection == null) {
-            if (dimensionName == null) {
-              throw new ChatException("Please provide a dimension");
-            }
-          } else {
-            dimensionName = successDimensions.get(userSelection);
+          if (msg == null) {
+            throw new ChatException("Please provide a dimension");
           }
-          System.out.println(
-            "User selected the " + dimensionName + " dimension"
-          );
+
+          System.out.println("User selected the " + msg + " dimension");
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
 
           chatResponse.put(
             "text",
-            formatSuccesFactorsForDimension(model, dimensionName, newContext)
+            formatSuccesFactorsForDimension(model, msg, newContext)
           );
           chatResponse.put("closeContext", false);
           break;
         case "provideFactor":
-          if (userSelection == null) {
-            factorName = msg; //in this case we suppose that the user wants typed a factorname instead of providing a number
-            if (factorName == null) {
-              throw new ChatException("Please provide a factor");
-            }
-          } else {
-            NodeList factors = (NodeList) context.get("currentSelection");
-            factorName =
-              ((Element) factors.item(userSelection)).getAttribute("name");
+          if (msg == null) {
+            throw new ChatException("Please provide a factor");
           }
-          System.out.println("User selected the " + factorName + " factor");
+
+          System.out.println("User selected the " + msg + " factor");
           catalog = getMeasureCatalogForGroup(groupName, parser);
           chatResponse.put(
             "text",
@@ -1045,22 +1042,16 @@ public class RestApiV2 {
           chatResponse.put("closeContext", false);
           break;
         case "provideMeasure":
-          if (userSelection == null) {
-            measureName = msg; //we suppose that the user typed the measure name instead of providing a number
-            if (measureName == null) {
-              throw new ChatException("Please provide a measure");
-            }
-          } else {
-            NodeList measures = (NodeList) context.get("currentSelection");
-            measureName =
-              ((Element) measures.item(userSelection)).getAttribute("name");
+          if (msg == null) {
+            throw new ChatException("Please provide a measure");
           }
-          System.out.println("User selected the " + measureName + " measure");
+
+          System.out.println("User selected the " + msg + " measure");
           catalog = getMeasureCatalogForGroup(groupName, parser);
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
 
-          Element measureElement = extractElementByName(measureName, catalog);
+          Element measureElement = extractElementByName(msg, catalog);
           Element factorElement = extractElementByName(factorName, model);
           if (factorElement == null) {
             Element dimensionElement = extractElementByName(
@@ -1195,7 +1186,10 @@ public class RestApiV2 {
     );
     for (int i = 0; i < measures.getLength(); i++) {
       response +=
-        (i + 1) + ". " + ((Element) measures.item(i)).getAttribute("name");
+        (i + 1) +
+        ". " +
+        ((Element) measures.item(i)).getAttribute("name") +
+        "\n";
     }
     return response;
   }
@@ -1208,6 +1202,7 @@ public class RestApiV2 {
     throws ChatException {
     String response = "";
     NodeList dimensions = model.getElementsByTagName("dimension");
+
     Element desiredDimension = null;
     for (int i = 0; i < dimensions.getLength(); i++) {
       if (dimensions.item(i) instanceof Element) {
@@ -1221,7 +1216,7 @@ public class RestApiV2 {
     }
     if (desiredDimension == null) {
       throw new ChatException(
-        "The desired measure was not found in the success model"
+        "The desired dimension was not found in the success model"
       );
     }
 
@@ -1261,6 +1256,8 @@ public class RestApiV2 {
       String dimension = successDimensions.get(i);
       response += (i + 1) + ". " + dimension + "\n";
     }
+    response +=
+      "If you want to exit the update process, just let me know by typing quit";
     return response;
   }
 
