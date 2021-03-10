@@ -842,8 +842,13 @@ public class RestApiV2 {
           groupName = defaultGroup;
         }
       }
-      GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupName);
-      checkGroupMembershipByEmail(email, groupAgent);
+
+      if (!defaultGroup.equals(groupName)) {
+        GroupAgent groupAgent = (GroupAgent) Context
+          .get()
+          .fetchAgent(groupName);
+        checkGroupMembershipByEmail(email, groupAgent);
+      }
 
       Document xml = getMeasureCatalogForGroup(groupName, parser);
       Element desiredMeasure = null;
@@ -977,8 +982,12 @@ public class RestApiV2 {
       if (groupName == null) groupName = defaultGroup;
       if (serviceName == null) serviceName = defaultServiceName;
 
-      GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupName);
-      checkGroupMembershipByEmail(email, groupAgent);
+      if (!defaultGroup.equals(groupName)) {
+        GroupAgent groupAgent = (GroupAgent) Context
+          .get()
+          .fetchAgent(groupName);
+        checkGroupMembershipByEmail(email, groupAgent);
+      }
 
       if (intent.contains("number_selection")) {
         intent = determineNewIntent(context); //in this case figure out the new intent from the old context
@@ -1090,16 +1099,13 @@ public class RestApiV2 {
           }
 
           System.out.println("Appending the measure to the factor");
-          Node importNode = model.importNode(measureElement, true);
+          Node importNode = model.importNode(measureElement, false);
           factorElement.appendChild(importNode);
           SuccessModelDTO successModel = new SuccessModelDTO();
           System.out.println("Transforming model into xml string");
           successModel.xml = toXMLString(model);
           System.out.println("Updating the success model");
           try {
-            System.out.println(
-              "Main Agent is " + Context.get().getMainAgent().getIdentifier()
-            );
             Response response = updateSuccessModelsForGroupAndService(
               groupName,
               serviceName,
@@ -1143,23 +1149,22 @@ public class RestApiV2 {
     return res;
   }
 
-  private boolean checkGroupMembershipByEmail(
-    String email,
-    GroupAgent groupAgent
-  )
-    throws ChatException {
-    boolean hasAccess = false;
+  private void checkGroupMembershipByEmail(String email, GroupAgent groupAgent)
+    throws ChatException, AgentOperationFailedException {
     try {
       String agentId = Context.get().getUserAgentIdentifierByEmail(email);
-      UserAgent userAgent = (UserAgent) Context.get().fetchAgent(agentId);
-      groupAgent.unlock(userAgent);
-      hasAccess = true;
-    } catch (Exception e) {
+
+      if (!groupAgent.hasMember(agentId)) {
+        throw new ChatException(
+          "You are not a part of the group 😅. Contact your admin to be added to the group"
+        );
+      }
+    } catch (AgentNotFoundException e) {
+      e.printStackTrace();
       throw new ChatException(
-        "You are not a part of the group 😅. Contax your admin to be added to the group"
+        "Your email ✉️ is not registered in the las2peer network. \nContact your admin or signin to a laspeer service in the network"
       );
     }
-    return hasAccess;
   }
 
   private String toXMLString(Document doc) {
