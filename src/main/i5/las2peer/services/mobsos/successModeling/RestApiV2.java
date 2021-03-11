@@ -979,6 +979,7 @@ public class RestApiV2 {
       String serviceName = newContext.getAsString("serviceName");
       String dimensionName = newContext.getAsString("dimensionName");
       String factorName = newContext.getAsString("factorName");
+      String measureName = newContext.getAsString("measureName");
       if (groupName == null) groupName = defaultGroup;
       if (serviceName == null) serviceName = defaultServiceName;
 
@@ -1101,33 +1102,26 @@ public class RestApiV2 {
           System.out.println("Appending the measure to the factor");
           Node importNode = model.importNode(measureElement, false);
           factorElement.appendChild(importNode);
-          SuccessModelDTO successModel = new SuccessModelDTO();
-          System.out.println("Transforming model into xml string");
-          successModel.xml = toXMLString(model);
-          System.out.println("Updating the success model");
-          try {
-            Response response = updateSuccessModelsForGroupAndService(
-              groupName,
-              serviceName,
-              successModel
-            );
-            // newContext.put("newModel", model);
-            if (response.getStatus() == 200) {
-              chatResponse.put(
-                "text",
-                "Your measure was successfully added to the model"
-              );
-            } else {
-              throw new ChatException("The model could not be updated 😦");
-            }
-          } catch (ForbiddenException e) {
-            throw new ChatException(
-              "Sorry I am not part of the group " +
-              groupName +
-              "😱. Contact your admin to add me to the group"
-            );
+          if (saveModel(model, groupName, serviceName)) chatResponse.put(
+            "text",
+            "Your measure was successfully added to the model"
+          );
+          break;
+        case "remove":
+          model =
+            getSuccessModelForGroupAndService(groupName, serviceName, parser);
+          if (measureName != null) {
+            measureElement =
+              extractElementByName(measureName, model, "measure");
+            measureElement.getParentNode().removeChild(measureElement);
+          } else if (factorName != null) {
+            factorElement = extractElementByName(factorName, model, "factor");
+            factorElement.getParentNode().removeChild(factorElement);
           }
-
+          if (saveModel(model, groupName, serviceName)) chatResponse.put(
+            "text",
+            "Your measure was successfully added to the model"
+          );
           break;
         // default:
         //   System.out.println(
@@ -1147,6 +1141,39 @@ public class RestApiV2 {
     }
     res = Response.ok(chatResponse.toString()).build();
     return res;
+  }
+
+  private boolean saveModel(
+    Document model,
+    String groupName,
+    String serviceName
+  )
+    throws ChatException {
+    SuccessModelDTO successModel = new SuccessModelDTO();
+    System.out.println("Transforming model into xml string");
+    successModel.xml = toXMLString(model);
+    System.out.println("Updating the success model");
+    try {
+      Response response = updateSuccessModelsForGroupAndService(
+        groupName,
+        serviceName,
+        successModel
+      );
+      // newContext.put("newModel", model);
+      if (response.getStatus() == 200) {
+        return true;
+      } else {
+        throw new ChatException("The model could not be updated 😦");
+      }
+    } catch (ForbiddenException e) {
+      throw new ChatException(
+        "Sorry I am not part of the group " +
+        groupName +
+        "😱. Contact your admin to add me to the group"
+      );
+    } catch (MalformedXMLException | FileBackendException e) {
+      throw new ChatException("Something went wrong while saving the model 🙇");
+    }
   }
 
   private void checkGroupMembershipByEmail(String email, GroupAgent groupAgent)
