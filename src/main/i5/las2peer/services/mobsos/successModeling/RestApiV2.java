@@ -775,11 +775,12 @@ public class RestApiV2 {
             "😱. Contact your admin to add me to the group"
           );
         }
-
-        GroupAgent groupAgent = (GroupAgent) Context
-          .get()
-          .fetchAgent(groupName);
-        checkGroupMembershipByEmail(email, groupAgent);
+        if (!groupName.equals(defaultGroup)) {
+          GroupAgent groupAgent = (GroupAgent) Context
+            .get()
+            .fetchAgent(groupName);
+          checkGroupMembershipByEmail(email, groupAgent);
+        }
       }
 
       SuccessModelDTO success = (SuccessModelDTO) this.getSuccessModelsForGroupAndService(
@@ -788,7 +789,11 @@ public class RestApiV2 {
         )
         .getEntity();
 
-      chatResponseText += SuccessModelToText(success.xml, dimension);
+      boolean measuresOnly =
+        "getSuccessModel".equals(requestObject.getAsString("intent")); //if getSuccessModel is recognized as intent, then we inlcude dimensions and factors in the list
+      chatResponseText +=
+        SuccessModelToText(success.xml, dimension, measuresOnly);
+
       chatResponse.put("text", chatResponseText);
     } catch (ChatException e) {
       e.printStackTrace();
@@ -1854,7 +1859,11 @@ public class RestApiV2 {
     return values[0].toString();
   }
 
-  private String SuccessModelToText(String xml, String dimension)
+  private String SuccessModelToText(
+    String xml,
+    String dimension,
+    boolean measuresOnly
+  )
     throws Exception {
     String res = "";
     Document model = loadXMLFromString(xml);
@@ -1864,7 +1873,10 @@ public class RestApiV2 {
         dimension == null ||
         dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
       ) {
-        res += (i + 1) + ") " + dimensionToText((Element) dimensions.item(i));
+        if (!measuresOnly) {
+          res += (i + 1) + ") ";
+        }
+        res += dimensionToText((Element) dimensions.item(i), measuresOnly);
       }
     }
     return res;
@@ -1880,18 +1892,50 @@ public class RestApiV2 {
     return res;
   }
 
+  private String dimensionToText(Element dimension, boolean measuresOnly) {
+    String res = "";
+    if (!measuresOnly) {
+      res += dimension.getAttribute("name") + ":\n";
+    }
+
+    NodeList factors = dimension.getElementsByTagName("factor");
+    for (int i = 0; i < factors.getLength(); i++) {
+      if (!measuresOnly) {
+        res += "    -";
+      }
+      res += factorToText((Element) factors.item(i), measuresOnly);
+    }
+    return res;
+  }
+
   private String factorToText(Element factor) {
     String res = "";
     res += factor.getAttribute("name") + ":\n";
     NodeList measures = ((Element) factor).getElementsByTagName("measure");
     for (int j = 0; j < measures.getLength(); j++) {
-      res += "        •" + measureToText((Element) measures.item(j));
+      res += "        • " + measureToText((Element) measures.item(j));
+    }
+    return res;
+  }
+
+  private String factorToText(Element factor, boolean measuresOnly) {
+    String res = "";
+    if (!measuresOnly) {
+      res += factor.getAttribute("name") + ":\n";
+    }
+
+    NodeList measures = ((Element) factor).getElementsByTagName("measure");
+    for (int j = 0; j < measures.getLength(); j++) {
+      if (!measuresOnly) {
+        res += "        ";
+      }
+      res += "• " + measureToText((Element) measures.item(j)) + "\n";
     }
     return res;
   }
 
   private String measureToText(Element measure) {
-    return measure.getAttribute("name") + "\n";
+    return measure.getAttribute("name");
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */
