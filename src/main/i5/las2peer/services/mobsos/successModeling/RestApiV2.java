@@ -743,7 +743,9 @@ public class RestApiV2 {
     }
   )
   public Response listMeasures(String body) {
-    System.out.println("User requesting a list of all measures");
+    System.out.println(
+      "User requesting a list of all measures. \nMessage Body" + body
+    );
     JSONParser p = new JSONParser(JSONParser.MODE_PERMISSIVE);
 
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
@@ -782,15 +784,21 @@ public class RestApiV2 {
           checkGroupMembershipByEmail(email, groupAgent);
         }
       }
+      Object resp =
+        this.getSuccessModelsForGroupAndService(groupName, serviceName)
+          .getEntity();
+      if (!(resp instanceof SuccessModelDTO)) {
+        throw new ChatException(((ErrorDTO) resp).message);
+      }
+      SuccessModelDTO success = (SuccessModelDTO) resp;
+      boolean measuresOnly;
+      if ("getSuccessModel".equals(requestObject.getAsString("intent"))) {
+        //if getSuccessModel is recognized as intent, then we inlcude dimensions and factors in the list
+        measuresOnly = false;
+      } else {
+        measuresOnly = true;
+      }
 
-      SuccessModelDTO success = (SuccessModelDTO) this.getSuccessModelsForGroupAndService(
-          groupName,
-          serviceName
-        )
-        .getEntity();
-
-      boolean measuresOnly =
-        "getSuccessModel".equals(requestObject.getAsString("intent")); //if getSuccessModel is recognized as intent, then we inlcude dimensions and factors in the list
       chatResponseText +=
         SuccessModelToText(success.xml, dimension, measuresOnly);
 
@@ -1681,6 +1689,7 @@ public class RestApiV2 {
     String b64 = null;
 
     NodeList queries = measure.getElementsByTagName("query");
+    String measureName = measure.getAttribute("name");
 
     InputStream graphQLResponse = graphQLQuery(
       ((Element) queries.item(0)).getTextContent()
@@ -1699,10 +1708,7 @@ public class RestApiV2 {
       .getElementsByTagName("chartType")
       .item(0)
       .getTextContent();
-    String chartTitle = visualization
-      .getElementsByTagName("title")
-      .item(0)
-      .getTextContent();
+    String chartTitle = measureName;
 
     b64 = getImage(json, chartType, chartTitle);
     return b64;
@@ -1868,6 +1874,7 @@ public class RestApiV2 {
     String res = "";
     Document model = loadXMLFromString(xml);
     NodeList dimensions = model.getElementsByTagName("dimension");
+    System.out.println("Measures only: " + measuresOnly);
     for (int i = 0; i < dimensions.getLength(); i++) {
       if (
         dimension == null ||
