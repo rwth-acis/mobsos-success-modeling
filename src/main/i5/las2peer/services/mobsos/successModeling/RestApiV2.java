@@ -895,7 +895,7 @@ public class RestApiV2 {
           throw new ChatException(
             "No nodes found matching your input💁\n " +
             "you can add them yourself by following this link:\n" +
-            "https://monitor.tech4comp.dbis.rwth-aachen.de/ \n " +
+            "https://sbf-dev.tech4comp.dbis.rwth-aachen.de/monitor/ \n " +
             "or create a requirement by following this link: \n" +
             "https://requirements-bazaar.org/"
           );
@@ -1573,10 +1573,10 @@ public class RestApiV2 {
     String query
   )
     throws ChatException {
-    if (dbSchema == null) {
+    if (dbSchema == null || dbSchema.length() == 0) {
       dbSchema = this.defaultDatabaseSchema;
     }
-    if (dbName == null) {
+    if (dbName == null || dbName.length() == 0) {
       dbName = this.defaultDatabase;
     }
     if (query == null) {
@@ -1767,14 +1767,8 @@ public class RestApiV2 {
     NodeList queries = measure.getElementsByTagName("query");
     Element database = extractElementByTagName(measure, "database");
     if (database != null) {
-      dbName =
-        database.getAttribute("name") != null
-          ? database.getAttribute("name")
-          : defaultDatabase;
-      dbSchema =
-        database.getAttribute("dbSchema") != null
-          ? database.getAttribute("dbSchema")
-          : defaultDatabaseSchema;
+      dbName = database.getAttribute("name");
+      dbSchema = database.getAttribute("dbSchema");
     }
     String measureName = measure.getAttribute("name");
     String query = ((Element) queries.item(0)).getTextContent();
@@ -1820,14 +1814,8 @@ public class RestApiV2 {
     NodeList queries = measure.getElementsByTagName("query");
     Element database = extractElementByTagName(measure, "database");
     if (database != null) {
-      dbName =
-        database.getAttribute("name") != null
-          ? database.getAttribute("name")
-          : defaultDatabase;
-      dbSchema =
-        database.getAttribute("dbSchema") != null
-          ? database.getAttribute("dbSchema")
-          : defaultDatabaseSchema;
+      dbName = database.getAttribute("name");
+      dbSchema = database.getAttribute("dbSchema");
     }
 
     kpi += measureName + ": \n";
@@ -1919,14 +1907,8 @@ public class RestApiV2 {
     NodeList queries = measure.getElementsByTagName("query");
     Element database = extractElementByTagName(measure, "database");
     if (database != null) {
-      dbName =
-        database.getAttribute("name") != null
-          ? database.getAttribute("name")
-          : defaultDatabase;
-      dbSchema =
-        database.getAttribute("dbSchema") != null
-          ? database.getAttribute("dbSchema")
-          : defaultDatabaseSchema;
+      dbName = database.getAttribute("name");
+      dbSchema = database.getAttribute("dbSchema");
     }
 
     String query = ((Element) queries.item(0)).getTextContent();
