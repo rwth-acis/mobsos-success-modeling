@@ -796,6 +796,7 @@ public class RestApiV2 {
         //if getSuccessModel is recognized as intent, then we inlcude dimensions and factors in the list
         measuresOnly = false;
       } else {
+        chatResponse.put("closeContext", false);
         measuresOnly = true;
       }
 
@@ -823,11 +824,12 @@ public class RestApiV2 {
   @Path("/visualize")
   @POST
   public Response visualizeRequest(String body) {
-    System.out.println("User requesting a visualization");
+    // System.out.println("User requesting a visualization");
     // System.out.println("Message body: " + body);
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
     Response res = null;
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+    Element desiredMeasure = null;
 
     try {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
@@ -840,23 +842,18 @@ public class RestApiV2 {
         context = new net.minidev.json.JSONObject();
       }
 
-      String tag = json.getAsString("tag");
-      String measureName = json.getAsString("msg");
-      if (tag == null) {
-        if (measureName == null) throw new ChatException(
-          "Please provide a measure"
-        );
-      }
+      // String tag = json.getAsString("tag"); //might be usefull in the future to search for measures by tag
+      String measureName = json.getAsString("measureName") != null
+        ? json.getAsString("measureName")
+        : json.getAsString("msg");
+
       String intent = json.getAsString("intent");
-      String groupName = json.getAsString("groupName");
-      if (groupName == null) {
-        groupName = context.getAsString("groupName");
-        if (groupName == null) {
-          groupName = defaultGroup;
-        }
-      }
+      String groupName = json.getAsString("groupName") != null
+        ? json.getAsString("groupName")
+        : defaultGroup;
 
       if (!defaultGroup.equals(groupName)) {
+        //groups other than the default group need permission to be accessed
         GroupAgent groupAgent = (GroupAgent) Context
           .get()
           .fetchAgent(groupName);
@@ -864,15 +861,17 @@ public class RestApiV2 {
       }
 
       Document xml = getMeasureCatalogForGroup(groupName, parser);
-      Element desiredMeasure = null;
-
       desiredMeasure = extractElementByName(measureName, xml, "measure");
-      if (intent.equals("number_selection")) {
+
+      if (
+        intent.equals("number_selection") &&
+        context.get("currentSelection") != null
+      ) {
+        //user selected an item from a the list
         if (context.get("currentSelection") instanceof Set<?>) {
           Set<Node> measures = (Set<Node>) context.get("currentSelection");
 
-          int userSelection =
-            ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
+          int userSelection = json.getAsNumber("number").intValue() - 1; // user list starts at 1
           if (measures.size() > userSelection) {
             desiredMeasure = (Element) measures.toArray()[userSelection];
           }
@@ -894,7 +893,7 @@ public class RestApiV2 {
           desiredMeasure = (Element) list.iterator().next();
         } else {
           context.put("currentSelection", list);
-          userContext.put(email, context);
+          userContext.put(email, context); //save the current selection in context
           String respString =
             "I found the following measures, matching \"" +
             measureName +
@@ -909,7 +908,6 @@ public class RestApiV2 {
               "\n";
           }
           respString += "Please specify your measure";
-
           throw new ChatException(respString);
         }
       }
@@ -1001,6 +999,17 @@ public class RestApiV2 {
           .get()
           .fetchAgent(groupName);
         checkGroupMembershipByEmail(email, groupAgent);
+      }
+
+      if (msg.length() > 4 && !"number_selection".equals(intent)) { //assume user typed name instead of number
+        if ("provideDimension".equals(context.getAsString("intent"))) {
+          intent = "provideFactor";
+          factorName = msg;
+        }
+        if ("provideFactor".equals(context.getAsString("intent"))) {
+          intent = "provideMeasure";
+          measureName = msg;
+        }
       }
 
       if (intent.contains("number_selection")) {
@@ -1121,20 +1130,27 @@ public class RestApiV2 {
           );
           break;
         case "remove":
-          model =
-            getSuccessModelForGroupAndService(groupName, serviceName, parser);
-          if (measureName != null) {
-            measureElement =
-              extractElementByName(measureName, model, "measure");
-            measureElement.getParentNode().removeChild(measureElement);
-          } else if (factorName != null) {
-            factorElement = extractElementByName(factorName, model, "factor");
-            factorElement.getParentNode().removeChild(factorElement);
+          String toBeRemoved = "";
+
+          if (measureName != null || factorName != null) {
+            model =
+              getSuccessModelForGroupAndService(groupName, serviceName, parser);
+            if (measureName != null) {
+              toBeRemoved = measureName;
+              measureElement =
+                extractElementByName(measureName, model, "measure");
+              measureElement.getParentNode().removeChild(measureElement);
+            } else if (factorName != null) {
+              toBeRemoved = factorName;
+              factorElement = extractElementByName(factorName, model, "factor");
+              factorElement.getParentNode().removeChild(factorElement);
+            }
+            if (saveModel(model, groupName, serviceName)) chatResponse.put(
+              "text",
+              "\"" + toBeRemoved + "\"  was successfully removed from the model"
+            );
           }
-          if (saveModel(model, groupName, serviceName)) chatResponse.put(
-            "text",
-            "Your measure was successfully added to the model"
-          );
+
           break;
         // default:
         //   System.out.println(
@@ -1287,6 +1303,13 @@ public class RestApiV2 {
     }
 
     return desiredElement;
+  }
+
+  private Element extractElementByTagName(Element doc, String tagName) {
+    NodeList elements = doc.getElementsByTagName(tagName);
+    return elements.getLength() > 0 && (elements.item(0) instanceof Element)
+      ? (Element) elements.item(0)
+      : null;
   }
 
   private String formatMeasuresFromCatalog(
@@ -1465,7 +1488,7 @@ public class RestApiV2 {
   }
 
   /**
-   * Makes a request to the GraphQl service uses default database and schema
+   * Makes a request to the GraphQl service, uses default database and schema
    * @param query sql query
    * @return the requested data
    * @throws ChatException
@@ -1473,6 +1496,40 @@ public class RestApiV2 {
   private InputStream graphQLQuery(String query) throws ChatException {
     try {
       String queryString = prepareGQLQueryString(query);
+      URL url = new URI(
+        service.GRAPHQL_PROTOCOL,
+        service.GRAPHQ_HOST,
+        "/graphql/graphql",
+        "query=" + queryString,
+        null
+      )
+        .toURL();
+      System.out.println("Graphql request: " + url);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+      return con.getInputStream();
+    } catch (IOException | URISyntaxException e) {
+      e.printStackTrace();
+      throw new ChatException("Sorry the graphQL request has failed 😶");
+    }
+  }
+
+  /**
+   * Makes a request to the GraphQl service
+   * @param query sql query
+   * @param dbName name of the database as defined when adding the database to graphql api
+   * @param dbSchema name of the database schema as defined when adding the database to graphql api
+   * @return response from graphql api
+   * @throws ChatException
+   */
+  private InputStream graphQLQuery(
+    String query,
+    String dbName,
+    String dbSchema
+  )
+    throws ChatException {
+    try {
+      String queryString = prepareGQLQueryString(query, dbName, dbSchema);
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
         service.GRAPHQ_HOST,
@@ -1534,9 +1591,9 @@ public class RestApiV2 {
    */
   private String prepareGQLQueryString(String query)
     throws UnsupportedEncodingException {
-    // if (query.contains("\\")) {
-    //   query = java.net.URLEncoder.encode(query.replaceAll("\"", "'"), "UTF-8");
-    // }
+    if (query.contains("\"")) {
+      query = java.net.URLEncoder.encode(query.replaceAll("\"", "'"), "UTF-8");
+    }
 
     System.out.println("SQL: " + query);
     return (
@@ -1644,15 +1701,15 @@ public class RestApiV2 {
   }
 
   /**
-   * find all elements that match key on the tag attribute
+   * find all elements with a tag attribute contained in the inputString
    * @param xml the document to search in
-   * @param tag the tag by which to search
+   * @param inpuString the tag by which to search
    * @return
    */
-  private Set<Node> findMeasuresByTag(Document xml, String tag) {
+  private Set<Node> findMeasuresByTag(Document xml, String inpuString) {
     Set<Node> list = new HashSet<Node>();
     NodeList measures = xml.getElementsByTagName("measure");
-    if (tag == null) {
+    if (inpuString == null) {
       return null;
     }
     for (int i = 0; i < measures.getLength(); i++) {
@@ -1661,14 +1718,13 @@ public class RestApiV2 {
         String[] tags =
           ((Element) measure).getAttribute("tags").toLowerCase().split(","); //get the name of the measure
         for (int j = 0; j < tags.length; j++) {
-          if (tags[j].toLowerCase().equals(tag.toLowerCase())) {
+          if (inpuString.toLowerCase().contains(tags[j].toLowerCase())) {
             list.add(measure);
             break;
           }
         }
       }
     }
-
     return list;
   }
 
@@ -1687,13 +1743,24 @@ public class RestApiV2 {
   )
     throws Exception {
     String b64 = null;
+    String dbName = defaultDatabase;
+    String dbSchema = defaultDatabaseSchema;
 
     NodeList queries = measure.getElementsByTagName("query");
+    Element database = extractElementByTagName(measure, "database");
+    if (database != null) {
+      dbName =
+        database.getAttribute("name") != null
+          ? database.getAttribute("name")
+          : defaultDatabase;
+      dbSchema =
+        database.getAttribute("dbSchema") != null
+          ? database.getAttribute("dbSchema")
+          : defaultDatabaseSchema;
+    }
     String measureName = measure.getAttribute("name");
-
-    InputStream graphQLResponse = graphQLQuery(
-      ((Element) queries.item(0)).getTextContent()
-    );
+    String query = ((Element) queries.item(0)).getTextContent();
+    InputStream graphQLResponse = graphQLQuery(query, dbName, dbSchema);
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
@@ -1728,8 +1795,22 @@ public class RestApiV2 {
   )
     throws Exception {
     String kpi = "";
-    NodeList queries = measure.getElementsByTagName("query");
+    String dbName = defaultDatabase;
+    String dbSchema = defaultDatabaseSchema;
+
     String measureName = measure.getAttribute("name");
+    NodeList queries = measure.getElementsByTagName("query");
+    Element database = extractElementByTagName(measure, "database");
+    if (database != null) {
+      dbName =
+        database.getAttribute("name") != null
+          ? database.getAttribute("name")
+          : defaultDatabase;
+      dbSchema =
+        database.getAttribute("dbSchema") != null
+          ? database.getAttribute("dbSchema")
+          : defaultDatabaseSchema;
+    }
 
     kpi += measureName + ": \n";
 
@@ -1754,7 +1835,11 @@ public class RestApiV2 {
       );
 
       System.out.println(sqlQueryString);
-      InputStream graphQLResponse = graphQLQuery(sqlQueryString);
+      InputStream graphQLResponse = graphQLQuery(
+        sqlQueryString,
+        dbName,
+        dbSchema
+      );
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         graphQLResponse
       );
@@ -1810,14 +1895,28 @@ public class RestApiV2 {
     String value = null;
     String measureName = measure.getAttribute("name");
 
+    String dbName = defaultDatabase;
+    String dbSchema = defaultDatabaseSchema;
+
+    NodeList queries = measure.getElementsByTagName("query");
+    Element database = extractElementByTagName(measure, "database");
+    if (database != null) {
+      dbName =
+        database.getAttribute("name") != null
+          ? database.getAttribute("name")
+          : defaultDatabase;
+      dbSchema =
+        database.getAttribute("dbSchema") != null
+          ? database.getAttribute("dbSchema")
+          : defaultDatabaseSchema;
+    }
+
+    String query = ((Element) queries.item(0)).getTextContent();
+
     NodeList units = visualization.getElementsByTagName("unit");
     String unit = units.getLength() > 0 ? units.item(0).getTextContent() : null;
-    NodeList queries = measure.getElementsByTagName("query");
-    String sqlQueryString = java.net.URLEncoder.encode(
-      ((Element) queries.item(0)).getTextContent().replaceAll("\"", "'"),
-      "UTF-8"
-    );
-    InputStream graphQLResponse = graphQLQuery(sqlQueryString);
+
+    InputStream graphQLResponse = graphQLQuery(query, dbName, dbSchema);
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
