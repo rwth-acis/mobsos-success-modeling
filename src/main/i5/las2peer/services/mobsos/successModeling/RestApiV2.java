@@ -796,7 +796,7 @@ public class RestApiV2 {
         //if getSuccessModel is recognized as intent, then we inlcude dimensions and factors in the list
         measuresOnly = false;
       } else {
-        chatResponse.put("closeContext", false);
+        // chatResponse.put("closeContext", false);
         measuresOnly = true;
       }
 
