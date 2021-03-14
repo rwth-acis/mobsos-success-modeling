@@ -884,6 +884,7 @@ public class RestApiV2 {
           int userSelection = json.getAsNumber("number").intValue() - 1; // user list starts at 1
           if (measures.size() > userSelection) {
             desiredMeasure = (Element) measures.toArray()[userSelection];
+            context.remove("currentSelection");
           }
         }
       }
