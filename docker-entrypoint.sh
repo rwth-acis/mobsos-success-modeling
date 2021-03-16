@@ -57,6 +57,7 @@ set_in_service_config catalogFileLocation ${CATALOG_FILE_LOCATION}
 set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATION}
 set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
 set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
+set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
 
 # configure web connector properties
 
@@ -118,12 +119,12 @@ function selectMnemonic {
 
 #prepare pastry properties
 echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/pastry.properties
-
+echo  ${LAUNCH_COMMAND}
 # start the service within a las2peer node
 if [[ -z "${@}" ]]
 then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
-        exec ${LAUNCH_COMMAND}  --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
+        exec ${LAUNCH_COMMAND}  --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
     else
         exec ${LAUNCH_COMMAND}  uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
     fi

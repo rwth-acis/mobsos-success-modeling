@@ -103,6 +103,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private String databasePassword;
   private String successModelsFolderLocation;
   private String DB2Schema;
+
   private FileBackend measureFileBackend;
   private FileBackend modelFileBackend;
   private boolean measureUpdatingStarted = false;
@@ -110,6 +111,9 @@ public class MonitoringDataProvisionService extends RESTService {
   protected String GRAPHQL_PROTOCOL = "http";
   protected String GRAPHQ_HOST = "127.0.0.1:8090";
   protected String CHART_API_ENDPOINT = "http://localhost:3000";
+
+  protected String defaultGroupId =
+    "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
 
   /**
    * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.

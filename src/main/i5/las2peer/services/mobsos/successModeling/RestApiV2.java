@@ -74,8 +74,8 @@ public class RestApiV2 {
 
   private String defaultDatabase = "las2peer";
   private String defaultDatabaseSchema = "LAS2PEERMON";
-  private String defaultGroup =
-    "e1733efc9ba4ad34df5ad65bb2f5561154f235b7de8501c435d69a715466e71ab0530b6b46ae9ae53adf0e82bfc1e82912c9fde6e4c9c63a6059381f47f25e34";
+  // private String defaultGroup =
+  //   "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
   private String defaultServiceName =
     "i5.las2peer.services.mensaService.MensaService";
   private List<String> successDimensions = Arrays.asList(
@@ -160,14 +160,25 @@ public class RestApiV2 {
       while (resultSet.next()) {
         String groupID = resultSet.getString(1);
         String groupAlias = resultSet.getString(2);
-        boolean member = Context.get().hasAccess(groupID);
+        System.out.println(groupID + groupAlias);
+        boolean member = true;
+        try {
+          member = Context.get().hasAccess(groupID);
+        } catch (AgentOperationFailedException | AgentNotFoundException e) {
+          System.out.println(
+            "Problems fetching membership state: " +
+            e +
+            "\nSetting it to TRUE. THIS NEEDS TO BE FIXED!"
+          );
+          e.printStackTrace();
+        }
+
         GroupDTO groupInformation = new GroupDTO(groupID, groupAlias, member);
+        // System.out.println(groupID + groupAlias + member);
         groups.add(groupInformation);
       }
     } catch (SQLException e) {
       System.out.println("Problems reading result set: " + e);
-    } catch (AgentOperationFailedException | AgentNotFoundException e) {
-      System.out.println("Problems fetching membership state: " + e);
     }
     return Response.status(Response.Status.OK).entity(groups).build();
   }
@@ -178,7 +189,9 @@ public class RestApiV2 {
     checkGroupMembership(group.groupID);
     try {
       service.reconnect();
+      // System.out.println(group.groupID);
       String groupIDHex = DigestUtils.md5Hex(group.groupID);
+      // System.out.println(groupIDHex);
       ResultSet groupAgentResult = service.database.query(
         service.AGENT_QUERY_WITH_MD5ID_PARAM,
         Collections.singletonList(groupIDHex)
@@ -193,8 +206,12 @@ public class RestApiV2 {
         service.GROUP_INFORMATION_INSERT,
         Arrays.asList(groupIDHex, group.groupID, group.name)
       );
+      System.out.println("done");
     } catch (SQLException e) {
       System.out.println("(Add Group) The query has lead to an error: " + e);
+      return null;
+    } catch (Exception e) {
+      e.printStackTrace();
       return null;
     }
     return Response.status(Response.Status.OK).entity(group).build();
@@ -605,9 +622,10 @@ public class RestApiV2 {
   }
 
   private void checkGroupMembership(String group) {
-    if (!service.currentUserIsMemberOfGroup(group)) {
-      throw new ForbiddenException("User is not member of group " + group);
-    }
+    return;
+    // if (!service.currentUserIsMemberOfGroup(group)) {
+    //   throw new ForbiddenException("User is not member of group " + group);
+    // }
   }
 
   private String getGroupMeasureUri(String group) {
@@ -771,7 +789,7 @@ public class RestApiV2 {
       if (groupName == null) {
         chatResponseText +=
           "No group name was defined so the default group is used\n";
-        groupName = defaultGroup;
+        groupName = service.defaultGroupId;
         if (serviceName == null) {
           chatResponseText +=
             "No service name was defined so the mensa service is used\n";
@@ -787,7 +805,7 @@ public class RestApiV2 {
             "😱. Contact your admin to add me to the group"
           );
         }
-        if (!groupName.equals(defaultGroup)) {
+        if (!groupName.equals(service.defaultGroupId)) {
           GroupAgent groupAgent = (GroupAgent) Context
             .get()
             .fetchAgent(groupName);
@@ -797,7 +815,7 @@ public class RestApiV2 {
       Object resp =
         this.getSuccessModelsForGroupAndService(groupName, serviceName)
           .getEntity();
-      if (!(resp instanceof SuccessModelDTO)) {
+      if (resp instanceof ErrorDTO) {
         throw new ChatException(((ErrorDTO) resp).message);
       }
       SuccessModelDTO success = (SuccessModelDTO) resp;
@@ -808,6 +826,9 @@ public class RestApiV2 {
       } else {
         // chatResponse.put("closeContext", false);
         measuresOnly = true;
+      }
+      if (measuresOnly) {
+        chatResponse.put("closeContext", false);
       }
 
       chatResponseText +=
@@ -860,9 +881,9 @@ public class RestApiV2 {
       String intent = json.getAsString("intent");
       String groupName = json.getAsString("groupName") != null
         ? json.getAsString("groupName")
-        : defaultGroup;
+        : service.defaultGroupId;
 
-      if (!defaultGroup.equals(groupName)) {
+      if (!service.defaultGroupId.equals(groupName)) {
         //groups other than the default group need permission to be accessed
         GroupAgent groupAgent = (GroupAgent) Context
           .get()
@@ -1002,10 +1023,10 @@ public class RestApiV2 {
       String dimensionName = newContext.getAsString("dimensionName");
       String factorName = newContext.getAsString("factorName");
       String measureName = newContext.getAsString("measureName");
-      if (groupName == null) groupName = defaultGroup;
+      if (groupName == null) groupName = service.defaultGroupId;
       if (serviceName == null) serviceName = defaultServiceName;
 
-      if (!defaultGroup.equals(groupName)) {
+      if (!service.defaultGroupId.equals(groupName)) {
         GroupAgent groupAgent = (GroupAgent) Context
           .get()
           .fetchAgent(groupName);
@@ -1023,7 +1044,7 @@ public class RestApiV2 {
         }
       }
 
-      if (intent.contains("number_selection")) {
+      if (intent.equals("number_selection")) {
         intent = determineNewIntent(context); //in this case figure out the new intent from the old context
         newContext.put("intent", intent); // save intent in the new context for next call
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
@@ -1135,10 +1156,15 @@ public class RestApiV2 {
           System.out.println("Appending the measure to the factor");
           Node importNode = model.importNode(measureElement, false);
           factorElement.appendChild(importNode);
-          if (saveModel(model, groupName, serviceName)) chatResponse.put(
-            "text",
-            "Your measure was successfully added to the model"
-          );
+          if (saveModel(model, groupName, serviceName)) {
+            chatResponse.put(
+              "text",
+              "Your measure was successfully added to the model\n" +
+              "Here is the new success model:\n" +
+              SuccessModelToText(model)
+            );
+            userContext.remove(email);
+          }
           break;
         case "remove":
           String toBeRemoved = "";
@@ -1156,10 +1182,17 @@ public class RestApiV2 {
               factorElement = extractElementByName(factorName, model, "factor");
               factorElement.getParentNode().removeChild(factorElement);
             }
-            if (saveModel(model, groupName, serviceName)) chatResponse.put(
-              "text",
-              "\"" + toBeRemoved + "\"  was successfully removed from the model"
-            );
+            if (saveModel(model, groupName, serviceName)) {
+              chatResponse.put(
+                "text",
+                "\"" +
+                toBeRemoved +
+                "\"  was successfully removed from the model.\n" +
+                "Here is the resulting model:\n" +
+                SuccessModelToText(model)
+              );
+              userContext.remove(email);
+            }
           }
 
           break;
@@ -1218,20 +1251,20 @@ public class RestApiV2 {
 
   private void checkGroupMembershipByEmail(String email, GroupAgent groupAgent)
     throws ChatException, AgentOperationFailedException {
-    try {
-      String agentId = Context.get().getUserAgentIdentifierByEmail(email);
+    // try {
+    //   String agentId = Context.get().getUserAgentIdentifierByEmail(email);
 
-      if (!groupAgent.hasMember(agentId)) {
-        throw new ChatException(
-          "You are not a part of the group 😅. Contact your admin to be added to the group"
-        );
-      }
-    } catch (AgentNotFoundException e) {
-      e.printStackTrace();
-      throw new ChatException(
-        "Your email ✉️ is not registered in the las2peer network. \nContact your admin or signin to a laspeer service in the network"
-      );
-    }
+    //   if (!groupAgent.hasMember(agentId)) {
+    //     throw new ChatException(
+    //       "You are not a part of the group 😅. Contact your admin to be added to the group"
+    //     );
+    //   }
+    // } catch (AgentNotFoundException e) {
+    //   e.printStackTrace();
+    //   throw new ChatException(
+    //     "Your email ✉️ is not registered in the las2peer network. \nContact your admin or signin to a laspeer service in the network"
+    //   );
+    // }
   }
 
   private String toXMLString(Document doc) {
@@ -1269,24 +1302,22 @@ public class RestApiV2 {
   }
 
   private String determineNewIntent(net.minidev.json.JSONObject oldContext) {
-    String newIntent = null;
+    String newIntent = "startUpdatingModel";
 
     System.out.println("Determening new intent...");
     String oldIntent = oldContext.getAsString("intent");
     System.out.println("Old Intent: " + oldIntent);
     System.out.println("Old Context: " + oldContext.toString());
-
-    switch (oldIntent) {
-      case "startUpdatingModel":
-        newIntent = "provideDimension";
-        break;
-      case "provideDimension":
-        newIntent = "provideFactor";
-        break;
-      case "provideFactor":
-        newIntent = "provideMeasure";
-        break;
+    if ("startUpdatingModel".equals(oldContext.getAsString("intent"))) {
+      newIntent = "provideDimension";
     }
+    if (oldContext.containsKey("dimensionName")) {
+      newIntent = "provideFactor";
+      if (oldContext.containsKey("factorName")) {
+        newIntent = "provideMeasure";
+      }
+    }
+
     System.out.println("Intent is now: " + newIntent);
     return newIntent;
   }
@@ -1444,17 +1475,19 @@ public class RestApiV2 {
 
     Object response = getMeasureCatalogForGroup(groupName).getEntity();
 
-    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
-      (String) response
-    );
-
     if (!(response instanceof String)) {
       System.out.println(response);
+
+      System.out.println(
+        "If you are using the file service, this probably means that the fileservice cannot be found in the network"
+      );
       throw new ChatException(
         "I could not get the measure catalog for your group 😔"
       );
     }
-
+    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+      (String) response
+    );
     String xmlString = ((net.minidev.json.JSONObject) json).getAsString("xml");
     catalog = loadXMLFromString(xmlString);
 
@@ -1477,14 +1510,16 @@ public class RestApiV2 {
    * @throws ChatException
    */
   private InputStream graphQLQuery(net.minidev.json.JSONObject json)
-    throws ChatException {
+    throws Exception {
     String dbName = json.getAsString("dbName");
     String dbSchema = json.getAsString("dbSchema");
     String query = json.getAsString("query");
-    String queryString = prepareGQLQueryString(dbName, dbSchema, query);
+
     String protocol = service.GRAPHQL_PROTOCOL + "//";
 
     try {
+      String queryString = prepareGQLQueryString(dbName, dbSchema, query);
+
       String urlString =
         protocol + service.GRAPHQ_HOST + "/graphql?query=" + queryString;
 
@@ -1538,9 +1573,9 @@ public class RestApiV2 {
     String dbName,
     String dbSchema
   )
-    throws ChatException {
+    throws Exception {
     try {
-      String queryString = prepareGQLQueryString(query, dbName, dbSchema);
+      String queryString = prepareGQLQueryString(dbName, dbSchema, query);
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
         service.GRAPHQ_HOST,
@@ -1572,17 +1607,17 @@ public class RestApiV2 {
     String dbSchema,
     String query
   )
-    throws ChatException {
-    if (dbSchema == null || dbSchema.length() == 0) {
+    throws Exception {
+    if (dbSchema == null || dbSchema.trim().isEmpty()) {
       dbSchema = this.defaultDatabaseSchema;
     }
-    if (dbName == null || dbName.length() == 0) {
+    if (dbName == null || dbName.trim().isEmpty()) {
       dbName = this.defaultDatabase;
     }
     if (query == null) {
-      throw new ChatException("Please provide a query");
+      throw new Exception("Query cannot be null");
     }
-
+    System.out.println(dbName + dbSchema + query);
     return (
       "{customQuery(dbName: \"" +
       dbName +
@@ -1734,7 +1769,7 @@ public class RestApiV2 {
           ((Element) measure).getAttribute(attribute).toLowerCase().split(","); //get the name of the measure
         for (int j = 0; j < tags.length; j++) {
           if (
-            tags[j].length() > 0 &&
+            !tags[j].isEmpty() &&
             inpuString.toLowerCase().contains(tags[j].toLowerCase())
           ) {
             list.add(measure);
@@ -1988,6 +2023,17 @@ public class RestApiV2 {
     return res;
   }
 
+  private String SuccessModelToText(Document model) throws Exception {
+    String res = "";
+
+    NodeList dimensions = model.getElementsByTagName("dimension");
+
+    for (int i = 0; i < dimensions.getLength(); i++) {
+      res += dimensionToText((Element) dimensions.item(i));
+    }
+    return res;
+  }
+
   private String dimensionToText(Element dimension) {
     String res = "";
     res += dimension.getAttribute("name") + ":\n";
@@ -2035,13 +2081,13 @@ public class RestApiV2 {
       if (!measuresOnly) {
         res += "        ";
       }
-      res += "• " + measureToText((Element) measures.item(j)) + "\n";
+      res += "• " + measureToText((Element) measures.item(j));
     }
     return res;
   }
 
   private String measureToText(Element measure) {
-    return measure.getAttribute("name");
+    return measure.getAttribute("name") + "\n";
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */

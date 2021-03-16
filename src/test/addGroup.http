@@ -3,7 +3,7 @@ Content-Type: application/json
 Authorization: Basic YWxpY2U6cHdhbGljZQ==
 
 {
-"groupID":"e1733efc9ba4ad34df5ad65bb2f5561154f235b7de8501c435d69a715466e71ab0530b6b46ae9ae53adf0e82bfc1e82912c9fde6e4c9c63a6059381f47f25e34",
-"name":"General",
+"groupID":"ccf714aa5c489b459e61c267e0a1f4501c8f4879fd1a3118454d3aac5d98aca1c049b4929fc45339daf27eab01c2c1b33c642e7e16b6e831505b876e65540ac9",
+"name":"Evaluation-Fina",
 "isMember":true
 }
