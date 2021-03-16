@@ -980,6 +980,7 @@ public class RestApiV2 {
           res = Response.ok(chatResponse.toString()).build();
           break;
       }
+      userContext.remove("email");
     } catch (ChatException e) {
       e.printStackTrace();
       chatResponse.put("text", e.getMessage());
