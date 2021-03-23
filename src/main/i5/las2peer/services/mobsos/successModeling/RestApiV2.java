@@ -827,9 +827,8 @@ public class RestApiV2 {
         // chatResponse.put("closeContext", false);
         measuresOnly = true;
       }
-      if (measuresOnly) {
-        chatResponse.put("closeContext", false);
-      }
+
+      chatResponse.put("closeContext", true);
 
       chatResponseText +=
         SuccessModelToText(success.xml, dimension, measuresOnly);
@@ -874,9 +873,7 @@ public class RestApiV2 {
       }
 
       // String tag = json.getAsString("tag"); //might be usefull in the future to search for measures by tag
-      String measureName = json.getAsString("measureName") != null
-        ? json.getAsString("measureName")
-        : json.getAsString("msg");
+      String measureName = json.getAsString("msg");
 
       String intent = json.getAsString("intent");
       String groupName = json.getAsString("groupName") != null
@@ -1071,6 +1068,7 @@ public class RestApiV2 {
       switch (intent) {
         case "quit":
           chatResponse.put("text", "Alright, discarding changes...");
+          userContext.remove(email); //reset contxt on quit
           chatResponse.put("closeContext", true);
           break;
         case "startUpdatingModel":
@@ -1155,7 +1153,10 @@ public class RestApiV2 {
           }
 
           System.out.println("Appending the measure to the factor");
-          Node importNode = model.importNode(measureElement, false);
+          Element importNode = (Element) model.importNode(
+            measureElement,
+            false
+          );
           factorElement.appendChild(importNode);
           if (saveModel(model, groupName, serviceName)) {
             chatResponse.put(
@@ -1330,6 +1331,7 @@ public class RestApiV2 {
   ) {
     Element desiredElement = null;
     NodeList elements = doc.getElementsByTagName(tagName);
+
     for (int i = 0; i < elements.getLength(); i++) {
       if (elements.item(i) instanceof Element) {
         if (
@@ -1359,7 +1361,7 @@ public class RestApiV2 {
     Document catalog,
     net.minidev.json.JSONObject context
   ) {
-    String response = "Please select one of the following measures\n";
+    String response = "Here are the measures defined by the community.\n";
     NodeList measures = catalog.getElementsByTagName("measure");
     context.put("currentSelection", measures);
     userContext.put(context.getAsString("email"), context);
@@ -1373,6 +1375,8 @@ public class RestApiV2 {
         ((Element) measures.item(i)).getAttribute("name") +
         "\n";
     }
+    response +=
+      "Please select one of the following measures by choosing a number to add it to the factor\n";
     return response;
   }
 
@@ -1413,7 +1417,8 @@ public class RestApiV2 {
     if (factors.getLength() == 0) {
       return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
     }
-    response = "Which of the following factors do you want to edit?\n";
+    response =
+      "Which of the following factors do you want to add a measure to?\n";
     for (int i = 0; i < factors.getLength(); i++) {
       response +=
         (i + 1) +
@@ -1421,7 +1426,9 @@ public class RestApiV2 {
         ((Element) factors.item(i)).getAttribute("name") +
         "\n";
     }
-    response += "You can also add a factor by providing a name.";
+    response +=
+      "Choose one by providing a number.\n" +
+      "You can also add a factor by providing a name.";
     return response;
   }
 
@@ -1429,6 +1436,7 @@ public class RestApiV2 {
     String email = context.getAsString("email");
 
     String response =
+      "I will now guide you through the updating process.\n" +
       "Which of the following dimensions do you want to edit?\n";
     context.put("currentSelection", successDimensions);
     System.out.println("Context is now: " + context);
@@ -1439,7 +1447,8 @@ public class RestApiV2 {
       response += (i + 1) + ". " + dimension + "\n";
     }
     response +=
-      "\nIf you want to exit the update process, just let me know by typing quit";
+      "Choose one by providing a number\n" +
+      "If you want to exit the update process, just let me know by typing quit";
     return response;
   }
 

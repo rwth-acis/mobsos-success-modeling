@@ -1,9 +1,9 @@
 POST https://git.tech4comp.dbis.rwth-aachen.de/mobsos-success-modeling/apiv2/groups
 Content-Type: application/json
-Authorization: Basic YWxpY2U6cHdhbGljZQ==
+Authorization: bGFraG91bmU6UEhscGg2VGkjRWRSPT0rdVk4OWU=
 
 {
-"groupID":"ccf714aa5c489b459e61c267e0a1f4501c8f4879fd1a3118454d3aac5d98aca1c049b4929fc45339daf27eab01c2c1b33c642e7e16b6e831505b876e65540ac9",
-"name":"Evaluation-Fina",
+"groupID":"5d12b82f25db394803988f701fd8c5c3833558f2b77519dc93e9bab800cacc8541bf378b7f457fff2f6d3d899e6f9cec9bb12ac223054c4d1c5bd5503777e343",
+"name":"EvalGroupTuesday",
 "isMember":true
 }

@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="lib/commons-codec-1.10.jar"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-8.0.15.jar"/>
 	<classpathentry kind="lib" path="lib/las2peer-bundle-0.8.3.jar"/>
+	<classpathentry kind="src" path="lib"/>
 	<classpathentry kind="output" path="output"/>
 </classpath>
