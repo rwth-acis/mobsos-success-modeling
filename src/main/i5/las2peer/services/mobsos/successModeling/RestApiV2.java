@@ -798,11 +798,9 @@ public class RestApiV2 {
         chatResponseText += "\n";
       } else {
         GroupDTO group = (GroupDTO) this.getGroup(groupName).getEntity();
-        if (!group.isMember) {
+        if (!group.isMember) { //check if bot is member of group
           throw new ChatException(
-            "Sorry I am not part of the group " +
-            groupName +
-            "😱. Contact your admin to add me to the group"
+            "Sorry I am not part of the group 😱. Contact your admin to add me to the group"
           );
         }
         if (!groupName.equals(service.defaultGroupId)) {
@@ -1253,20 +1251,20 @@ public class RestApiV2 {
 
   private void checkGroupMembershipByEmail(String email, GroupAgent groupAgent)
     throws ChatException, AgentOperationFailedException {
-    // try {
-    //   String agentId = Context.get().getUserAgentIdentifierByEmail(email);
+    try {
+      String agentId = Context.get().getUserAgentIdentifierByEmail(email);
 
-    //   if (!groupAgent.hasMember(agentId)) {
-    //     throw new ChatException(
-    //       "You are not a part of the group 😅. Contact your admin to be added to the group"
-    //     );
-    //   }
-    // } catch (AgentNotFoundException e) {
-    //   e.printStackTrace();
-    //   throw new ChatException(
-    //     "Your email ✉️ is not registered in the las2peer network. \nContact your admin or signin to a laspeer service in the network"
-    //   );
-    // }
+      if (!groupAgent.hasMember(agentId)) {
+        throw new ChatException(
+          "You are not a part of the group 😅. Contact your admin to be added to the group"
+        );
+      }
+    } catch (AgentNotFoundException e) {
+      e.printStackTrace();
+      throw new ChatException(
+        "Your email ✉️ is not registered in the las2peer network. \nContact your admin or signin to a laspeer service in the network"
+      );
+    }
   }
 
   private String toXMLString(Document doc) {
