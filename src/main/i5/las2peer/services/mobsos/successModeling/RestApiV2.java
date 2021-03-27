@@ -622,10 +622,9 @@ public class RestApiV2 {
   }
 
   private void checkGroupMembership(String group) {
-    return;
-    // if (!service.currentUserIsMemberOfGroup(group)) {
-    //   throw new ForbiddenException("User is not member of group " + group);
-    // }
+    if (!service.currentUserIsMemberOfGroup(group)) {
+      throw new ForbiddenException("User is not member of group " + group);
+    }
   }
 
   private String getGroupMeasureUri(String group) {
@@ -869,6 +868,7 @@ public class RestApiV2 {
       if (context == null) {
         context = new net.minidev.json.JSONObject();
       }
+      //TODO handle groupName. groupName should be the name of the group not its id
 
       // String tag = json.getAsString("tag"); //might be usefull in the future to search for measures by tag
       String measureName = json.getAsString("msg");
