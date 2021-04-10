@@ -1988,24 +1988,38 @@ public class RestApiV2 {
   )
     throws Exception {
     String value = null;
-    String measureName = measure.getAttribute("name");
-
+    InputStream graphQLResponse=null;
     String dbName = defaultDatabase;
     String dbSchema = defaultDatabaseSchema;
 
-    NodeList queries = measure.getElementsByTagName("query");
-    Element database = extractElementByTagName(measure, "database");
-    if (database != null) {
-      dbName = database.getAttribute("name");
-      dbSchema = database.getAttribute("dbSchema");
-    }
-
-    String query = ((Element) queries.item(0)).getTextContent();
-
+    String measureName = measure.getAttribute("name");
     NodeList units = visualization.getElementsByTagName("unit");
     String unit = units.getLength() > 0 ? units.item(0).getTextContent() : null;
 
-    InputStream graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    NodeList datasets = measure.getElementsByTagName("data");
+    if (datasets.getLength() > 0) {
+      NodeList queries =
+        ((Element) datasets.item(0)).getElementsByTagName("query");
+      Element database = extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    } else {
+      NodeList queries = measure.getElementsByTagName("query");
+      Element database = extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    }
+   
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
