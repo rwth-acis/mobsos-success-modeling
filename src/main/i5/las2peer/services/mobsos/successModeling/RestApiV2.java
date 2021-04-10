@@ -75,7 +75,7 @@ public class RestApiV2 {
   private String defaultDatabase = "las2peer";
   private String defaultDatabaseSchema = "LAS2PEERMON";
   // private String defaultGroup =
-  //   "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
+  // "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
   private String defaultServiceName =
     "i5.las2peer.services.mensaService.MensaService";
   private List<String> successDimensions = Arrays.asList(
@@ -237,7 +237,7 @@ public class RestApiV2 {
       return null;
     }
     try {
-      resultSet.next(); //Select the first result
+      resultSet.next(); // Select the first result
       String groupID = resultSet.getString(1);
       String groupAlias = resultSet.getString(2);
       boolean member = Context.get().hasAccess(groupID);
@@ -718,37 +718,42 @@ public class RestApiV2 {
   }
 
   // /**
-  //  * Bot function to get a visualization
-  //  * @param body jsonString containing the query, the Chart type and other optional parameters
-  //  * @return image to be displayed in chat
-  //  */
+  // * Bot function to get a visualization
+  // * @param body jsonString containing the query, the Chart type and other
+  // optional parameters
+  // * @return image to be displayed in chat
+  // */
   // @Path("/getSuccessModel")
   // @POST
   // public Response getSuccessModel(String body) {
-  //   Response res = null;
-  //   net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
-  //   try {
-  //     res =
-  //       getSuccessModelsForGroupAndService(
-  //         "default",
-  //         "i5.las2peer.services.mensaService.MensaService"
-  //       );
+  // Response res = null;
+  // net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+  // try {
+  // res =
+  // getSuccessModelsForGroupAndService(
+  // "default",
+  // "i5.las2peer.services.mensaService.MensaService"
+  // );
 
-  //     SuccessModelDTO sModel = (SuccessModelDTO) res.getEntity();
-  //     System.out.println(res.getEntity());
-  //     chatResponse.put("text", sModel.xml);
-  //     res = Response.ok(chatResponse.toJSONString()).build();
-  //   } catch (Exception e) { // } //   res = Response.ok(chatResponse.toString()).build(); //   chatResponse.put("text", e.getMessage()); //   e.printStackTrace(); // catch (ChatException e) {
-  //     chatResponse.put("text", "An error occured 😦");
-  //     res = Response.ok(chatResponse.toString()).build();
-  //     e.printStackTrace();
-  //   }
-  //   return res;
+  // SuccessModelDTO sModel = (SuccessModelDTO) res.getEntity();
+  // System.out.println(res.getEntity());
+  // chatResponse.put("text", sModel.xml);
+  // res = Response.ok(chatResponse.toJSONString()).build();
+  // } catch (Exception e) { // } // res =
+  // Response.ok(chatResponse.toString()).build(); // chatResponse.put("text",
+  // e.getMessage()); // e.printStackTrace(); // catch (ChatException e) {
+  // chatResponse.put("text", "An error occured 😦");
+  // res = Response.ok(chatResponse.toString()).build();
+  // e.printStackTrace();
+  // }
+  // return res;
   // }
 
   /**
    * Bot function to get a visualization
-   * @param body jsonString containing the query, the Chart type and other optional parameters
+   *
+   * @param body jsonString containing the query, the Chart type and other
+   *             optional parameters
    * @return image to be displayed in chat
    */
   @Path("/listMeasures")
@@ -778,12 +783,12 @@ public class RestApiV2 {
       String email = requestObject.getAsString("email");
       // String intent = requestObject.getAsString("intent");
       // if (
-      //   intent != null &&
-      //   !"listMeasures".equals(intent) &&
-      //   !"getSuccessModel".equals(intent)
+      // intent != null &&
+      // !"listMeasures".equals(intent) &&
+      // !"getSuccessModel".equals(intent)
       // ) {
-      //   //if the intent is wrong we assume the user wants to visualize
-      //   return visualizeRequest(body);
+      // //if the intent is wrong we assume the user wants to visualize
+      // return visualizeRequest(body);
       // }
       if (groupName == null) {
         chatResponseText +=
@@ -797,7 +802,7 @@ public class RestApiV2 {
         chatResponseText += "\n";
       } else {
         GroupDTO group = (GroupDTO) this.getGroup(groupName).getEntity();
-        if (!group.isMember) { //check if bot is member of group
+        if (!group.isMember) { // check if bot is member of group
           throw new ChatException(
             "Sorry I am not part of the group 😱. Contact your admin to add me to the group"
           );
@@ -818,7 +823,8 @@ public class RestApiV2 {
       SuccessModelDTO success = (SuccessModelDTO) resp;
       boolean measuresOnly;
       if ("getSuccessModel".equals(requestObject.getAsString("intent"))) {
-        //if getSuccessModel is recognized as intent, then we inlcude dimensions and factors in the list
+        // if getSuccessModel is recognized as intent, then we inlcude dimensions and
+        // factors in the list
         measuresOnly = false;
       } else {
         // chatResponse.put("closeContext", false);
@@ -845,7 +851,9 @@ public class RestApiV2 {
 
   /**
    * Bot function to get a visualization
-   * @param body jsonString containing the query, the Chart type and other optional parameters
+   *
+   * @param body jsonString containing the query, the Chart type and other
+   *             optional parameters
    * @return image to be displayed in chat
    */
   @Path("/visualize")
@@ -868,9 +876,10 @@ public class RestApiV2 {
       if (context == null) {
         context = new net.minidev.json.JSONObject();
       }
-      //TODO handle groupName. groupName should be the name of the group not its id
+      // TODO handle groupName. groupName should be the name of the group not its id
 
-      // String tag = json.getAsString("tag"); //might be usefull in the future to search for measures by tag
+      // String tag = json.getAsString("tag"); //might be usefull in the future to
+      // search for measures by tag
       String measureName = json.getAsString("msg");
 
       String intent = json.getAsString("intent");
@@ -879,7 +888,7 @@ public class RestApiV2 {
         : service.defaultGroupId;
 
       if (!service.defaultGroupId.equals(groupName)) {
-        //groups other than the default group need permission to be accessed
+        // groups other than the default group need permission to be accessed
         GroupAgent groupAgent = (GroupAgent) Context
           .get()
           .fetchAgent(groupName);
@@ -893,7 +902,7 @@ public class RestApiV2 {
         intent.equals("number_selection") &&
         context.get("currentSelection") != null
       ) {
-        //user selected an item from a the list
+        // user selected an item from a the list
         if (context.get("currentSelection") instanceof Set<?>) {
           Set<Node> measures = (Set<Node>) context.get("currentSelection");
 
@@ -905,7 +914,7 @@ public class RestApiV2 {
         }
       }
 
-      if (desiredMeasure == null) { //try to find measure using tag search
+      if (desiredMeasure == null) { // try to find measure using tag search
         Set<Node> list = findMeasuresByAttribute(xml, measureName, "tag");
         if (list.isEmpty()) {
           throw new ChatException(
@@ -916,11 +925,11 @@ public class RestApiV2 {
             "https://requirements-bazaar.org/"
           );
         }
-        if (list.size() == 1) { //only one result->use this as the desired measure
+        if (list.size() == 1) { // only one result->use this as the desired measure
           desiredMeasure = (Element) list.iterator().next();
         } else {
           context.put("currentSelection", list);
-          userContext.put(email, context); //save the current selection in context
+          userContext.put(email, context); // save the current selection in context
           String respString =
             "I found the following measures, matching \"" +
             measureName +
@@ -1029,7 +1038,7 @@ public class RestApiV2 {
         checkGroupMembershipByEmail(email, groupAgent);
       }
 
-      if (msg.length() > 4 && !"number_selection".equals(intent)) { //assume user typed name instead of number
+      if (msg.length() > 4 && !"number_selection".equals(intent)) { // assume user typed name instead of number
         if ("provideDimension".equals(context.getAsString("intent"))) {
           intent = "provideFactor";
           factorName = msg;
@@ -1041,7 +1050,7 @@ public class RestApiV2 {
       }
 
       if (intent.equals("number_selection")) {
-        intent = determineNewIntent(context); //in this case figure out the new intent from the old context
+        intent = determineNewIntent(context); // in this case figure out the new intent from the old context
         newContext.put("intent", intent); // save intent in the new context for next call
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
         Object currentSelection = context.get("currentSelection");
@@ -1061,12 +1070,12 @@ public class RestApiV2 {
         System.out.println("Resulting input: " + msg);
       }
 
-      userContext.put(email, newContext); //better be safe than sorry...
+      userContext.put(email, newContext); // better be safe than sorry...
 
       switch (intent) {
         case "quit":
           chatResponse.put("text", "Alright, discarding changes...");
-          userContext.remove(email); //reset contxt on quit
+          userContext.remove(email); // reset contxt on quit
           chatResponse.put("closeContext", true);
           break;
         case "startUpdatingModel":
@@ -1096,7 +1105,7 @@ public class RestApiV2 {
 
           System.out.println("User selected the " + msg + " factor");
           catalog = getMeasureCatalogForGroup(groupName, parser);
-          newContext.put("factorName", msg); //save the factorname in context
+          newContext.put("factorName", msg); // save the factorname in context
           chatResponse.put(
             "text",
             formatMeasuresFromCatalog(catalog, newContext)
@@ -1197,13 +1206,13 @@ public class RestApiV2 {
 
           break;
         // default:
-        //   System.out.println(
-        //     "Unexpected intent " +
-        //     intent +
-        //     " recognized. Choosing default response"
-        //   );
-        //   chatResponse.put("text", formatSuccessDimensions(newContext));
-        //   break;
+        // System.out.println(
+        // "Unexpected intent " +
+        // intent +
+        // " recognized. Choosing default response"
+        // );
+        // chatResponse.put("text", formatSuccessDimensions(newContext));
+        // break;
       }
     } catch (ChatException e) {
       e.printStackTrace();
@@ -1290,13 +1299,13 @@ public class RestApiV2 {
     net.minidev.json.JSONObject newinfo
   ) {
     net.minidev.json.JSONObject newContext = new net.minidev.json.JSONObject();
-    newContext.putAll(context); //copy the values from the old context
+    newContext.putAll(context); // copy the values from the old context
     Set<Entry<String, Object>> entries = newinfo.entrySet();
     for (Entry<String, Object> entry : entries) {
       if (entry.getValue() != null) newContext.put(
         entry.getKey(),
         entry.getValue()
-      ); //overwrite or set new
+      ); // overwrite or set new
     }
     return newContext;
   }
@@ -1386,7 +1395,7 @@ public class RestApiV2 {
     throws ChatException {
     String response = "";
     NodeList dimensions = model.getElementsByTagName("dimension");
-    context.put("dimensionName", dimension); //save the dimensionname
+    context.put("dimensionName", dimension); // save the dimensionname
     Element desiredDimension = null;
     for (int i = 0; i < dimensions.getLength(); i++) {
       if (dimensions.item(i) instanceof Element) {
@@ -1513,7 +1522,9 @@ public class RestApiV2 {
 
   /**
    * Makes a request to the GraphQl service
-   * @param json contains dbName: name if the db, dbSchema: name of the db schema and query sql query
+   *
+   * @param json contains dbName: name if the db, dbSchema: name of the db schema
+   *             and query sql query
    * @return the requested data
    * @throws ChatException
    */
@@ -1543,6 +1554,7 @@ public class RestApiV2 {
 
   /**
    * Makes a request to the GraphQl service, uses default database and schema
+   *
    * @param query sql query
    * @return the requested data
    * @throws ChatException
@@ -1570,9 +1582,12 @@ public class RestApiV2 {
 
   /**
    * Makes a request to the GraphQl service
-   * @param query sql query
-   * @param dbName name of the database as defined when adding the database to graphql api
-   * @param dbSchema name of the database schema as defined when adding the database to graphql api
+   *
+   * @param query    sql query
+   * @param dbName   name of the database as defined when adding the database to
+   *                 graphql api
+   * @param dbSchema name of the database schema as defined when adding the
+   *                 database to graphql api
    * @return response from graphql api
    * @throws ChatException
    */
@@ -1604,9 +1619,12 @@ public class RestApiV2 {
 
   /**
    * Prepares the string to the customQuery query of the graphql schema
-   * @param dbName name of the database. This name uniquelly identifies the datase on the graphql service
+   *
+   * @param dbName   name of the database. This name uniquelly identifies the
+   *                 datase on the graphql service
    * @param dbSchema name of the database schema
-   * @param query query which can be used as the query parameter in the graphql http request
+   * @param query    query which can be used as the query parameter in the graphql
+   *                 http request
    * @return
    * @throws ChatException
    */
@@ -1638,9 +1656,12 @@ public class RestApiV2 {
   }
 
   /**
-   * Prepares the string to the customQuery query of the graphql schema. Will use the default database and schema
-   * @param query  sql query
-   * @return query which can be used as the query parameter in the graphql http request
+   * Prepares the string to the customQuery query of the graphql schema. Will use
+   * the default database and schema
+   *
+   * @param query sql query
+   * @return query which can be used as the query parameter in the graphql http
+   *         request
    * @throws ChatException
    */
   private String prepareGQLQueryString(String query)
@@ -1663,8 +1684,9 @@ public class RestApiV2 {
 
   /**
    * Makes a call to the visulization service to create a chart as png
-   * @param data Data which should be visualized
-   * @param type type of (Google Charts) chart
+   *
+   * @param data  Data which should be visualized
+   * @param type  type of (Google Charts) chart
    * @param title title of the chart
    * @return chart as base64 encoded string
    * @throws ChatException
@@ -1688,7 +1710,7 @@ public class RestApiV2 {
     try {
       String urlString = service.CHART_API_ENDPOINT + "/customQuery";
       // if (!urlString.contains("http")) {
-      //   urlString = "http://" + urlString;
+      // urlString = "http://" + urlString;
       // }
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -1711,6 +1733,7 @@ public class RestApiV2 {
 
   /**
    * Transforms an Input stream into a base64 encoded string
+   *
    * @param is Input stream of a connection
    * @return base64 encoded string
    */
@@ -1728,35 +1751,38 @@ public class RestApiV2 {
   }
 
   // /**
-  //  * Returns the first occurence of an element in the document that matches its name attribute with key
-  //  * @param xml the document to search in
-  //  * @param key the key by which to search
-  //  * @return first occurence
-  //  */
+  // * Returns the first occurence of an element in the document that matches its
+  // name attribute with key
+  // * @param xml the document to search in
+  // * @param key the key by which to search
+  // * @return first occurence
+  // */
   // private Element findMeasureByName(Document xml, String key) {
-  //   Element desiredNode = null;
-  //   if (key == null) {
-  //     return null;
-  //   }
-  //   NodeList measures = xml.getElementsByTagName("measure");
+  // Element desiredNode = null;
+  // if (key == null) {
+  // return null;
+  // }
+  // NodeList measures = xml.getElementsByTagName("measure");
 
-  //   for (int i = 0; i < measures.getLength(); i++) {
-  //     Node measure = measures.item(i);
-  //     if (measure.getNodeType() == Node.ELEMENT_NODE) {
-  //       String name = ((Element) measure).getAttribute("name"); //get the name of the measure
+  // for (int i = 0; i < measures.getLength(); i++) {
+  // Node measure = measures.item(i);
+  // if (measure.getNodeType() == Node.ELEMENT_NODE) {
+  // String name = ((Element) measure).getAttribute("name"); //get the name of the
+  // measure
 
-  //       if (key.toLowerCase().equals(name.toLowerCase())) {
-  //         desiredNode = (Element) measure;
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   return desiredNode;
+  // if (key.toLowerCase().equals(name.toLowerCase())) {
+  // desiredNode = (Element) measure;
+  // break;
+  // }
+  // }
+  // }
+  // return desiredNode;
   // }
 
   /**
    * find all elements with a tag attribute contained in the inputString
-   * @param xml the document to search in
+   *
+   * @param xml        the document to search in
    * @param inpuString the tag by which to search
    * @return
    */
@@ -1774,7 +1800,8 @@ public class RestApiV2 {
       Node measure = measures.item(i);
       if (measure.getNodeType() == Node.ELEMENT_NODE) {
         String[] tags =
-          ((Element) measure).getAttribute(attribute).toLowerCase().split(","); //get the name of the measure
+          ((Element) measure).getAttribute(attribute).toLowerCase().split(","); // get the name of the
+        // measure
         for (int j = 0; j < tags.length; j++) {
           if (
             !tags[j].isEmpty() &&
@@ -1806,19 +1833,35 @@ public class RestApiV2 {
     String b64 = null;
     String dbName = defaultDatabase;
     String dbSchema = defaultDatabaseSchema;
+    String measureName = "";
+    net.minidev.json.JSONObject json = null;
+    InputStream graphQLResponse = null;
 
-    NodeList queries = measure.getElementsByTagName("query");
-    Element database = extractElementByTagName(measure, "database");
-    if (database != null) {
-      dbName = database.getAttribute("name");
-      dbSchema = database.getAttribute("dbSchema");
+    NodeList datasets = measure.getElementsByTagName("data");
+    if (datasets.getLength() > 0) {
+      NodeList queries =
+        ((Element) datasets.item(0)).getElementsByTagName("query");
+      Element database = extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    } else {
+      NodeList queries = measure.getElementsByTagName("query");
+      Element database = extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
     }
-    String measureName = measure.getAttribute("name");
-    String query = ((Element) queries.item(0)).getTextContent();
-    InputStream graphQLResponse = graphQLQuery(query, dbName, dbSchema);
-    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
-      graphQLResponse
-    );
+
+    json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
     System.out.println("gql response: " + json);
 
     if (json.get("customQuery") == null) {
@@ -1826,6 +1869,7 @@ public class RestApiV2 {
         "No data has been collected for this measure yet"
       );
     }
+
     String chartType = visualization
       .getElementsByTagName("chartType")
       .item(0)
@@ -1838,8 +1882,9 @@ public class RestApiV2 {
 
   /**
    * Visualizes a KPI from a measure
+   *
    * @param measure measure as xml node
-   * @param parser json parser to parse response from api calls
+   * @param parser  json parser to parse response from api calls
    * @return
    * @throws Exception
    */
@@ -1863,14 +1908,14 @@ public class RestApiV2 {
 
     kpi += measureName + ": \n";
 
-    HashMap<Integer, String> operationInfo = new HashMap<Integer, String>(); //holds the childs of visualization
+    HashMap<Integer, String> operationInfo = new HashMap<Integer, String>(); // holds the childs of visualization
     for (int i = 0; i < visualization.getChildNodes().getLength(); i++) {
       Node node = visualization.getChildNodes().item(i);
       if (node instanceof Element) {
         int index = Integer.parseInt(((Element) node).getAttribute("index"));
         String name = ((Element) node).getAttribute("name");
         kpi += name;
-        operationInfo.put(index, name); //operands might not be sorted by index}
+        operationInfo.put(index, name); // operands might not be sorted by index}
       }
     }
     kpi += "=";
@@ -1895,11 +1940,11 @@ public class RestApiV2 {
       String value = null;
 
       value = extractValue(json, parser);
-      values.put(queryName, Float.valueOf(value)); //save as floats idk
+      values.put(queryName, Float.valueOf(value)); // save as floats idk
     }
 
-    float accu = 0; //saves the result
-    float curr = 0; //current value which accu will be operated on
+    float accu = 0; // saves the result
+    float curr = 0; // current value which accu will be operated on
     for (int i = 0; i < operationInfo.size(); i++) {
       if (i == 0) {
         accu = (Float) values.get(operationInfo.get(i));
@@ -1930,8 +1975,9 @@ public class RestApiV2 {
 
   /**
    * Returns the value from a measure
+   *
    * @param measure measure as xml node
-   * @param parser json parser to parse response from api calls
+   * @param parser  json parser to parse response from api calls
    * @return
    * @throws Exception
    */
@@ -1971,8 +2017,9 @@ public class RestApiV2 {
 
   /**
    * Extracts a single value from the graphql response
+   *
    * @param jsonObject contains the desired data under customQuery
-   * @param p used to parse the data
+   * @param p          used to parse the data
    * @return
    */
   private String extractValue(
