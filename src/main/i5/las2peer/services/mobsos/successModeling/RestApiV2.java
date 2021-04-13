@@ -882,7 +882,11 @@ public class RestApiV2 {
       }
 
       if (desiredMeasure == null) { // try to find measure using tag search
-        Set<Node> list = findMeasuresByAttribute(xml, measureName, "tag");
+        Set<Node> list = XMLTools.findMeasuresByAttribute(
+          xml,
+          measureName,
+          "tag"
+        );
         if (list.isEmpty()) {
           throw new ChatException(
             "No nodes found matching your input💁\n " +
@@ -1587,43 +1591,6 @@ public class RestApiV2 {
       e.printStackTrace();
     }
     return null;
-  }
-
-  /**
-   * find all elements with a tag attribute contained in the inputString
-   *
-   * @param xml        the document to search in
-   * @param inpuString the tag by which to search
-   * @return
-   */
-  private Set<Node> findMeasuresByAttribute(
-    Document xml,
-    String inpuString,
-    String attribute
-  ) {
-    Set<Node> list = new HashSet<Node>();
-    NodeList measures = xml.getElementsByTagName("measure");
-    if (inpuString == null) {
-      return null;
-    }
-    for (int i = 0; i < measures.getLength(); i++) {
-      Node measure = measures.item(i);
-      if (measure.getNodeType() == Node.ELEMENT_NODE) {
-        String[] tags =
-          ((Element) measure).getAttribute(attribute).toLowerCase().split(","); // get the name of the
-        // measure
-        for (int j = 0; j < tags.length; j++) {
-          if (
-            !tags[j].isEmpty() &&
-            inpuString.toLowerCase().contains(tags[j].toLowerCase())
-          ) {
-            list.add(measure);
-            break;
-          }
-        }
-      }
-    }
-    return list;
   }
 
   /**
