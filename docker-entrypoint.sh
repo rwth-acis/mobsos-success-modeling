@@ -30,6 +30,7 @@ export MYSQL_DATABASE='LAS2PEERMON'
 [[ -z "${USE_FILE_SERVICE}" ]] && export USE_FILE_SERVICE='FALSE'
 [[ -z "${CATALOG_FILE_LOCATION}" ]] && export CATALOG_FILE_LOCATION='measure_catalogs/'
 [[ -z "${SUCCESS_MODELS_FOLDER_LOCATION}" ]] && export SUCCESS_MODELS_FOLDER_LOCATION='success_models/'
+[[ -z "${DEFAULT_SERVICE_NAME}" ]] && export DEFAULT_SERVICE_NAME='i5.las2peer.services.mensaService.MensaService'
 
 # set defaults for optional web connector parameters
 [[ -z "${START_HTTP}" ]] && export START_HTTP='TRUE'
@@ -58,6 +59,7 @@ set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATI
 set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
 set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
 set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
+set_in_service_config defaultServiceName ${DEFAULT_SERVICE_NAME}
 
 # configure web connector properties
 

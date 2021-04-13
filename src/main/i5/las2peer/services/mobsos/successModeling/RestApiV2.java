@@ -74,10 +74,7 @@ public class RestApiV2 {
 
   private String defaultDatabase = "las2peer";
   private String defaultDatabaseSchema = "LAS2PEERMON";
-  // private String defaultGroup =
-  // "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
-  private String defaultServiceName =
-    "i5.las2peer.services.mensaService.MensaService";
+
   private List<String> successDimensions = Arrays.asList(
     "System Quality",
     "Information Quality",
@@ -797,7 +794,7 @@ public class RestApiV2 {
         if (serviceName == null) {
           chatResponseText +=
             "No service name was defined so the mensa service is used\n";
-          serviceName = defaultServiceName;
+          serviceName = service.defaultServiceName;
         }
         chatResponseText += "\n";
       } else {
@@ -1029,7 +1026,7 @@ public class RestApiV2 {
       String factorName = newContext.getAsString("factorName");
       String measureName = newContext.getAsString("measureName");
       if (groupName == null) groupName = service.defaultGroupId;
-      if (serviceName == null) serviceName = defaultServiceName;
+      if (serviceName == null) serviceName = service.defaultServiceName;
 
       if (!service.defaultGroupId.equals(groupName)) {
         GroupAgent groupAgent = (GroupAgent) Context
@@ -1988,7 +1985,7 @@ public class RestApiV2 {
   )
     throws Exception {
     String value = null;
-    InputStream graphQLResponse=null;
+    InputStream graphQLResponse = null;
     String dbName = defaultDatabase;
     String dbSchema = defaultDatabaseSchema;
 
@@ -2019,7 +2016,7 @@ public class RestApiV2 {
       String query = ((Element) queries.item(0)).getTextContent();
       graphQLResponse = graphQLQuery(query, dbName, dbSchema);
     }
-   
+
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
