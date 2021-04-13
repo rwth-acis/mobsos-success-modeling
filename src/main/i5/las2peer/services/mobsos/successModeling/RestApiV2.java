@@ -104,6 +104,7 @@ public class RestApiV2 {
       .build();
   }
 
+  //needed for SBManager
   @GET
   @Path("/swagger.json")
   public Response getSwagger2() throws JsonProcessingException {
@@ -831,7 +832,7 @@ public class RestApiV2 {
       chatResponse.put("closeContext", true);
 
       chatResponseText +=
-        SuccessModelToText(success.xml, dimension, measuresOnly);
+        TextFormatter.SuccessModelToText(success.xml, dimension, measuresOnly);
 
       chatResponse.put("text", chatResponseText);
     } catch (ChatException e) {
@@ -893,7 +894,8 @@ public class RestApiV2 {
       }
 
       Document xml = getMeasureCatalogForGroup(groupName, parser);
-      desiredMeasure = extractElementByName(measureName, xml, "measure");
+      desiredMeasure =
+        XMLTools.extractElementByName(measureName, xml, "measure");
 
       if (
         intent.equals("number_selection") &&
@@ -1076,7 +1078,14 @@ public class RestApiV2 {
           chatResponse.put("closeContext", true);
           break;
         case "startUpdatingModel":
-          chatResponse.put("text", formatSuccessDimensions(newContext));
+          String response =
+            "I will now guide you through the updating process.\n" +
+            "Which of the following dimensions do you want to edit?\n";
+          context.put("currentSelection", successDimensions);
+          System.out.println("Context is now: " + context);
+          userContext.put(email, context);
+          response += TextFormatter.formatSuccessDimensions(successDimensions);
+          chatResponse.put("text", response);
           chatResponse.put("closeContext", false);
           break;
         case "provideDimension":
@@ -1085,14 +1094,24 @@ public class RestApiV2 {
           }
 
           System.out.println("User selected the " + msg + " dimension");
+          newContext.put("dimensionName", msg); // save the dimensionname
 
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
-
-          chatResponse.put(
-            "text",
-            formatSuccesFactorsForDimension(model, msg, newContext)
+          Element dimension = XMLTools.extractElementByName(
+            msg,
+            model,
+            "dimension"
           );
+          if (dimension == null) {
+            throw new ChatException(
+              "The desired dimension was not found in the success model"
+            );
+          }
+          NodeList factors = dimension.getElementsByTagName("factor");
+          newContext.put("currentSelection", factors);
+          userContext.put(context.getAsString("email"), newContext);
+          chatResponse.put("text", TextFormatter.formatSuccesFactors(factors));
           chatResponse.put("closeContext", false);
           break;
         case "provideFactor":
@@ -1103,10 +1122,10 @@ public class RestApiV2 {
           System.out.println("User selected the " + msg + " factor");
           catalog = getMeasureCatalogForGroup(groupName, parser);
           newContext.put("factorName", msg); // save the factorname in context
-          chatResponse.put(
-            "text",
-            formatMeasuresFromCatalog(catalog, newContext)
-          );
+          NodeList measures = catalog.getElementsByTagName("measure");
+          newContext.put("currentSelection", measures);
+          userContext.put(newContext.getAsString("email"), newContext);
+          chatResponse.put("text", TextFormatter.formatMeasures(measures));
           chatResponse.put("closeContext", false);
           break;
         case "provideMeasure":
@@ -1122,12 +1141,12 @@ public class RestApiV2 {
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
 
-          Element measureElement = extractElementByName(
+          Element measureElement = XMLTools.extractElementByName(
             msg,
             catalog,
             "measure"
           );
-          Element factorElement = extractElementByName(
+          Element factorElement = XMLTools.extractElementByName(
             factorName,
             model,
             "factor"
@@ -1143,7 +1162,7 @@ public class RestApiV2 {
               factorName +
               ", because it did not exist before"
             );
-            Element dimensionElement = extractElementByName(
+            Element dimensionElement = XMLTools.extractElementByName(
               dimensionName,
               model,
               "dimension"
@@ -1167,7 +1186,7 @@ public class RestApiV2 {
               "text",
               "Your measure was successfully added to the model\n" +
               "Here is the new success model:\n" +
-              SuccessModelToText(model)
+              TextFormatter.SuccessModelToText(model)
             );
             userContext.remove(email);
           }
@@ -1181,11 +1200,12 @@ public class RestApiV2 {
             if (measureName != null) {
               toBeRemoved = measureName;
               measureElement =
-                extractElementByName(measureName, model, "measure");
+                XMLTools.extractElementByName(measureName, model, "measure");
               measureElement.getParentNode().removeChild(measureElement);
             } else if (factorName != null) {
               toBeRemoved = factorName;
-              factorElement = extractElementByName(factorName, model, "factor");
+              factorElement =
+                XMLTools.extractElementByName(factorName, model, "factor");
               factorElement.getParentNode().removeChild(factorElement);
             }
             if (saveModel(model, groupName, serviceName)) {
@@ -1195,7 +1215,7 @@ public class RestApiV2 {
                 toBeRemoved +
                 "\"  was successfully removed from the model.\n" +
                 "Here is the resulting model:\n" +
-                SuccessModelToText(model)
+                TextFormatter.SuccessModelToText(model)
               );
               userContext.remove(email);
             }
@@ -1230,7 +1250,7 @@ public class RestApiV2 {
     throws ChatException {
     SuccessModelDTO successModel = new SuccessModelDTO();
     System.out.println("Transforming model into xml string");
-    successModel.xml = toXMLString(model);
+    successModel.xml = XMLTools.toXMLString(model);
     System.out.println("Updating the success model");
     try {
       Response response = updateSuccessModelsForGroupAndService(
@@ -1273,23 +1293,23 @@ public class RestApiV2 {
     }
   }
 
-  private String toXMLString(Document doc) {
-    TransformerFactory tf = TransformerFactory.newInstance();
-    Transformer transformer;
-    try {
-      transformer = tf.newTransformer();
-      // below code to remove XML declaration
-      // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-      StringWriter writer = new StringWriter();
-      transformer.transform(new DOMSource(doc), new StreamResult(writer));
-      String output = writer.getBuffer().toString();
-      return output;
-    } catch (TransformerException e) {
-      e.printStackTrace();
-    }
+  // private String toXMLString(Document doc) {
+  //   TransformerFactory tf = TransformerFactory.newInstance();
+  //   Transformer transformer;
+  //   try {
+  //     transformer = tf.newTransformer();
+  //     // below code to remove XML declaration
+  //     // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+  //     StringWriter writer = new StringWriter();
+  //     transformer.transform(new DOMSource(doc), new StreamResult(writer));
+  //     String output = writer.getBuffer().toString();
+  //     return output;
+  //   } catch (TransformerException e) {
+  //     e.printStackTrace();
+  //   }
 
-    return null;
-  }
+  //   return null;
+  // }
 
   private net.minidev.json.JSONObject getNewContext(
     net.minidev.json.JSONObject context,
@@ -1328,133 +1348,133 @@ public class RestApiV2 {
     return newIntent;
   }
 
-  private Element extractElementByName(
-    String elementName,
-    Document doc,
-    String tagName
-  ) {
-    Element desiredElement = null;
-    NodeList elements = doc.getElementsByTagName(tagName);
+  // private Element extractElementByName(
+  //   String elementName,
+  //   Document doc,
+  //   String tagName
+  // ) {
+  //   Element desiredElement = null;
+  //   NodeList elements = doc.getElementsByTagName(tagName);
 
-    for (int i = 0; i < elements.getLength(); i++) {
-      if (elements.item(i) instanceof Element) {
-        if (
-          elementName
-            .toLowerCase()
-            .equals(
-              ((Element) elements.item(i)).getAttribute("name").toLowerCase()
-            )
-        ) {
-          desiredElement = (Element) elements.item(i);
-          break;
-        }
-      }
-    }
+  //   for (int i = 0; i < elements.getLength(); i++) {
+  //     if (elements.item(i) instanceof Element) {
+  //       if (
+  //         elementName
+  //           .toLowerCase()
+  //           .equals(
+  //             ((Element) elements.item(i)).getAttribute("name").toLowerCase()
+  //           )
+  //       ) {
+  //         desiredElement = (Element) elements.item(i);
+  //         break;
+  //       }
+  //     }
+  //   }
 
-    return desiredElement;
-  }
+  //   return desiredElement;
+  // }
 
-  private Element extractElementByTagName(Element doc, String tagName) {
-    NodeList elements = doc.getElementsByTagName(tagName);
-    return elements.getLength() > 0 && (elements.item(0) instanceof Element)
-      ? (Element) elements.item(0)
-      : null;
-  }
+  // private Element extractElementByTagName(Element doc, String tagName) {
+  //   NodeList elements = doc.getElementsByTagName(tagName);
+  //   return elements.getLength() > 0 && (elements.item(0) instanceof Element)
+  //     ? (Element) elements.item(0)
+  //     : null;
+  // }
 
-  private String formatMeasuresFromCatalog(
-    Document catalog,
-    net.minidev.json.JSONObject context
-  ) {
-    String response = "Here are the measures defined by the community.\n";
-    NodeList measures = catalog.getElementsByTagName("measure");
-    context.put("currentSelection", measures);
-    userContext.put(context.getAsString("email"), context);
-    System.out.println(
-      "Saved context" + context + "\n intent should be provideFactor"
-    );
-    for (int i = 0; i < measures.getLength(); i++) {
-      response +=
-        (i + 1) +
-        ". " +
-        ((Element) measures.item(i)).getAttribute("name") +
-        "\n";
-    }
-    response +=
-      "Please select one of the following measures by choosing a number to add it to the factor\n";
-    return response;
-  }
+  // private String formatMeasuresFromCatalog(
+  //   Document catalog,
+  //   net.minidev.json.JSONObject context
+  // ) {
+  //   String response = "Here are the measures defined by the community.\n";
+  //   NodeList measures = catalog.getElementsByTagName("measure");
+  //   context.put("currentSelection", measures);
+  //   userContext.put(context.getAsString("email"), context);
+  //   System.out.println(
+  //     "Saved context" + context + "\n intent should be provideFactor"
+  //   );
+  //   for (int i = 0; i < measures.getLength(); i++) {
+  //     response +=
+  //       (i + 1) +
+  //       ". " +
+  //       ((Element) measures.item(i)).getAttribute("name") +
+  //       "\n";
+  //   }
+  //   response +=
+  //     "Please select one of the following measures by choosing a number to add it to the factor\n";
+  //   return response;
+  // }
 
-  private String formatSuccesFactorsForDimension(
-    Document model,
-    String dimension,
-    net.minidev.json.JSONObject context
-  )
-    throws ChatException {
-    String response = "";
-    NodeList dimensions = model.getElementsByTagName("dimension");
-    context.put("dimensionName", dimension); // save the dimensionname
-    Element desiredDimension = null;
-    for (int i = 0; i < dimensions.getLength(); i++) {
-      if (dimensions.item(i) instanceof Element) {
-        if (
-          dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
-        ) {
-          desiredDimension = (Element) dimensions.item(i);
-          break;
-        }
-      }
-    }
-    if (desiredDimension == null) {
-      throw new ChatException(
-        "The desired dimension was not found in the success model"
-      );
-    }
+  // private String formatSuccesFactorsForDimension(
+  //   Document model,
+  //   String dimension,
+  //   net.minidev.json.JSONObject context
+  // )
+  //   throws ChatException {
+  //   String response = "";
+  //   NodeList dimensions = model.getElementsByTagName("dimension");
+  //   context.put("dimensionName", dimension); // save the dimensionname
+  //   Element desiredDimension = null;
+  //   for (int i = 0; i < dimensions.getLength(); i++) {
+  //     if (dimensions.item(i) instanceof Element) {
+  //       if (
+  //         dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
+  //       ) {
+  //         desiredDimension = (Element) dimensions.item(i);
+  //         break;
+  //       }
+  //     }
+  //   }
+  //   if (desiredDimension == null) {
+  //     throw new ChatException(
+  //       "The desired dimension was not found in the success model"
+  //     );
+  //   }
 
-    NodeList factors = desiredDimension.getElementsByTagName("factor");
+  //   NodeList factors = desiredDimension.getElementsByTagName("factor");
 
-    context.put("currentSelection", factors);
-    System.out.println(
-      "Saved context" + context + "\n intent should be provideFactor"
-    );
-    userContext.put(context.getAsString("email"), context);
+  //   context.put("currentSelection", factors);
+  //   System.out.println(
+  //     "Saved context" + context + "\n intent should be provideFactor"
+  //   );
+  //   userContext.put(context.getAsString("email"), context);
 
-    if (factors.getLength() == 0) {
-      return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
-    }
-    response =
-      "Which of the following factors do you want to add a measure to?\n";
-    for (int i = 0; i < factors.getLength(); i++) {
-      response +=
-        (i + 1) +
-        ". " +
-        ((Element) factors.item(i)).getAttribute("name") +
-        "\n";
-    }
-    response +=
-      "Choose one by providing a number.\n" +
-      "You can also add a factor by providing a name.";
-    return response;
-  }
+  //   if (factors.getLength() == 0) {
+  //     return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
+  //   }
+  //   response =
+  //     "Which of the following factors do you want to add a measure to?\n";
+  //   for (int i = 0; i < factors.getLength(); i++) {
+  //     response +=
+  //       (i + 1) +
+  //       ". " +
+  //       ((Element) factors.item(i)).getAttribute("name") +
+  //       "\n";
+  //   }
+  //   response +=
+  //     "Choose one by providing a number.\n" +
+  //     "You can also add a factor by providing a name.";
+  //   return response;
+  // }
 
-  private String formatSuccessDimensions(net.minidev.json.JSONObject context) {
-    String email = context.getAsString("email");
+  // private String formatSuccessDimensions(net.minidev.json.JSONObject context) {
+  //   String email = context.getAsString("email");
 
-    String response =
-      "I will now guide you through the updating process.\n" +
-      "Which of the following dimensions do you want to edit?\n";
-    context.put("currentSelection", successDimensions);
-    System.out.println("Context is now: " + context);
-    userContext.put(email, context);
+  //   String response =
+  //     "I will now guide you through the updating process.\n" +
+  //     "Which of the following dimensions do you want to edit?\n";
+  //   context.put("currentSelection", successDimensions);
+  //   System.out.println("Context is now: " + context);
+  //   userContext.put(email, context);
 
-    for (int i = 0; i < successDimensions.size(); i++) {
-      String dimension = successDimensions.get(i);
-      response += (i + 1) + ". " + dimension + "\n";
-    }
-    response +=
-      "Choose one by providing a number\n" +
-      "If you want to exit the update process, just let me know by typing quit";
-    return response;
-  }
+  //   for (int i = 0; i < successDimensions.size(); i++) {
+  //     String dimension = successDimensions.get(i);
+  //     response += (i + 1) + ". " + dimension + "\n";
+  //   }
+  //   response +=
+  //     "Choose one by providing a number\n" +
+  //     "If you want to exit the update process, just let me know by typing quit";
+  //   return response;
+  // }
 
   private Document getSuccessModelForGroupAndService(
     String groupName,
@@ -1475,7 +1495,7 @@ public class RestApiV2 {
     }
 
     String xmlString = ((SuccessModelDTO) response).xml;
-    model = loadXMLFromString(xmlString);
+    model = XMLTools.loadXMLFromString(xmlString);
 
     return model;
   }
@@ -1503,19 +1523,19 @@ public class RestApiV2 {
       (String) response
     );
     String xmlString = ((net.minidev.json.JSONObject) json).getAsString("xml");
-    catalog = loadXMLFromString(xmlString);
+    catalog = XMLTools.loadXMLFromString(xmlString);
 
     return catalog;
   }
 
-  public Document loadXMLFromString(String xml) throws Exception {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+  // public Document loadXMLFromString(String xml) throws Exception {
+  //   DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-    factory.setNamespaceAware(true);
-    DocumentBuilder builder = factory.newDocumentBuilder();
+  //   factory.setNamespaceAware(true);
+  //   DocumentBuilder builder = factory.newDocumentBuilder();
 
-    return builder.parse(new ByteArrayInputStream(xml.getBytes()));
-  }
+  //   return builder.parse(new ByteArrayInputStream(xml.getBytes()));
+  // }
 
   /**
    * Makes a request to the GraphQl service
@@ -1838,7 +1858,7 @@ public class RestApiV2 {
     if (datasets.getLength() > 0) {
       NodeList queries =
         ((Element) datasets.item(0)).getElementsByTagName("query");
-      Element database = extractElementByTagName(measure, "database");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
       if (database != null) {
         dbName = database.getAttribute("name");
         dbSchema = database.getAttribute("dbSchema");
@@ -1848,7 +1868,7 @@ public class RestApiV2 {
       graphQLResponse = graphQLQuery(query, dbName, dbSchema);
     } else {
       NodeList queries = measure.getElementsByTagName("query");
-      Element database = extractElementByTagName(measure, "database");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
       if (database != null) {
         dbName = database.getAttribute("name");
         dbSchema = database.getAttribute("dbSchema");
@@ -1897,7 +1917,7 @@ public class RestApiV2 {
 
     String measureName = measure.getAttribute("name");
     NodeList queries = measure.getElementsByTagName("query");
-    Element database = extractElementByTagName(measure, "database");
+    Element database = XMLTools.extractElementByTagName(measure, "database");
     if (database != null) {
       dbName = database.getAttribute("name");
       dbSchema = database.getAttribute("dbSchema");
@@ -1997,7 +2017,7 @@ public class RestApiV2 {
     if (datasets.getLength() > 0) {
       NodeList queries =
         ((Element) datasets.item(0)).getElementsByTagName("query");
-      Element database = extractElementByTagName(measure, "database");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
       if (database != null) {
         dbName = database.getAttribute("name");
         dbSchema = database.getAttribute("dbSchema");
@@ -2007,7 +2027,7 @@ public class RestApiV2 {
       graphQLResponse = graphQLQuery(query, dbName, dbSchema);
     } else {
       NodeList queries = measure.getElementsByTagName("query");
-      Element database = extractElementByTagName(measure, "database");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
       if (database != null) {
         dbName = database.getAttribute("name");
         dbSchema = database.getAttribute("dbSchema");
@@ -2065,96 +2085,96 @@ public class RestApiV2 {
     return values[0].toString();
   }
 
-  private String SuccessModelToText(
-    String xml,
-    String dimension,
-    boolean measuresOnly
-  )
-    throws Exception {
-    String res = "";
-    Document model = loadXMLFromString(xml);
-    NodeList dimensions = model.getElementsByTagName("dimension");
-    System.out.println("Measures only: " + measuresOnly);
-    for (int i = 0; i < dimensions.getLength(); i++) {
-      if (
-        dimension == null ||
-        dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
-      ) {
-        if (!measuresOnly) {
-          res += (i + 1) + ") ";
-        }
-        res += dimensionToText((Element) dimensions.item(i), measuresOnly);
-      }
-    }
-    return res;
-  }
+  // private String SuccessModelToText(
+  //   String xml,
+  //   String dimension,
+  //   boolean measuresOnly
+  // )
+  //   throws Exception {
+  //   String res = "";
+  //   Document model = XMLTools.loadXMLFromString(xml);
+  //   NodeList dimensions = model.getElementsByTagName("dimension");
+  //   System.out.println("Measures only: " + measuresOnly);
+  //   for (int i = 0; i < dimensions.getLength(); i++) {
+  //     if (
+  //       dimension == null ||
+  //       dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
+  //     ) {
+  //       if (!measuresOnly) {
+  //         res += (i + 1) + ") ";
+  //       }
+  //       res += dimensionToText((Element) dimensions.item(i), measuresOnly);
+  //     }
+  //   }
+  //   return res;
+  // }
 
-  private String SuccessModelToText(Document model) throws Exception {
-    String res = "";
+  // private String SuccessModelToText(Document model) throws Exception {
+  //   String res = "";
 
-    NodeList dimensions = model.getElementsByTagName("dimension");
+  //   NodeList dimensions = model.getElementsByTagName("dimension");
 
-    for (int i = 0; i < dimensions.getLength(); i++) {
-      res += dimensionToText((Element) dimensions.item(i));
-    }
-    return res;
-  }
+  //   for (int i = 0; i < dimensions.getLength(); i++) {
+  //     res += dimensionToText((Element) dimensions.item(i));
+  //   }
+  //   return res;
+  // }
 
-  private String dimensionToText(Element dimension) {
-    String res = "";
-    res += dimension.getAttribute("name") + ":\n";
-    NodeList factors = dimension.getElementsByTagName("factor");
-    for (int i = 0; i < factors.getLength(); i++) {
-      res += "    -" + factorToText((Element) factors.item(i));
-    }
-    return res;
-  }
+  // private String dimensionToText(Element dimension) {
+  //   String res = "";
+  //   res += dimension.getAttribute("name") + ":\n";
+  //   NodeList factors = dimension.getElementsByTagName("factor");
+  //   for (int i = 0; i < factors.getLength(); i++) {
+  //     res += "    -" + factorToText((Element) factors.item(i));
+  //   }
+  //   return res;
+  // }
 
-  private String dimensionToText(Element dimension, boolean measuresOnly) {
-    String res = "";
-    if (!measuresOnly) {
-      res += dimension.getAttribute("name") + ":\n";
-    }
+  // private String dimensionToText(Element dimension, boolean measuresOnly) {
+  //   String res = "";
+  //   if (!measuresOnly) {
+  //     res += dimension.getAttribute("name") + ":\n";
+  //   }
 
-    NodeList factors = dimension.getElementsByTagName("factor");
-    for (int i = 0; i < factors.getLength(); i++) {
-      if (!measuresOnly) {
-        res += "    -";
-      }
-      res += factorToText((Element) factors.item(i), measuresOnly);
-    }
-    return res;
-  }
+  //   NodeList factors = dimension.getElementsByTagName("factor");
+  //   for (int i = 0; i < factors.getLength(); i++) {
+  //     if (!measuresOnly) {
+  //       res += "    -";
+  //     }
+  //     res += factorToText((Element) factors.item(i), measuresOnly);
+  //   }
+  //   return res;
+  // }
 
-  private String factorToText(Element factor) {
-    String res = "";
-    res += factor.getAttribute("name") + ":\n";
-    NodeList measures = ((Element) factor).getElementsByTagName("measure");
-    for (int j = 0; j < measures.getLength(); j++) {
-      res += "        • " + measureToText((Element) measures.item(j));
-    }
-    return res;
-  }
+  // private String factorToText(Element factor) {
+  //   String res = "";
+  //   res += factor.getAttribute("name") + ":\n";
+  //   NodeList measures = ((Element) factor).getElementsByTagName("measure");
+  //   for (int j = 0; j < measures.getLength(); j++) {
+  //     res += "        • " + measureToText((Element) measures.item(j));
+  //   }
+  //   return res;
+  // }
 
-  private String factorToText(Element factor, boolean measuresOnly) {
-    String res = "";
-    if (!measuresOnly) {
-      res += factor.getAttribute("name") + ":\n";
-    }
+  // private String factorToText(Element factor, boolean measuresOnly) {
+  //   String res = "";
+  //   if (!measuresOnly) {
+  //     res += factor.getAttribute("name") + ":\n";
+  //   }
 
-    NodeList measures = ((Element) factor).getElementsByTagName("measure");
-    for (int j = 0; j < measures.getLength(); j++) {
-      if (!measuresOnly) {
-        res += "        ";
-      }
-      res += "• " + measureToText((Element) measures.item(j));
-    }
-    return res;
-  }
+  //   NodeList measures = ((Element) factor).getElementsByTagName("measure");
+  //   for (int j = 0; j < measures.getLength(); j++) {
+  //     if (!measuresOnly) {
+  //       res += "        ";
+  //     }
+  //     res += "• " + measureToText((Element) measures.item(j));
+  //   }
+  //   return res;
+  // }
 
-  private String measureToText(Element measure) {
-    return measure.getAttribute("name") + "\n";
-  }
+  // private String measureToText(Element measure) {
+  //   return measure.getAttribute("name") + "\n";
+  // }
 
   /** Exceptions ,with messages, that should be returned in Chat */
   protected static class ChatException extends Exception {
