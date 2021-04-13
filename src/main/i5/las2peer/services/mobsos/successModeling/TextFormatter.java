@@ -6,6 +6,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+/**
+ * Text formatting functions used to format text to be used by the chatbot
+ */
 public class TextFormatter {
 
   protected static String formatMeasures(NodeList measures) {
