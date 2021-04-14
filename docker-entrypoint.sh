@@ -6,7 +6,7 @@ set -e
 if [[ ! -z "${DEBUG}" ]]; then
     set -x
 fi
-
+NODE_ID_SEED=${NODE_ID_SEED:-$RANDOM}
 # set some helpful variables
 export SERVICE_PROPERTY_FILE='etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties'
 export WEB_CONNECTOR_PROPERTY_FILE='etc/i5.las2peer.connectors.webConnector.WebConnector.properties'
@@ -128,7 +128,7 @@ then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
         exec ${LAUNCH_COMMAND}  --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
     else
-        exec ${LAUNCH_COMMAND}   startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
+        exec ${LAUNCH_COMMAND} --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
     fi
 else
   exec ${LAUNCH_COMMAND} ${@}
