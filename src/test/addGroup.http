@@ -3,7 +3,7 @@ Content-Type: application/json
 Authorization: bGFraG91bmU6UEhscGg2VGkjRWRSPT0rdVk4OWU=
 
 {
-"groupID":"5d12b82f25db394803988f701fd8c5c3833558f2b77519dc93e9bab800cacc8541bf378b7f457fff2f6d3d899e6f9cec9bb12ac223054c4d1c5bd5503777e343",
-"name":"EvalGroupTuesday",
+"groupID":"7dd212f9b90c451f1900b07d9cd96e25f169a7f79841418617802d44879a2c00f48acd26dadb1a82995f1274f85b2d08d4311f3eaeeab24927b11f380f44c0e6",
+"name":"default",
 "isMember":true
 }
