@@ -6,7 +6,7 @@ set -e
 if [[ ! -z "${DEBUG}" ]]; then
     set -x
 fi
-
+NODE_ID_SEED=${NODE_ID_SEED:-$RANDOM}
 # set some helpful variables
 export SERVICE_PROPERTY_FILE='etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties'
 export WEB_CONNECTOR_PROPERTY_FILE='etc/i5.las2peer.connectors.webConnector.WebConnector.properties'
@@ -30,6 +30,7 @@ export MYSQL_DATABASE='LAS2PEERMON'
 [[ -z "${USE_FILE_SERVICE}" ]] && export USE_FILE_SERVICE='FALSE'
 [[ -z "${CATALOG_FILE_LOCATION}" ]] && export CATALOG_FILE_LOCATION='measure_catalogs/'
 [[ -z "${SUCCESS_MODELS_FOLDER_LOCATION}" ]] && export SUCCESS_MODELS_FOLDER_LOCATION='success_models/'
+[[ -z "${DEFAULT_SERVICE_NAME}" ]] && export DEFAULT_SERVICE_NAME='i5.las2peer.services.mensaService.MensaService'
 
 # set defaults for optional web connector parameters
 [[ -z "${START_HTTP}" ]] && export START_HTTP='TRUE'
@@ -58,6 +59,7 @@ set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATI
 set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
 set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
 set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
+set_in_service_config defaultServiceName ${DEFAULT_SERVICE_NAME}
 
 # configure web connector properties
 
@@ -126,7 +128,7 @@ then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
         exec ${LAUNCH_COMMAND}  --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
     else
-        exec ${LAUNCH_COMMAND}  uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
+        exec ${LAUNCH_COMMAND} --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
     fi
 else
   exec ${LAUNCH_COMMAND} ${@}

@@ -74,10 +74,7 @@ public class RestApiV2 {
 
   private String defaultDatabase = "las2peer";
   private String defaultDatabaseSchema = "LAS2PEERMON";
-  // private String defaultGroup =
-  //   "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
-  private String defaultServiceName =
-    "i5.las2peer.services.mensaService.MensaService";
+
   private List<String> successDimensions = Arrays.asList(
     "System Quality",
     "Information Quality",
@@ -107,6 +104,7 @@ public class RestApiV2 {
       .build();
   }
 
+  //needed for SBManager
   @GET
   @Path("/swagger.json")
   public Response getSwagger2() throws JsonProcessingException {
@@ -237,7 +235,7 @@ public class RestApiV2 {
       return null;
     }
     try {
-      resultSet.next(); //Select the first result
+      resultSet.next(); // Select the first result
       String groupID = resultSet.getString(1);
       String groupAlias = resultSet.getString(2);
       boolean member = Context.get().hasAccess(groupID);
@@ -717,38 +715,11 @@ public class RestApiV2 {
     }
   }
 
-  // /**
-  //  * Bot function to get a visualization
-  //  * @param body jsonString containing the query, the Chart type and other optional parameters
-  //  * @return image to be displayed in chat
-  //  */
-  // @Path("/getSuccessModel")
-  // @POST
-  // public Response getSuccessModel(String body) {
-  //   Response res = null;
-  //   net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
-  //   try {
-  //     res =
-  //       getSuccessModelsForGroupAndService(
-  //         "default",
-  //         "i5.las2peer.services.mensaService.MensaService"
-  //       );
-
-  //     SuccessModelDTO sModel = (SuccessModelDTO) res.getEntity();
-  //     System.out.println(res.getEntity());
-  //     chatResponse.put("text", sModel.xml);
-  //     res = Response.ok(chatResponse.toJSONString()).build();
-  //   } catch (Exception e) { // } //   res = Response.ok(chatResponse.toString()).build(); //   chatResponse.put("text", e.getMessage()); //   e.printStackTrace(); // catch (ChatException e) {
-  //     chatResponse.put("text", "An error occured 😦");
-  //     res = Response.ok(chatResponse.toString()).build();
-  //     e.printStackTrace();
-  //   }
-  //   return res;
-  // }
-
   /**
    * Bot function to get a visualization
-   * @param body jsonString containing the query, the Chart type and other optional parameters
+   *
+   * @param body jsonString containing the query, the Chart type and other
+   *             optional parameters
    * @return image to be displayed in chat
    */
   @Path("/listMeasures")
@@ -778,12 +749,12 @@ public class RestApiV2 {
       String email = requestObject.getAsString("email");
       // String intent = requestObject.getAsString("intent");
       // if (
-      //   intent != null &&
-      //   !"listMeasures".equals(intent) &&
-      //   !"getSuccessModel".equals(intent)
+      // intent != null &&
+      // !"listMeasures".equals(intent) &&
+      // !"getSuccessModel".equals(intent)
       // ) {
-      //   //if the intent is wrong we assume the user wants to visualize
-      //   return visualizeRequest(body);
+      // //if the intent is wrong we assume the user wants to visualize
+      // return visualizeRequest(body);
       // }
       if (groupName == null) {
         chatResponseText +=
@@ -792,12 +763,12 @@ public class RestApiV2 {
         if (serviceName == null) {
           chatResponseText +=
             "No service name was defined so the mensa service is used\n";
-          serviceName = defaultServiceName;
+          serviceName = service.defaultServiceName;
         }
         chatResponseText += "\n";
       } else {
         GroupDTO group = (GroupDTO) this.getGroup(groupName).getEntity();
-        if (!group.isMember) { //check if bot is member of group
+        if (!group.isMember) { // check if bot is member of group
           throw new ChatException(
             "Sorry I am not part of the group 😱. Contact your admin to add me to the group"
           );
@@ -818,7 +789,8 @@ public class RestApiV2 {
       SuccessModelDTO success = (SuccessModelDTO) resp;
       boolean measuresOnly;
       if ("getSuccessModel".equals(requestObject.getAsString("intent"))) {
-        //if getSuccessModel is recognized as intent, then we inlcude dimensions and factors in the list
+        // if getSuccessModel is recognized as intent, then we inlcude dimensions and
+        // factors in the list
         measuresOnly = false;
       } else {
         // chatResponse.put("closeContext", false);
@@ -828,7 +800,7 @@ public class RestApiV2 {
       chatResponse.put("closeContext", true);
 
       chatResponseText +=
-        SuccessModelToText(success.xml, dimension, measuresOnly);
+        TextFormatter.SuccessModelToText(success.xml, dimension, measuresOnly);
 
       chatResponse.put("text", chatResponseText);
     } catch (ChatException e) {
@@ -845,7 +817,9 @@ public class RestApiV2 {
 
   /**
    * Bot function to get a visualization
-   * @param body jsonString containing the query, the Chart type and other optional parameters
+   *
+   * @param body jsonString containing the query, the Chart type and other
+   *             optional parameters
    * @return image to be displayed in chat
    */
   @Path("/visualize")
@@ -868,9 +842,10 @@ public class RestApiV2 {
       if (context == null) {
         context = new net.minidev.json.JSONObject();
       }
-      //TODO handle groupName. groupName should be the name of the group not its id
+      // TODO handle groupName. groupName should be the name of the group not its id
 
-      // String tag = json.getAsString("tag"); //might be usefull in the future to search for measures by tag
+      // String tag = json.getAsString("tag"); //might be usefull in the future to
+      // search for measures by tag
       String measureName = json.getAsString("msg");
 
       String intent = json.getAsString("intent");
@@ -879,7 +854,7 @@ public class RestApiV2 {
         : service.defaultGroupId;
 
       if (!service.defaultGroupId.equals(groupName)) {
-        //groups other than the default group need permission to be accessed
+        // groups other than the default group need permission to be accessed
         GroupAgent groupAgent = (GroupAgent) Context
           .get()
           .fetchAgent(groupName);
@@ -887,13 +862,14 @@ public class RestApiV2 {
       }
 
       Document xml = getMeasureCatalogForGroup(groupName, parser);
-      desiredMeasure = extractElementByName(measureName, xml, "measure");
+      desiredMeasure =
+        XMLTools.extractElementByName(measureName, xml, "measure");
 
       if (
         intent.equals("number_selection") &&
         context.get("currentSelection") != null
       ) {
-        //user selected an item from a the list
+        // user selected an item from a the list
         if (context.get("currentSelection") instanceof Set<?>) {
           Set<Node> measures = (Set<Node>) context.get("currentSelection");
 
@@ -905,8 +881,12 @@ public class RestApiV2 {
         }
       }
 
-      if (desiredMeasure == null) { //try to find measure using tag search
-        Set<Node> list = findMeasuresByAttribute(xml, measureName, "tag");
+      if (desiredMeasure == null) { // try to find measure using tag search
+        Set<Node> list = XMLTools.findMeasuresByAttribute(
+          xml,
+          measureName,
+          "tag"
+        );
         if (list.isEmpty()) {
           throw new ChatException(
             "No nodes found matching your input💁\n " +
@@ -916,11 +896,11 @@ public class RestApiV2 {
             "https://requirements-bazaar.org/"
           );
         }
-        if (list.size() == 1) { //only one result->use this as the desired measure
+        if (list.size() == 1) { // only one result->use this as the desired measure
           desiredMeasure = (Element) list.iterator().next();
         } else {
           context.put("currentSelection", list);
-          userContext.put(email, context); //save the current selection in context
+          userContext.put(email, context); // save the current selection in context
           String respString =
             "I found the following measures, matching \"" +
             measureName +
@@ -1020,7 +1000,7 @@ public class RestApiV2 {
       String factorName = newContext.getAsString("factorName");
       String measureName = newContext.getAsString("measureName");
       if (groupName == null) groupName = service.defaultGroupId;
-      if (serviceName == null) serviceName = defaultServiceName;
+      if (serviceName == null) serviceName = service.defaultServiceName;
 
       if (!service.defaultGroupId.equals(groupName)) {
         GroupAgent groupAgent = (GroupAgent) Context
@@ -1029,7 +1009,7 @@ public class RestApiV2 {
         checkGroupMembershipByEmail(email, groupAgent);
       }
 
-      if (msg.length() > 4 && !"number_selection".equals(intent)) { //assume user typed name instead of number
+      if (msg.length() > 4 && !"number_selection".equals(intent)) { // assume user typed name instead of number
         if ("provideDimension".equals(context.getAsString("intent"))) {
           intent = "provideFactor";
           factorName = msg;
@@ -1041,7 +1021,7 @@ public class RestApiV2 {
       }
 
       if (intent.equals("number_selection")) {
-        intent = determineNewIntent(context); //in this case figure out the new intent from the old context
+        intent = determineNewIntent(context); // in this case figure out the new intent from the old context
         newContext.put("intent", intent); // save intent in the new context for next call
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
         Object currentSelection = context.get("currentSelection");
@@ -1061,16 +1041,23 @@ public class RestApiV2 {
         System.out.println("Resulting input: " + msg);
       }
 
-      userContext.put(email, newContext); //better be safe than sorry...
+      userContext.put(email, newContext); // better be safe than sorry...
 
       switch (intent) {
         case "quit":
           chatResponse.put("text", "Alright, discarding changes...");
-          userContext.remove(email); //reset contxt on quit
+          userContext.remove(email); // reset contxt on quit
           chatResponse.put("closeContext", true);
           break;
         case "startUpdatingModel":
-          chatResponse.put("text", formatSuccessDimensions(newContext));
+          String response =
+            "I will now guide you through the updating process.\n" +
+            "Which of the following dimensions do you want to edit?\n";
+          context.put("currentSelection", successDimensions);
+          System.out.println("Context is now: " + context);
+          userContext.put(email, context);
+          response += TextFormatter.formatSuccessDimensions(successDimensions);
+          chatResponse.put("text", response);
           chatResponse.put("closeContext", false);
           break;
         case "provideDimension":
@@ -1079,14 +1066,24 @@ public class RestApiV2 {
           }
 
           System.out.println("User selected the " + msg + " dimension");
+          newContext.put("dimensionName", msg); // save the dimensionname
 
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
-
-          chatResponse.put(
-            "text",
-            formatSuccesFactorsForDimension(model, msg, newContext)
+          Element dimension = XMLTools.extractElementByName(
+            msg,
+            model,
+            "dimension"
           );
+          if (dimension == null) {
+            throw new ChatException(
+              "The desired dimension was not found in the success model"
+            );
+          }
+          NodeList factors = dimension.getElementsByTagName("factor");
+          newContext.put("currentSelection", factors);
+          userContext.put(context.getAsString("email"), newContext);
+          chatResponse.put("text", TextFormatter.formatSuccesFactors(factors));
           chatResponse.put("closeContext", false);
           break;
         case "provideFactor":
@@ -1096,11 +1093,11 @@ public class RestApiV2 {
 
           System.out.println("User selected the " + msg + " factor");
           catalog = getMeasureCatalogForGroup(groupName, parser);
-          newContext.put("factorName", msg); //save the factorname in context
-          chatResponse.put(
-            "text",
-            formatMeasuresFromCatalog(catalog, newContext)
-          );
+          newContext.put("factorName", msg); // save the factorname in context
+          NodeList measures = catalog.getElementsByTagName("measure");
+          newContext.put("currentSelection", measures);
+          userContext.put(newContext.getAsString("email"), newContext);
+          chatResponse.put("text", TextFormatter.formatMeasures(measures));
           chatResponse.put("closeContext", false);
           break;
         case "provideMeasure":
@@ -1116,12 +1113,12 @@ public class RestApiV2 {
           model =
             getSuccessModelForGroupAndService(groupName, serviceName, parser);
 
-          Element measureElement = extractElementByName(
+          Element measureElement = XMLTools.extractElementByName(
             msg,
             catalog,
             "measure"
           );
-          Element factorElement = extractElementByName(
+          Element factorElement = XMLTools.extractElementByName(
             factorName,
             model,
             "factor"
@@ -1137,7 +1134,7 @@ public class RestApiV2 {
               factorName +
               ", because it did not exist before"
             );
-            Element dimensionElement = extractElementByName(
+            Element dimensionElement = XMLTools.extractElementByName(
               dimensionName,
               model,
               "dimension"
@@ -1161,7 +1158,7 @@ public class RestApiV2 {
               "text",
               "Your measure was successfully added to the model\n" +
               "Here is the new success model:\n" +
-              SuccessModelToText(model)
+              TextFormatter.SuccessModelToText(model)
             );
             userContext.remove(email);
           }
@@ -1175,11 +1172,12 @@ public class RestApiV2 {
             if (measureName != null) {
               toBeRemoved = measureName;
               measureElement =
-                extractElementByName(measureName, model, "measure");
+                XMLTools.extractElementByName(measureName, model, "measure");
               measureElement.getParentNode().removeChild(measureElement);
             } else if (factorName != null) {
               toBeRemoved = factorName;
-              factorElement = extractElementByName(factorName, model, "factor");
+              factorElement =
+                XMLTools.extractElementByName(factorName, model, "factor");
               factorElement.getParentNode().removeChild(factorElement);
             }
             if (saveModel(model, groupName, serviceName)) {
@@ -1189,7 +1187,7 @@ public class RestApiV2 {
                 toBeRemoved +
                 "\"  was successfully removed from the model.\n" +
                 "Here is the resulting model:\n" +
-                SuccessModelToText(model)
+                TextFormatter.SuccessModelToText(model)
               );
               userContext.remove(email);
             }
@@ -1197,13 +1195,13 @@ public class RestApiV2 {
 
           break;
         // default:
-        //   System.out.println(
-        //     "Unexpected intent " +
-        //     intent +
-        //     " recognized. Choosing default response"
-        //   );
-        //   chatResponse.put("text", formatSuccessDimensions(newContext));
-        //   break;
+        // System.out.println(
+        // "Unexpected intent " +
+        // intent +
+        // " recognized. Choosing default response"
+        // );
+        // chatResponse.put("text", formatSuccessDimensions(newContext));
+        // break;
       }
     } catch (ChatException e) {
       e.printStackTrace();
@@ -1224,7 +1222,7 @@ public class RestApiV2 {
     throws ChatException {
     SuccessModelDTO successModel = new SuccessModelDTO();
     System.out.println("Transforming model into xml string");
-    successModel.xml = toXMLString(model);
+    successModel.xml = XMLTools.toXMLString(model);
     System.out.println("Updating the success model");
     try {
       Response response = updateSuccessModelsForGroupAndService(
@@ -1267,36 +1265,18 @@ public class RestApiV2 {
     }
   }
 
-  private String toXMLString(Document doc) {
-    TransformerFactory tf = TransformerFactory.newInstance();
-    Transformer transformer;
-    try {
-      transformer = tf.newTransformer();
-      // below code to remove XML declaration
-      // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-      StringWriter writer = new StringWriter();
-      transformer.transform(new DOMSource(doc), new StreamResult(writer));
-      String output = writer.getBuffer().toString();
-      return output;
-    } catch (TransformerException e) {
-      e.printStackTrace();
-    }
-
-    return null;
-  }
-
   private net.minidev.json.JSONObject getNewContext(
     net.minidev.json.JSONObject context,
     net.minidev.json.JSONObject newinfo
   ) {
     net.minidev.json.JSONObject newContext = new net.minidev.json.JSONObject();
-    newContext.putAll(context); //copy the values from the old context
+    newContext.putAll(context); // copy the values from the old context
     Set<Entry<String, Object>> entries = newinfo.entrySet();
     for (Entry<String, Object> entry : entries) {
       if (entry.getValue() != null) newContext.put(
         entry.getKey(),
         entry.getValue()
-      ); //overwrite or set new
+      ); // overwrite or set new
     }
     return newContext;
   }
@@ -1322,134 +1302,6 @@ public class RestApiV2 {
     return newIntent;
   }
 
-  private Element extractElementByName(
-    String elementName,
-    Document doc,
-    String tagName
-  ) {
-    Element desiredElement = null;
-    NodeList elements = doc.getElementsByTagName(tagName);
-
-    for (int i = 0; i < elements.getLength(); i++) {
-      if (elements.item(i) instanceof Element) {
-        if (
-          elementName
-            .toLowerCase()
-            .equals(
-              ((Element) elements.item(i)).getAttribute("name").toLowerCase()
-            )
-        ) {
-          desiredElement = (Element) elements.item(i);
-          break;
-        }
-      }
-    }
-
-    return desiredElement;
-  }
-
-  private Element extractElementByTagName(Element doc, String tagName) {
-    NodeList elements = doc.getElementsByTagName(tagName);
-    return elements.getLength() > 0 && (elements.item(0) instanceof Element)
-      ? (Element) elements.item(0)
-      : null;
-  }
-
-  private String formatMeasuresFromCatalog(
-    Document catalog,
-    net.minidev.json.JSONObject context
-  ) {
-    String response = "Here are the measures defined by the community.\n";
-    NodeList measures = catalog.getElementsByTagName("measure");
-    context.put("currentSelection", measures);
-    userContext.put(context.getAsString("email"), context);
-    System.out.println(
-      "Saved context" + context + "\n intent should be provideFactor"
-    );
-    for (int i = 0; i < measures.getLength(); i++) {
-      response +=
-        (i + 1) +
-        ". " +
-        ((Element) measures.item(i)).getAttribute("name") +
-        "\n";
-    }
-    response +=
-      "Please select one of the following measures by choosing a number to add it to the factor\n";
-    return response;
-  }
-
-  private String formatSuccesFactorsForDimension(
-    Document model,
-    String dimension,
-    net.minidev.json.JSONObject context
-  )
-    throws ChatException {
-    String response = "";
-    NodeList dimensions = model.getElementsByTagName("dimension");
-    context.put("dimensionName", dimension); //save the dimensionname
-    Element desiredDimension = null;
-    for (int i = 0; i < dimensions.getLength(); i++) {
-      if (dimensions.item(i) instanceof Element) {
-        if (
-          dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
-        ) {
-          desiredDimension = (Element) dimensions.item(i);
-          break;
-        }
-      }
-    }
-    if (desiredDimension == null) {
-      throw new ChatException(
-        "The desired dimension was not found in the success model"
-      );
-    }
-
-    NodeList factors = desiredDimension.getElementsByTagName("factor");
-
-    context.put("currentSelection", factors);
-    System.out.println(
-      "Saved context" + context + "\n intent should be provideFactor"
-    );
-    userContext.put(context.getAsString("email"), context);
-
-    if (factors.getLength() == 0) {
-      return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
-    }
-    response =
-      "Which of the following factors do you want to add a measure to?\n";
-    for (int i = 0; i < factors.getLength(); i++) {
-      response +=
-        (i + 1) +
-        ". " +
-        ((Element) factors.item(i)).getAttribute("name") +
-        "\n";
-    }
-    response +=
-      "Choose one by providing a number.\n" +
-      "You can also add a factor by providing a name.";
-    return response;
-  }
-
-  private String formatSuccessDimensions(net.minidev.json.JSONObject context) {
-    String email = context.getAsString("email");
-
-    String response =
-      "I will now guide you through the updating process.\n" +
-      "Which of the following dimensions do you want to edit?\n";
-    context.put("currentSelection", successDimensions);
-    System.out.println("Context is now: " + context);
-    userContext.put(email, context);
-
-    for (int i = 0; i < successDimensions.size(); i++) {
-      String dimension = successDimensions.get(i);
-      response += (i + 1) + ". " + dimension + "\n";
-    }
-    response +=
-      "Choose one by providing a number\n" +
-      "If you want to exit the update process, just let me know by typing quit";
-    return response;
-  }
-
   private Document getSuccessModelForGroupAndService(
     String groupName,
     String serviceName,
@@ -1469,7 +1321,7 @@ public class RestApiV2 {
     }
 
     String xmlString = ((SuccessModelDTO) response).xml;
-    model = loadXMLFromString(xmlString);
+    model = XMLTools.loadXMLFromString(xmlString);
 
     return model;
   }
@@ -1497,23 +1349,25 @@ public class RestApiV2 {
       (String) response
     );
     String xmlString = ((net.minidev.json.JSONObject) json).getAsString("xml");
-    catalog = loadXMLFromString(xmlString);
+    catalog = XMLTools.loadXMLFromString(xmlString);
 
     return catalog;
   }
 
-  public Document loadXMLFromString(String xml) throws Exception {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+  // public Document loadXMLFromString(String xml) throws Exception {
+  //   DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-    factory.setNamespaceAware(true);
-    DocumentBuilder builder = factory.newDocumentBuilder();
+  //   factory.setNamespaceAware(true);
+  //   DocumentBuilder builder = factory.newDocumentBuilder();
 
-    return builder.parse(new ByteArrayInputStream(xml.getBytes()));
-  }
+  //   return builder.parse(new ByteArrayInputStream(xml.getBytes()));
+  // }
 
   /**
    * Makes a request to the GraphQl service
-   * @param json contains dbName: name if the db, dbSchema: name of the db schema and query sql query
+   *
+   * @param json contains dbName: name if the db, dbSchema: name of the db schema
+   *             and query sql query
    * @return the requested data
    * @throws ChatException
    */
@@ -1543,6 +1397,7 @@ public class RestApiV2 {
 
   /**
    * Makes a request to the GraphQl service, uses default database and schema
+   *
    * @param query sql query
    * @return the requested data
    * @throws ChatException
@@ -1570,9 +1425,12 @@ public class RestApiV2 {
 
   /**
    * Makes a request to the GraphQl service
-   * @param query sql query
-   * @param dbName name of the database as defined when adding the database to graphql api
-   * @param dbSchema name of the database schema as defined when adding the database to graphql api
+   *
+   * @param query    sql query
+   * @param dbName   name of the database as defined when adding the database to
+   *                 graphql api
+   * @param dbSchema name of the database schema as defined when adding the
+   *                 database to graphql api
    * @return response from graphql api
    * @throws ChatException
    */
@@ -1604,9 +1462,12 @@ public class RestApiV2 {
 
   /**
    * Prepares the string to the customQuery query of the graphql schema
-   * @param dbName name of the database. This name uniquelly identifies the datase on the graphql service
+   *
+   * @param dbName   name of the database. This name uniquelly identifies the
+   *                 datase on the graphql service
    * @param dbSchema name of the database schema
-   * @param query query which can be used as the query parameter in the graphql http request
+   * @param query    query which can be used as the query parameter in the graphql
+   *                 http request
    * @return
    * @throws ChatException
    */
@@ -1638,9 +1499,12 @@ public class RestApiV2 {
   }
 
   /**
-   * Prepares the string to the customQuery query of the graphql schema. Will use the default database and schema
-   * @param query  sql query
-   * @return query which can be used as the query parameter in the graphql http request
+   * Prepares the string to the customQuery query of the graphql schema. Will use
+   * the default database and schema
+   *
+   * @param query sql query
+   * @return query which can be used as the query parameter in the graphql http
+   *         request
    * @throws ChatException
    */
   private String prepareGQLQueryString(String query)
@@ -1663,8 +1527,9 @@ public class RestApiV2 {
 
   /**
    * Makes a call to the visulization service to create a chart as png
-   * @param data Data which should be visualized
-   * @param type type of (Google Charts) chart
+   *
+   * @param data  Data which should be visualized
+   * @param type  type of (Google Charts) chart
    * @param title title of the chart
    * @return chart as base64 encoded string
    * @throws ChatException
@@ -1688,7 +1553,7 @@ public class RestApiV2 {
     try {
       String urlString = service.CHART_API_ENDPOINT + "/customQuery";
       // if (!urlString.contains("http")) {
-      //   urlString = "http://" + urlString;
+      // urlString = "http://" + urlString;
       // }
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -1711,6 +1576,7 @@ public class RestApiV2 {
 
   /**
    * Transforms an Input stream into a base64 encoded string
+   *
    * @param is Input stream of a connection
    * @return base64 encoded string
    */
@@ -1725,68 +1591,6 @@ public class RestApiV2 {
       e.printStackTrace();
     }
     return null;
-  }
-
-  // /**
-  //  * Returns the first occurence of an element in the document that matches its name attribute with key
-  //  * @param xml the document to search in
-  //  * @param key the key by which to search
-  //  * @return first occurence
-  //  */
-  // private Element findMeasureByName(Document xml, String key) {
-  //   Element desiredNode = null;
-  //   if (key == null) {
-  //     return null;
-  //   }
-  //   NodeList measures = xml.getElementsByTagName("measure");
-
-  //   for (int i = 0; i < measures.getLength(); i++) {
-  //     Node measure = measures.item(i);
-  //     if (measure.getNodeType() == Node.ELEMENT_NODE) {
-  //       String name = ((Element) measure).getAttribute("name"); //get the name of the measure
-
-  //       if (key.toLowerCase().equals(name.toLowerCase())) {
-  //         desiredNode = (Element) measure;
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   return desiredNode;
-  // }
-
-  /**
-   * find all elements with a tag attribute contained in the inputString
-   * @param xml the document to search in
-   * @param inpuString the tag by which to search
-   * @return
-   */
-  private Set<Node> findMeasuresByAttribute(
-    Document xml,
-    String inpuString,
-    String attribute
-  ) {
-    Set<Node> list = new HashSet<Node>();
-    NodeList measures = xml.getElementsByTagName("measure");
-    if (inpuString == null) {
-      return null;
-    }
-    for (int i = 0; i < measures.getLength(); i++) {
-      Node measure = measures.item(i);
-      if (measure.getNodeType() == Node.ELEMENT_NODE) {
-        String[] tags =
-          ((Element) measure).getAttribute(attribute).toLowerCase().split(","); //get the name of the measure
-        for (int j = 0; j < tags.length; j++) {
-          if (
-            !tags[j].isEmpty() &&
-            inpuString.toLowerCase().contains(tags[j].toLowerCase())
-          ) {
-            list.add(measure);
-            break;
-          }
-        }
-      }
-    }
-    return list;
   }
 
   /**
@@ -1806,19 +1610,35 @@ public class RestApiV2 {
     String b64 = null;
     String dbName = defaultDatabase;
     String dbSchema = defaultDatabaseSchema;
+    String measureName = "";
+    net.minidev.json.JSONObject json = null;
+    InputStream graphQLResponse = null;
 
-    NodeList queries = measure.getElementsByTagName("query");
-    Element database = extractElementByTagName(measure, "database");
-    if (database != null) {
-      dbName = database.getAttribute("name");
-      dbSchema = database.getAttribute("dbSchema");
+    NodeList datasets = measure.getElementsByTagName("data");
+    if (datasets.getLength() > 0) {
+      NodeList queries =
+        ((Element) datasets.item(0)).getElementsByTagName("query");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    } else {
+      NodeList queries = measure.getElementsByTagName("query");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
     }
-    String measureName = measure.getAttribute("name");
-    String query = ((Element) queries.item(0)).getTextContent();
-    InputStream graphQLResponse = graphQLQuery(query, dbName, dbSchema);
-    net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
-      graphQLResponse
-    );
+
+    json = (net.minidev.json.JSONObject) parser.parse(graphQLResponse);
     System.out.println("gql response: " + json);
 
     if (json.get("customQuery") == null) {
@@ -1826,6 +1646,7 @@ public class RestApiV2 {
         "No data has been collected for this measure yet"
       );
     }
+
     String chartType = visualization
       .getElementsByTagName("chartType")
       .item(0)
@@ -1838,8 +1659,9 @@ public class RestApiV2 {
 
   /**
    * Visualizes a KPI from a measure
+   *
    * @param measure measure as xml node
-   * @param parser json parser to parse response from api calls
+   * @param parser  json parser to parse response from api calls
    * @return
    * @throws Exception
    */
@@ -1855,7 +1677,7 @@ public class RestApiV2 {
 
     String measureName = measure.getAttribute("name");
     NodeList queries = measure.getElementsByTagName("query");
-    Element database = extractElementByTagName(measure, "database");
+    Element database = XMLTools.extractElementByTagName(measure, "database");
     if (database != null) {
       dbName = database.getAttribute("name");
       dbSchema = database.getAttribute("dbSchema");
@@ -1863,14 +1685,14 @@ public class RestApiV2 {
 
     kpi += measureName + ": \n";
 
-    HashMap<Integer, String> operationInfo = new HashMap<Integer, String>(); //holds the childs of visualization
+    HashMap<Integer, String> operationInfo = new HashMap<Integer, String>(); // holds the childs of visualization
     for (int i = 0; i < visualization.getChildNodes().getLength(); i++) {
       Node node = visualization.getChildNodes().item(i);
       if (node instanceof Element) {
         int index = Integer.parseInt(((Element) node).getAttribute("index"));
         String name = ((Element) node).getAttribute("name");
         kpi += name;
-        operationInfo.put(index, name); //operands might not be sorted by index}
+        operationInfo.put(index, name); // operands might not be sorted by index}
       }
     }
     kpi += "=";
@@ -1895,11 +1717,11 @@ public class RestApiV2 {
       String value = null;
 
       value = extractValue(json, parser);
-      values.put(queryName, Float.valueOf(value)); //save as floats idk
+      values.put(queryName, Float.valueOf(value)); // save as floats idk
     }
 
-    float accu = 0; //saves the result
-    float curr = 0; //current value which accu will be operated on
+    float accu = 0; // saves the result
+    float curr = 0; // current value which accu will be operated on
     for (int i = 0; i < operationInfo.size(); i++) {
       if (i == 0) {
         accu = (Float) values.get(operationInfo.get(i));
@@ -1930,8 +1752,9 @@ public class RestApiV2 {
 
   /**
    * Returns the value from a measure
+   *
    * @param measure measure as xml node
-   * @param parser json parser to parse response from api calls
+   * @param parser  json parser to parse response from api calls
    * @return
    * @throws Exception
    */
@@ -1942,24 +1765,38 @@ public class RestApiV2 {
   )
     throws Exception {
     String value = null;
-    String measureName = measure.getAttribute("name");
-
+    InputStream graphQLResponse = null;
     String dbName = defaultDatabase;
     String dbSchema = defaultDatabaseSchema;
 
-    NodeList queries = measure.getElementsByTagName("query");
-    Element database = extractElementByTagName(measure, "database");
-    if (database != null) {
-      dbName = database.getAttribute("name");
-      dbSchema = database.getAttribute("dbSchema");
-    }
-
-    String query = ((Element) queries.item(0)).getTextContent();
-
+    String measureName = measure.getAttribute("name");
     NodeList units = visualization.getElementsByTagName("unit");
     String unit = units.getLength() > 0 ? units.item(0).getTextContent() : null;
 
-    InputStream graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    NodeList datasets = measure.getElementsByTagName("data");
+    if (datasets.getLength() > 0) {
+      NodeList queries =
+        ((Element) datasets.item(0)).getElementsByTagName("query");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    } else {
+      NodeList queries = measure.getElementsByTagName("query");
+      Element database = XMLTools.extractElementByTagName(measure, "database");
+      if (database != null) {
+        dbName = database.getAttribute("name");
+        dbSchema = database.getAttribute("dbSchema");
+      }
+      measureName = measure.getAttribute("name");
+      String query = ((Element) queries.item(0)).getTextContent();
+      graphQLResponse = graphQLQuery(query, dbName, dbSchema);
+    }
+
     net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
       graphQLResponse
     );
@@ -1971,8 +1808,9 @@ public class RestApiV2 {
 
   /**
    * Extracts a single value from the graphql response
+   *
    * @param jsonObject contains the desired data under customQuery
-   * @param p used to parse the data
+   * @param p          used to parse the data
    * @return
    */
   private String extractValue(
@@ -2005,97 +1843,6 @@ public class RestApiV2 {
       throw new ChatException("No data has been collected for this measure");
     }
     return values[0].toString();
-  }
-
-  private String SuccessModelToText(
-    String xml,
-    String dimension,
-    boolean measuresOnly
-  )
-    throws Exception {
-    String res = "";
-    Document model = loadXMLFromString(xml);
-    NodeList dimensions = model.getElementsByTagName("dimension");
-    System.out.println("Measures only: " + measuresOnly);
-    for (int i = 0; i < dimensions.getLength(); i++) {
-      if (
-        dimension == null ||
-        dimension.equals(((Element) dimensions.item(i)).getAttribute("name"))
-      ) {
-        if (!measuresOnly) {
-          res += (i + 1) + ") ";
-        }
-        res += dimensionToText((Element) dimensions.item(i), measuresOnly);
-      }
-    }
-    return res;
-  }
-
-  private String SuccessModelToText(Document model) throws Exception {
-    String res = "";
-
-    NodeList dimensions = model.getElementsByTagName("dimension");
-
-    for (int i = 0; i < dimensions.getLength(); i++) {
-      res += dimensionToText((Element) dimensions.item(i));
-    }
-    return res;
-  }
-
-  private String dimensionToText(Element dimension) {
-    String res = "";
-    res += dimension.getAttribute("name") + ":\n";
-    NodeList factors = dimension.getElementsByTagName("factor");
-    for (int i = 0; i < factors.getLength(); i++) {
-      res += "    -" + factorToText((Element) factors.item(i));
-    }
-    return res;
-  }
-
-  private String dimensionToText(Element dimension, boolean measuresOnly) {
-    String res = "";
-    if (!measuresOnly) {
-      res += dimension.getAttribute("name") + ":\n";
-    }
-
-    NodeList factors = dimension.getElementsByTagName("factor");
-    for (int i = 0; i < factors.getLength(); i++) {
-      if (!measuresOnly) {
-        res += "    -";
-      }
-      res += factorToText((Element) factors.item(i), measuresOnly);
-    }
-    return res;
-  }
-
-  private String factorToText(Element factor) {
-    String res = "";
-    res += factor.getAttribute("name") + ":\n";
-    NodeList measures = ((Element) factor).getElementsByTagName("measure");
-    for (int j = 0; j < measures.getLength(); j++) {
-      res += "        • " + measureToText((Element) measures.item(j));
-    }
-    return res;
-  }
-
-  private String factorToText(Element factor, boolean measuresOnly) {
-    String res = "";
-    if (!measuresOnly) {
-      res += factor.getAttribute("name") + ":\n";
-    }
-
-    NodeList measures = ((Element) factor).getElementsByTagName("measure");
-    for (int j = 0; j < measures.getLength(); j++) {
-      if (!measuresOnly) {
-        res += "        ";
-      }
-      res += "• " + measureToText((Element) measures.item(j));
-    }
-    return res;
-  }
-
-  private String measureToText(Element measure) {
-    return measure.getAttribute("name") + "\n";
   }
 
   /** Exceptions ,with messages, that should be returned in Chat */
