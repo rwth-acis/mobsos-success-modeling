@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -146,16 +148,16 @@ public class XMLTools {
    * @param inpuString the tag by which to search
    * @return
    */
-  protected static Set<Node> findMeasuresByAttribute(
+  protected static List<Node> findMeasuresByAttribute(
     Document xml,
     String inpuString,
     String attribute
   ) {
-    Set<Node> list = new HashSet<Node>();
+    if (inpuString == null) return null;
+
+    List<Node> list = new LinkedList<Node>();
     NodeList measures = xml.getElementsByTagName("measure");
-    if (inpuString == null) {
-      return null;
-    }
+
     for (int i = 0; i < measures.getLength(); i++) {
       Node measure = measures.item(i);
       if (measure.getNodeType() == Node.ELEMENT_NODE) {

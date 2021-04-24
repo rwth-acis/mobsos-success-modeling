@@ -870,8 +870,8 @@ public class RestApiV2 {
         context.get("currentSelection") != null
       ) {
         // user selected an item from a the list
-        if (context.get("currentSelection") instanceof Set<?>) {
-          Set<Node> measures = (Set<Node>) context.get("currentSelection");
+        if (context.get("currentSelection") instanceof List<?>) {
+          List<Node> measures = (List<Node>) context.get("currentSelection");
 
           int userSelection = json.getAsNumber("number").intValue() - 1; // user list starts at 1
           if (measures.size() > userSelection) {
@@ -882,7 +882,7 @@ public class RestApiV2 {
       }
 
       if (desiredMeasure == null) { // try to find measure using tag search
-        Set<Node> list = XMLTools.findMeasuresByAttribute(
+        List<Node> list = XMLTools.findMeasuresByAttribute(
           xml,
           measureName,
           "tag"
@@ -1021,24 +1021,34 @@ public class RestApiV2 {
       }
 
       if (intent.equals("number_selection")) {
-        intent = determineNewIntent(context); // in this case figure out the new intent from the old context
-        newContext.put("intent", intent);
-        userContext.put(email, newContext); // save intent in the new context for next call
-        userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
+        intent = determineNewIntent(context); // in this case figure out at which step we are from the old context
+        newContext.put("intent", intent); //set the newly determined intent in the context
+
+        System.out.println("Intent is now: " + intent);
+
+        userSelection = json.getAsNumber("number").intValue() - 1; // lists in chat start at 1
         Object currentSelection = context.get("currentSelection");
-        if (currentSelection instanceof Set<?>) {
-          if (((Set<?>) currentSelection).size() > userSelection) {
-            msg = (String) ((Set<?>) currentSelection).toArray()[userSelection];
-          }
-        } else if (currentSelection instanceof NodeList) {
+        if (currentSelection == null) {
+          throw new Exception("Current selection empty");
+        }
+
+        System.out.println("current selection  " + currentSelection);
+        System.out.println(
+          "current selection of type " + currentSelection.getClass()
+        );
+
+        if (currentSelection instanceof NodeList) { //measures and factors are NodeLists
           if (((NodeList) currentSelection).getLength() > userSelection) msg =
             (
               (Element) ((NodeList) currentSelection).item(userSelection)
             ).getAttribute("name");
-        } else if (currentSelection instanceof List<?>) {
+        } else if (currentSelection instanceof List<?>) { //dimensions are Lists of String names
           if (((List<?>) currentSelection).size() > userSelection) msg =
             (String) ((List<?>) currentSelection).get(userSelection);
+        } else {
+          throw new ChatException("Something went wrong");
         }
+
         System.out.println("Resulting input: " + msg);
       }
 
@@ -1047,13 +1057,13 @@ public class RestApiV2 {
       switch (intent) {
         case "quit":
           chatResponse.put("text", "Alright, discarding changes...");
-          userContext.remove(email); // reset contxt on quit
+          userContext.remove(email); // reset context on quit
           chatResponse.put("closeContext", true);
           break;
         case "startUpdatingModel":
-          context.put("currentSelection", successDimensions);
-          System.out.println("Context is now: " + context);
-          userContext.put(email, context);
+          newContext.put("currentSelection", successDimensions);
+          System.out.println("Context is now: " + newContext);
+          userContext.put(email, newContext);
           String response =
             "I will now guide you through the updating process.\n" +
             "Which of the following dimensions do you want to edit?\n" +
@@ -1085,7 +1095,7 @@ public class RestApiV2 {
           }
           NodeList factors = dimension.getElementsByTagName("factor");
           newContext.put("currentSelection", factors);
-          userContext.put(context.getAsString("email"), newContext);
+          userContext.put(email, newContext);
           chatResponse.put("text", TextFormatter.formatSuccesFactors(factors));
           chatResponse.put("closeContext", false);
           break;
@@ -1099,7 +1109,7 @@ public class RestApiV2 {
           newContext.put("factorName", msg); // save the factorname in context
           NodeList measures = catalog.getElementsByTagName("measure");
           newContext.put("currentSelection", measures);
-          userContext.put(newContext.getAsString("email"), newContext);
+          userContext.put(email, newContext);
           chatResponse.put("text", TextFormatter.formatMeasures(measures));
           chatResponse.put("closeContext", false);
           break;
@@ -1284,24 +1294,33 @@ public class RestApiV2 {
     return newContext;
   }
 
+  /**
+   * Determines at which step in the success modeling the user is.
+   * @param oldContext context from the last call
+   * @return
+   */
   private String determineNewIntent(net.minidev.json.JSONObject oldContext) {
-    String newIntent = "startUpdatingModel";
+    if (
+      oldContext == null || oldContext.getAsString("intent") == null
+    ) return "startUpdatingModel";
+
+    String newIntent = "startUpdatingModel"; //first and default step
+    String oldIntent = oldContext.getAsString("intent");
 
     System.out.println("Determening new intent...");
-    String oldIntent = oldContext.getAsString("intent");
     System.out.println("Old Intent: " + oldIntent);
     System.out.println("Old Context: " + oldContext.toString());
+
     if ("startUpdatingModel".equals(oldContext.getAsString("intent"))) {
       newIntent = "provideDimension";
     }
+
     if (oldContext.containsKey("dimensionName")) {
       newIntent = "provideFactor";
       if (oldContext.containsKey("factorName")) {
         newIntent = "provideMeasure";
       }
     }
-
-    System.out.println("Intent is now: " + newIntent);
     return newIntent;
   }
 
