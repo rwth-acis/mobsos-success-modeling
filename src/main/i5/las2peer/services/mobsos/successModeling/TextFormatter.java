@@ -49,17 +49,13 @@ public class TextFormatter {
   }
 
   protected static String formatSuccessDimensions(List<String> dimensions) {
-    String response =
-      "I will now guide you through the updating process.\n" +
-      "Which of the following dimensions do you want to edit?\n";
+    String response = "";
 
     for (int i = 0; i < dimensions.size(); i++) {
       String dimension = dimensions.get(i);
       response += (i + 1) + ". " + dimension + "\n";
     }
-    response +=
-      "Choose one by providing a number\n" +
-      "If you want to exit the update process, just let me know by typing quit";
+
     return response;
   }
 

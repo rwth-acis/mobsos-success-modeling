@@ -1022,7 +1022,8 @@ public class RestApiV2 {
 
       if (intent.equals("number_selection")) {
         intent = determineNewIntent(context); // in this case figure out the new intent from the old context
-        newContext.put("intent", intent); // save intent in the new context for next call
+        newContext.put("intent", intent);
+        userContext.put(email, newContext); // save intent in the new context for next call
         userSelection = ((Long) json.getAsNumber("number")).intValue() - 1; // user list starts at 1
         Object currentSelection = context.get("currentSelection");
         if (currentSelection instanceof Set<?>) {
@@ -1050,13 +1051,15 @@ public class RestApiV2 {
           chatResponse.put("closeContext", true);
           break;
         case "startUpdatingModel":
-          String response =
-            "I will now guide you through the updating process.\n" +
-            "Which of the following dimensions do you want to edit?\n";
           context.put("currentSelection", successDimensions);
           System.out.println("Context is now: " + context);
           userContext.put(email, context);
-          response += TextFormatter.formatSuccessDimensions(successDimensions);
+          String response =
+            "I will now guide you through the updating process.\n" +
+            "Which of the following dimensions do you want to edit?\n" +
+            TextFormatter.formatSuccessDimensions(successDimensions) +
+            "\nChoose one by providing a number\n" +
+            "If you want to exit the update process, just let me know by typing quit";
           chatResponse.put("text", response);
           chatResponse.put("closeContext", false);
           break;
