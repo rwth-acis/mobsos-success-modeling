@@ -1032,11 +1032,6 @@ public class RestApiV2 {
           throw new Exception("Current selection empty");
         }
 
-        System.out.println("current selection  " + currentSelection);
-        System.out.println(
-          "current selection of type " + currentSelection.getClass()
-        );
-
         if (currentSelection instanceof NodeList) { //measures and factors are NodeLists
           if (((NodeList) currentSelection).getLength() > userSelection) msg =
             (
