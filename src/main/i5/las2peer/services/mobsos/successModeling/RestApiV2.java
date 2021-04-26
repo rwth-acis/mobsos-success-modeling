@@ -83,6 +83,8 @@ public class RestApiV2 {
     "Individual Impact",
     "Community Impact"
   );
+
+  private static HashMap<String, String> defaultGroupMap = new HashMap<String, String>();
   private static HashMap<String, net.minidev.json.JSONObject> userContext = new HashMap<String, net.minidev.json.JSONObject>();
 
   @javax.ws.rs.core.Context
@@ -774,15 +776,7 @@ public class RestApiV2 {
       String serviceName = requestObject.getAsString("serviceName");
       String dimension = requestObject.getAsString("dimension");
       String email = requestObject.getAsString("email");
-      // String intent = requestObject.getAsString("intent");
-      // if (
-      // intent != null &&
-      // !"listMeasures".equals(intent) &&
-      // !"getSuccessModel".equals(intent)
-      // ) {
-      // //if the intent is wrong we assume the user wants to visualize
-      // return visualizeRequest(body);
-      // }
+
       if (groupName == null) {
         chatResponseText +=
           "No group name was defined so the default group is used\n";
@@ -864,49 +858,48 @@ public class RestApiV2 {
         body
       );
       String email = json.getAsString("email");
+      String channel_id = json.getAsString("channel");
+      String measureName = json.getAsString("msg");
+      // String intent = json.getAsString("intent");
 
       net.minidev.json.JSONObject context = userContext.get(email);
-      if (context == null) {
-        context = new net.minidev.json.JSONObject();
-      }
-      // TODO handle groupName. groupName should be the name of the group not its id
+      if (context == null) context = new net.minidev.json.JSONObject();
+
+      String groupName = json.getAsString("groupName");
+      if (groupName == null) defaultGroupMap.get(channel_id);
+
+      String groupId = this.getGroupIdByName(groupName);
+      if (groupId == null) groupId = service.defaultGroupId;
 
       // String tag = json.getAsString("tag"); //might be usefull in the future to
       // search for measures by tag
-      String measureName = json.getAsString("msg");
 
-      String intent = json.getAsString("intent");
-      String groupName = json.getAsString("groupName") != null
-        ? json.getAsString("groupName")
-        : service.defaultGroupId;
-
-      if (!service.defaultGroupId.equals(groupName)) {
+      if (!service.defaultGroupId.equals(groupId)) {
         // groups other than the default group need permission to be accessed
-        GroupAgent groupAgent = (GroupAgent) Context
-          .get()
-          .fetchAgent(groupName);
+        GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupId);
         checkGroupMembershipByEmail(email, groupAgent);
       }
 
-      Document xml = getMeasureCatalogForGroup(groupName, parser);
+      Document xml = getMeasureCatalogForGroup(groupId, parser);
       desiredMeasure =
         XMLTools.extractElementByName(measureName, xml, "measure");
 
-      if (
-        intent.equals("number_selection") &&
-        context.get("currentSelection") != null
-      ) {
-        // user selected an item from a the list
-        if (context.get("currentSelection") instanceof List<?>) {
-          List<Node> measures = (List<Node>) context.get("currentSelection");
+      // TODO add  capability to select measure from list by pproviding number
+      // if (
+      //   intent.equals("number_selection") &&
+      //   context.get("currentSelection") != null
+      // ) {
+      //   // user selected an item from a the list
+      //   if (context.get("currentSelection") instanceof List<?>) {
+      //     List<Node> measures = (List<Node>) context.get("currentSelection");
 
-          int userSelection = json.getAsNumber("number").intValue() - 1; // user list starts at 1
-          if (measures.size() > userSelection) {
-            desiredMeasure = (Element) measures.toArray()[userSelection];
-            context.remove("currentSelection");
-          }
-        }
-      }
+      //     int userSelection = json.getAsNumber("number").intValue() - 1; // user list starts at 1
+      //     if (measures.size() > userSelection) {
+      //       desiredMeasure = (Element) measures.toArray()[userSelection];
+      //       context.remove("currentSelection");
+      //     }
+      //   }
+      // }
 
       if (desiredMeasure == null) { // try to find measure using tag search
         List<Node> list = XMLTools.findMeasuresByAttribute(
@@ -1002,6 +995,7 @@ public class RestApiV2 {
     Document catalog;
     Document model;
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+    String groupName = null;
     Response res = null;
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
 
@@ -1009,8 +1003,16 @@ public class RestApiV2 {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         body
       );
+      String channel_id = json.getAsString("channel");
+
       String email = json.getAsString("email");
       String intent = json.getAsString("intent");
+
+      groupName = json.getAsString("groupName");
+      if (groupName == null) defaultGroupMap.get(channel_id);
+
+      String groupId = this.getGroupIdByName(groupName);
+      if (groupId == null) groupId = service.defaultGroupId;
 
       if ("startUpdatingModel".equals(intent)) {
         //if user starts the routine we make sure that the context is reset
@@ -1026,18 +1028,16 @@ public class RestApiV2 {
       net.minidev.json.JSONObject newContext = getNewContext(context, json);
       Integer userSelection = null;
       String msg = json.getAsString("msg");
-      String groupName = newContext.getAsString("groupName");
+
       String serviceName = newContext.getAsString("serviceName");
       String dimensionName = newContext.getAsString("dimensionName");
       String factorName = newContext.getAsString("factorName");
       String measureName = newContext.getAsString("measureName");
-      if (groupName == null) groupName = service.defaultGroupId;
+
       if (serviceName == null) serviceName = service.defaultServiceName;
 
-      if (!service.defaultGroupId.equals(groupName)) {
-        GroupAgent groupAgent = (GroupAgent) Context
-          .get()
-          .fetchAgent(groupName);
+      if (!service.defaultGroupId.equals(groupId)) {
+        GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupId);
         checkGroupMembershipByEmail(email, groupAgent);
       }
 
@@ -1109,7 +1109,7 @@ public class RestApiV2 {
           newContext.put("dimensionName", msg); // save the dimensionname
 
           model =
-            getSuccessModelForGroupAndService(groupName, serviceName, parser);
+            getSuccessModelForGroupAndService(groupId, serviceName, parser);
           Element dimension = XMLTools.extractElementByName(
             msg,
             model,
@@ -1132,7 +1132,7 @@ public class RestApiV2 {
           }
 
           System.out.println("User selected the " + msg + " factor");
-          catalog = getMeasureCatalogForGroup(groupName, parser);
+          catalog = getMeasureCatalogForGroup(groupId, parser);
           newContext.put("factorName", msg); // save the factorname in context
           NodeList measures = catalog.getElementsByTagName("measure");
           newContext.put("currentSelection", measures);
@@ -1149,9 +1149,9 @@ public class RestApiV2 {
           System.out.println("Factor is: " + factorName);
           System.out.println("Measure is: " + msg);
 
-          catalog = getMeasureCatalogForGroup(groupName, parser);
+          catalog = getMeasureCatalogForGroup(groupId, parser);
           model =
-            getSuccessModelForGroupAndService(groupName, serviceName, parser);
+            getSuccessModelForGroupAndService(groupId, serviceName, parser);
 
           Element measureElement = XMLTools.extractElementByName(
             msg,
@@ -1193,7 +1193,7 @@ public class RestApiV2 {
             false
           );
           factorElement.appendChild(importNode);
-          if (saveModel(model, groupName, serviceName)) {
+          if (saveModel(model, groupId, serviceName)) {
             chatResponse.put(
               "text",
               "Your measure was successfully added to the model\n" +
@@ -1208,7 +1208,7 @@ public class RestApiV2 {
 
           if (measureName != null || factorName != null) {
             model =
-              getSuccessModelForGroupAndService(groupName, serviceName, parser);
+              getSuccessModelForGroupAndService(groupId, serviceName, parser);
             if (measureName != null) {
               toBeRemoved = measureName;
               measureElement =
@@ -1220,7 +1220,7 @@ public class RestApiV2 {
                 XMLTools.extractElementByName(factorName, model, "factor");
               factorElement.getParentNode().removeChild(factorElement);
             }
-            if (saveModel(model, groupName, serviceName)) {
+            if (saveModel(model, groupId, serviceName)) {
               chatResponse.put(
                 "text",
                 "\"" +
@@ -1246,6 +1246,14 @@ public class RestApiV2 {
     } catch (ChatException e) {
       e.printStackTrace();
       chatResponse.put("text", e.getMessage());
+    } catch (ForbiddenException e) {
+      e.printStackTrace();
+      chatResponse.put(
+        "text",
+        "Sorry I am not part of the group " +
+        groupName +
+        "😱. Contact your admin to add me to the group"
+      );
     } catch (Exception e) {
       e.printStackTrace();
       chatResponse.put("text", "An error occured 😦");
@@ -1254,19 +1262,15 @@ public class RestApiV2 {
     return res;
   }
 
-  private boolean saveModel(
-    Document model,
-    String groupName,
-    String serviceName
-  )
-    throws ChatException {
+  private boolean saveModel(Document model, String groupId, String serviceName)
+    throws ChatException, ForbiddenException {
     SuccessModelDTO successModel = new SuccessModelDTO();
     System.out.println("Transforming model into xml string");
     successModel.xml = XMLTools.toXMLString(model);
     System.out.println("Updating the success model");
     try {
       Response response = updateSuccessModelsForGroupAndService(
-        groupName,
+        groupId,
         serviceName,
         successModel
       );
@@ -1276,13 +1280,6 @@ public class RestApiV2 {
       } else {
         throw new ChatException("The model could not be updated 😦");
       }
-    } catch (ForbiddenException e) {
-      e.printStackTrace();
-      throw new ChatException(
-        "Sorry I am not part of the group " +
-        groupName +
-        "😱. Contact your admin to add me to the group"
-      );
     } catch (MalformedXMLException | FileBackendException e) {
       throw new ChatException("Something went wrong while saving the model 🙇");
     }
