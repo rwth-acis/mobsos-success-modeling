@@ -251,6 +251,33 @@ public class RestApiV2 {
     return Response.status(Response.Status.OK).entity(groupInformation).build();
   }
 
+  private String getGroupIdByName(String name) {
+    if (name == null) return null;
+    ResultSet resultSet;
+    try {
+      service.reconnect();
+      resultSet =
+        service.database.query(
+          service.GROUP_QUERY_WITH_NAME_PARAM,
+          Collections.singletonList(name)
+        );
+      if (service.database.getRowCount(resultSet) == 0) {
+        throw new NotFoundException("Group " + name + " does not exist");
+      }
+    } catch (SQLException e) {
+      System.out.println("(Get Group) The query has lead to an error: " + e);
+      return null;
+    }
+
+    try {
+      resultSet.next(); // Select the first result
+      return resultSet.getString(1);
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
   @PUT
   @Path("/groups/{group}")
   public Response updateGroup(GroupDTO group) {
