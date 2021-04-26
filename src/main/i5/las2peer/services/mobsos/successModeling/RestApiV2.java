@@ -985,6 +985,11 @@ public class RestApiV2 {
       String email = json.getAsString("email");
       String intent = json.getAsString("intent");
 
+      if ("startUpdatingModel".equals(intent)) {
+        //if user starts the routine we make sure that the context is reset
+        userContext.remove(email);
+      }
+
       net.minidev.json.JSONObject context = userContext.get(email);
 
       if (context == null) {
@@ -1245,6 +1250,7 @@ public class RestApiV2 {
         throw new ChatException("The model could not be updated 😦");
       }
     } catch (ForbiddenException e) {
+      e.printStackTrace();
       throw new ChatException(
         "Sorry I am not part of the group " +
         groupName +
