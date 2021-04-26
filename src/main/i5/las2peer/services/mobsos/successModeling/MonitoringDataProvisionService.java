@@ -64,6 +64,7 @@ public class MonitoringDataProvisionService extends RESTService {
   public final String AGENT_QUERY_WITH_MD5ID_PARAM;
   public final String GROUP_QUERY;
   public final String GROUP_QUERY_WITH_ID_PARAM;
+  public final String GROUP_QUERY_WITH_NAME_PARAM;
   public final String GROUP_AGENT_INSERT;
   public final String GROUP_INFORMATION_INSERT;
   public final String GROUP_INFORMATION_UPDATE;
@@ -145,6 +146,7 @@ public class MonitoringDataProvisionService extends RESTService {
         "SELECT GROUP_AGENT_ID,GROUP_NAME " +
         "FROM GROUP_INFORMATION " +
         "WHERE PUBLIC=1";
+      this.GROUP_QUERY_WITH_NAME_PARAM = this.GROUP_QUERY + "AND GROUP_NAME=?";
       this.GROUP_QUERY_WITH_ID_PARAM =
         this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
       this.GROUP_AGENT_INSERT = "INSERT INTO AGENT VALUES (?, \"GROUP\")";
@@ -166,6 +168,7 @@ public class MonitoringDataProvisionService extends RESTService {
         DB2Schema +
         ".GROUP_INFORMATION " +
         "WHERE PUBLIC=1";
+      this.GROUP_QUERY_WITH_NAME_PARAM = this.GROUP_QUERY + "AND GROUP_NAME=?";
       this.GROUP_QUERY_WITH_ID_PARAM =
         this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
       this.GROUP_AGENT_INSERT =
