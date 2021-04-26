@@ -1262,6 +1262,34 @@ public class RestApiV2 {
     return res;
   }
 
+  @Path("/setGroup")
+  @POST
+  public Response setDefaultGroup(String body) {
+    JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+    Response res = null;
+    net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
+    try {
+      net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
+        body
+      );
+      String groupName = json.getAsString("groupName");
+      if (groupName == null) {
+        throw new ChatException("Please provide a groupName");
+      }
+      String channel_id = json.getAsString("channel");
+      defaultGroupMap.put(channel_id, groupName);
+      chatResponse.put("text", "Consider it done.😉");
+    } catch (ChatException e) {
+      chatResponse.appendField("text", e.getMessage());
+      chatResponse.put("closeContext", e.getCloseContext());
+    } catch (Exception e) {
+      e.printStackTrace();
+      chatResponse.appendField("text", "");
+    }
+
+    return Response.ok(chatResponse).build();
+  }
+
   private boolean saveModel(Document model, String groupId, String serviceName)
     throws ChatException, ForbiddenException {
     SuccessModelDTO successModel = new SuccessModelDTO();
@@ -1896,9 +1924,20 @@ public class RestApiV2 {
   protected static class ChatException extends Exception {
 
     private static final long serialVersionUID = 1L;
+    private final boolean closeContext;
+
+    protected boolean getCloseContext() {
+      return this.closeContext;
+    }
 
     protected ChatException(String message) {
       super(message);
+      this.closeContext = true;
+    }
+
+    protected ChatException(String message, boolean closeContext) {
+      super(message);
+      this.closeContext = closeContext;
     }
   }
 }
