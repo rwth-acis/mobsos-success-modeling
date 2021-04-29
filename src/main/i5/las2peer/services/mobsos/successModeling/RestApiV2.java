@@ -776,7 +776,11 @@ public class RestApiV2 {
       String serviceName = requestObject.getAsString("serviceName");
       String dimension = requestObject.getAsString("dimension");
       String email = requestObject.getAsString("email");
+      String channel_id = requestObject.getAsString("channel");
 
+      if (groupName == null) {
+        groupName = defaultGroupMap.get(channel_id);
+      }
       String groupId = this.getGroupIdByName(groupName);
 
       if (serviceName == null) {
