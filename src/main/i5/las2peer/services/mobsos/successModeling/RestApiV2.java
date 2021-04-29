@@ -777,32 +777,39 @@ public class RestApiV2 {
       String dimension = requestObject.getAsString("dimension");
       String email = requestObject.getAsString("email");
 
-      if (groupName == null) {
+      String groupId = this.getGroupIdByName(groupName);
+
+      if (serviceName == null) {
+        chatResponseText +=
+          "No service name was defined so the mensa service is used\n";
+        serviceName = service.defaultServiceName;
+      }
+
+      if (groupId == null) {
         chatResponseText +=
           "No group name was defined so the default group is used\n";
-        groupName = service.defaultGroupId;
-        if (serviceName == null) {
-          chatResponseText +=
-            "No service name was defined so the mensa service is used\n";
-          serviceName = service.defaultServiceName;
-        }
-        chatResponseText += "\n";
+        groupId = service.defaultGroupId;
       } else {
-        GroupDTO group = (GroupDTO) this.getGroup(groupName).getEntity();
+        chatResponseText +=
+          "Here is the success model for the \"" + groupName + "\" group\n";
+        GroupDTO group = (GroupDTO) this.getGroup(groupId).getEntity();
         if (!group.isMember) { // check if bot is member of group
           throw new ChatException(
             "Sorry I am not part of the group 😱. Contact your admin to add me to the group"
           );
         }
-        if (!groupName.equals(service.defaultGroupId)) {
+        if (!groupId.equals(service.defaultGroupId)) {
           GroupAgent groupAgent = (GroupAgent) Context
             .get()
-            .fetchAgent(groupName);
+            .fetchAgent(groupId);
           checkGroupMembershipByEmail(email, groupAgent);
         }
       }
+
+      chatResponseText += "\n";
+
       Object resp =
-        this.getSuccessModelsForGroupAndService(groupName, serviceName)
+        this.getSuccessModelsForGroupAndService(groupId, serviceName)
           .getEntity();
       if (resp instanceof ErrorDTO) {
         throw new ChatException(((ErrorDTO) resp).message);
@@ -1266,7 +1273,7 @@ public class RestApiV2 {
   @POST
   public Response setDefaultGroup(String body) {
     JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
-    Response res = null;
+
     net.minidev.json.JSONObject chatResponse = new net.minidev.json.JSONObject();
     try {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
