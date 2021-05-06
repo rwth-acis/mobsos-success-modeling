@@ -6,7 +6,7 @@ set -e
 if [[ ! -z "${DEBUG}" ]]; then
     set -x
 fi
-
+NODE_ID_SEED=${NODE_ID_SEED:-$RANDOM}
 # set some helpful variables
 export SERVICE_PROPERTY_FILE='etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties'
 export WEB_CONNECTOR_PROPERTY_FILE='etc/i5.las2peer.connectors.webConnector.WebConnector.properties'
@@ -30,6 +30,7 @@ export MYSQL_DATABASE='LAS2PEERMON'
 [[ -z "${USE_FILE_SERVICE}" ]] && export USE_FILE_SERVICE='FALSE'
 [[ -z "${CATALOG_FILE_LOCATION}" ]] && export CATALOG_FILE_LOCATION='measure_catalogs/'
 [[ -z "${SUCCESS_MODELS_FOLDER_LOCATION}" ]] && export SUCCESS_MODELS_FOLDER_LOCATION='success_models/'
+[[ -z "${DEFAULT_SERVICE_NAME}" ]] && export DEFAULT_SERVICE_NAME='i5.las2peer.services.mensaService.MensaService'
 
 # set defaults for optional web connector parameters
 [[ -z "${START_HTTP}" ]] && export START_HTTP='TRUE'
@@ -55,6 +56,10 @@ set_in_service_config databasePort ${MYSQL_PORT}
 set_in_service_config useFileService ${USE_FILE_SERVICE}
 set_in_service_config catalogFileLocation ${CATALOG_FILE_LOCATION}
 set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATION}
+set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
+set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
+set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
+set_in_service_config defaultServiceName ${DEFAULT_SERVICE_NAME}
 
 # configure web connector properties
 
@@ -116,14 +121,14 @@ function selectMnemonic {
 
 #prepare pastry properties
 echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/pastry.properties
-
+echo  ${LAUNCH_COMMAND}
 # start the service within a las2peer node
 if [[ -z "${@}" ]]
 then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
-        exec ${LAUNCH_COMMAND} --observer --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
     else
-        exec ${LAUNCH_COMMAND} --observer uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
     fi
 else
   exec ${LAUNCH_COMMAND} ${@}

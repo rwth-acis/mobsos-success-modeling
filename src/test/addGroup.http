@@ -1,0 +1,9 @@
+POST https://git.tech4comp.dbis.rwth-aachen.de/mobsos-success-modeling/apiv2/groups
+Content-Type: application/json
+Authorization: bGFraG91bmU6UEhscGg2VGkjRWRSPT0rdVk4OWU=
+
+{
+"groupID":"3d105fd10e3d04c2f68cb8e6337fb7a125bc42f863099b8802a7d0b9746b507cbd3f12cd4fadd3e09418b20102a77221bfdddbfd1ed8385db76b7317da8788f7",
+"name":"myFancyGroup",
+"isMember":true
+}
