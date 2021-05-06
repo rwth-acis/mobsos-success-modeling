@@ -785,17 +785,19 @@ public class RestApiV2 {
 
       if (serviceName == null) {
         chatResponseText +=
-          "No service name was defined so the mensa service is used\n";
+          "No service name was defined so the_" +
+          service.defaultServiceName +
+          "_ service is used\n";
         serviceName = service.defaultServiceName;
       }
 
       if (groupId == null) {
         chatResponseText +=
-          "No group name was defined so the default group is used\n";
+          "No group name was defined so the _default_ group is used\n";
         groupId = service.defaultGroupId;
       } else {
         chatResponseText +=
-          "Here is the success model for the \"" + groupName + "\" group\n";
+          "Here is the success model for the _" + groupName + "_ group\n";
         GroupDTO group = (GroupDTO) this.getGroup(groupId).getEntity();
         if (!group.isMember) { // check if bot is member of group
           throw new ChatException(
@@ -1104,11 +1106,10 @@ public class RestApiV2 {
             "_ service and the _" +
             groupName +
             "_ group.\n" +
-            "I will now guide you through the updating process ✏️.\n" +
+            "I will now guide you through the updating ✏️ process \n" +
             "Which of the following dimensions do you want to edit?\n\n" +
             TextFormatter.formatSuccessDimensions(successDimensions) +
-            "\nChoose one by providing a *number*\n" +
-            "You can exit the update process by typing \"quit\" at any time.";
+            "\nChoose one by providing a *number*. You can exit the update process by typing _quit_ at any time.";
           chatResponse.put("text", response);
           chatResponse.put("closeContext", false);
           break;
@@ -1145,8 +1146,7 @@ public class RestApiV2 {
               "text",
               "Which of the following factors do you want to add a measure to?\n" +
               TextFormatter.formatSuccesFactors(factors) +
-              "Choose one by providing a number.\n" +
-              "You can also add a factor by providing a name."
+              "Choose one by providing a *number*. You can also add a factor by providing a name."
             );
           }
 
@@ -1167,7 +1167,7 @@ public class RestApiV2 {
             "text",
             "Here are the measures defined by the community.\n\n" +
             TextFormatter.formatMeasures(measures) +
-            "\nPlease select one of the following measures by choosing a number to add it to the factor\n"
+            "\nPlease select one of the following measures by choosing a *number* to add it to the factor\n"
           );
           chatResponse.put("closeContext", false);
           break;
@@ -1227,8 +1227,7 @@ public class RestApiV2 {
           if (saveModel(model, groupId, serviceName)) {
             chatResponse.put(
               "text",
-              "Your measure was successfully added to the model\n" +
-              "Here is the new success model:\n" +
+              "Your measure was successfully added to the model. Here is the _new_ success model:\n" +
               TextFormatter.SuccessModelToText(model)
             );
             userContext.remove(email);
@@ -1303,9 +1302,26 @@ public class RestApiV2 {
       net.minidev.json.JSONObject json = (net.minidev.json.JSONObject) parser.parse(
         body
       );
+      String intent = json.getAsString("intent");
+      if ("quit".equals(intent)) {
+        chatResponse.put("text", "Alright.");
+        chatResponse.put("closeContext", true);
+        return Response.ok(chatResponse).build();
+      }
+
       String groupName = json.getAsString("groupName");
+      String email = json.getAsString("email");
+      net.minidev.json.JSONObject context = (userContext.get(email));
+      String lastIntent = context.getAsString("intent");
+      if (groupName == null && "setGroup".equals(lastIntent)) {
+        //assume user tried to set default group before this call
+        groupName = context.getAsString("msg");
+      }
+      context.put("intent", intent);
+      userContext.put(email, context);
+
       if (groupName == null) {
-        throw new ChatException("Please provide a groupName");
+        throw new ChatException("Please provide a groupName", false);
       }
       String channel_id = json.getAsString("channel");
       defaultGroupMap.put(channel_id, groupName);
