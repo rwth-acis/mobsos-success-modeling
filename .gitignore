@@ -18,3 +18,4 @@ junit*.properties
 bin/test.http
 .vscode/extensions.json
 *.http
+etc/startup/passphrases.txt
