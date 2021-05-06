@@ -1610,7 +1610,6 @@ public class RestApiV2 {
       throw new Exception("Query cannot be null");
     }
     query = query.replace("\n", " ");
-
     // System.out.println(dbName + dbSchema + query);
     return (
       "{customQuery(dbName: \"" +
@@ -1622,6 +1621,41 @@ public class RestApiV2 {
       "\")}"
     );
   }
+
+  // private String prepareGQLQueryString(
+  //   String dbName,
+  //   String dbSchema,
+  //   String query,
+  //   String serviceNode,
+  //   String serviceAgentId
+  // )
+  //   throws Exception {
+  //   if (dbSchema == null || dbSchema.trim().isEmpty()) {
+  //     dbSchema = this.defaultDatabaseSchema;
+  //   }
+  //   if (dbName == null || dbName.trim().isEmpty()) {
+  //     dbName = this.defaultDatabase;
+  //   }
+  //   if (query == null) {
+  //     throw new Exception("Query cannot be null");
+  //   }
+  //   query = query.replace("\n", " ");
+  //   query.replaceAll("SOURCE_NODE\s*=\s*’$NODE$", "SOURCE_NODE=" + serviceNode);
+  //   query.replaceAll(
+  //     "SOURCE_AGENT\s*=\s*’$AGENT$",
+  //     "SOURCE_AGENT=" + serviceAgentId
+  //   );
+  //   // System.out.println(dbName + dbSchema + query);
+  //   return (
+  //     "{customQuery(dbName: \"" +
+  //     dbName +
+  //     "\",dbSchema: \"" +
+  //     dbSchema +
+  //     "\",query: \"" +
+  //     query +
+  //     "\")}"
+  //   );
+  // }
 
   /**
    * Prepares the string to the customQuery query of the graphql schema. Will use

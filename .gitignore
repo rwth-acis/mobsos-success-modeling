@@ -17,3 +17,4 @@ success_models/*
 junit*.properties
 bin/test.http
 .vscode/extensions.json
+*.http

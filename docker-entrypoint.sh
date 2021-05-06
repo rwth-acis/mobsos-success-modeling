@@ -126,9 +126,9 @@ echo  ${LAUNCH_COMMAND}
 if [[ -z "${@}" ]]
 then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
-        exec ${LAUNCH_COMMAND}  --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
+        exec ${LAUNCH_COMMAND} --observer --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
     else
-        exec ${LAUNCH_COMMAND} --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
     fi
 else
   exec ${LAUNCH_COMMAND} ${@}
