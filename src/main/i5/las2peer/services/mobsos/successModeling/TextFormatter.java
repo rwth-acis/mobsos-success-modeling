@@ -12,7 +12,7 @@ import org.w3c.dom.NodeList;
 public class TextFormatter {
 
   protected static String formatMeasures(NodeList measures) {
-    String response = "Here are the measures defined by the community.\n";
+    String response = "";
 
     for (int i = 0; i < measures.getLength(); i++) {
       response +=
@@ -21,8 +21,6 @@ public class TextFormatter {
         ((Element) measures.item(i)).getAttribute("name") +
         "\n";
     }
-    response +=
-      "Please select one of the following measures by choosing a number to add it to the factor\n";
     return response;
   }
 
@@ -30,11 +28,6 @@ public class TextFormatter {
     throws ChatException {
     String response = "";
 
-    if (factors.getLength() == 0) {
-      return "There are no factors for this dimension yet. \nYou can add one by providing a name.";
-    }
-    response =
-      "Which of the following factors do you want to add a measure to?\n";
     for (int i = 0; i < factors.getLength(); i++) {
       response +=
         (i + 1) +
@@ -42,9 +35,7 @@ public class TextFormatter {
         ((Element) factors.item(i)).getAttribute("name") +
         "\n";
     }
-    response +=
-      "Choose one by providing a number.\n" +
-      "You can also add a factor by providing a name.";
+
     return response;
   }
 
@@ -59,6 +50,14 @@ public class TextFormatter {
     return response;
   }
 
+  /**
+   * Formats the success model from an xml string as a text
+   * @param xml success model as string
+   * @param dimension if set only the specified dimention is transformed into text
+   * @param measuresOnly wheter to only list the success measures
+   * @return
+   * @throws Exception
+   */
   protected static String SuccessModelToText(
     String xml,
     String dimension,
@@ -68,7 +67,7 @@ public class TextFormatter {
     String res = "";
     Document model = XMLTools.loadXMLFromString(xml);
     NodeList dimensions = model.getElementsByTagName("dimension");
-    System.out.println("Measures only: " + measuresOnly);
+
     for (int i = 0; i < dimensions.getLength(); i++) {
       if (
         dimension == null ||
@@ -94,7 +93,7 @@ public class TextFormatter {
     return res;
   }
 
-  protected static String dimensionToText(Element dimension) {
+  private static String dimensionToText(Element dimension) {
     String res = "";
     res += dimension.getAttribute("name") + ":\n";
     NodeList factors = dimension.getElementsByTagName("factor");
@@ -104,7 +103,7 @@ public class TextFormatter {
     return res;
   }
 
-  protected static String dimensionToText(
+  private static String dimensionToText(
     Element dimension,
     boolean measuresOnly
   ) {
@@ -123,7 +122,7 @@ public class TextFormatter {
     return res;
   }
 
-  protected static String factorToText(Element factor) {
+  private static String factorToText(Element factor) {
     String res = "";
     res += factor.getAttribute("name") + ":\n";
     NodeList measures = ((Element) factor).getElementsByTagName("measure");
@@ -133,7 +132,7 @@ public class TextFormatter {
     return res;
   }
 
-  protected static String factorToText(Element factor, boolean measuresOnly) {
+  private static String factorToText(Element factor, boolean measuresOnly) {
     String res = "";
     if (!measuresOnly) {
       res += factor.getAttribute("name") + ":\n";
@@ -149,7 +148,7 @@ public class TextFormatter {
     return res;
   }
 
-  protected static String measureToText(Element measure) {
+  private static String measureToText(Element measure) {
     return measure.getAttribute("name") + "\n";
   }
 }

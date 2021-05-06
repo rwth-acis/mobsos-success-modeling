@@ -106,7 +106,7 @@ public class RestApiV2 {
       .build();
   }
 
-  //needed for SBManager
+  // needed for SBManager
   @GET
   @Path("/swagger.json")
   public Response getSwagger2() throws JsonProcessingException {
@@ -802,12 +802,12 @@ public class RestApiV2 {
             "Sorry I am not part of the group 😱. Contact your admin to add me to the group"
           );
         }
-        if (!groupId.equals(service.defaultGroupId)) {
-          GroupAgent groupAgent = (GroupAgent) Context
-            .get()
-            .fetchAgent(groupId);
-          checkGroupMembershipByEmail(email, groupAgent);
-        }
+        // if (!groupId.equals(service.defaultGroupId)) {
+        //   GroupAgent groupAgent = (GroupAgent) Context
+        //     .get()
+        //     .fetchAgent(groupId);
+        //   checkGroupMembershipByEmail(email, groupAgent);
+        // }
       }
 
       chatResponseText += "\n";
@@ -885,31 +885,32 @@ public class RestApiV2 {
       // String tag = json.getAsString("tag"); //might be usefull in the future to
       // search for measures by tag
 
-      if (!service.defaultGroupId.equals(groupId)) {
-        // groups other than the default group need permission to be accessed
-        GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupId);
-        checkGroupMembershipByEmail(email, groupAgent);
-      }
+      // if (!service.defaultGroupId.equals(groupId)) {
+      //   // groups other than the default group need permission to be accessed
+      //   GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupId);
+      //   checkGroupMembershipByEmail(email, groupAgent);
+      // }
 
       Document xml = getMeasureCatalogForGroup(groupId, parser);
       desiredMeasure =
         XMLTools.extractElementByName(measureName, xml, "measure");
 
-      // TODO add  capability to select measure from list by pproviding number
+      // TODO add capability to select measure from list by pproviding number
       // if (
-      //   intent.equals("number_selection") &&
-      //   context.get("currentSelection") != null
+      // intent.equals("number_selection") &&
+      // context.get("currentSelection") != null
       // ) {
-      //   // user selected an item from a the list
-      //   if (context.get("currentSelection") instanceof List<?>) {
-      //     List<Node> measures = (List<Node>) context.get("currentSelection");
+      // // user selected an item from a the list
+      // if (context.get("currentSelection") instanceof List<?>) {
+      // List<Node> measures = (List<Node>) context.get("currentSelection");
 
-      //     int userSelection = json.getAsNumber("number").intValue() - 1; // user list starts at 1
-      //     if (measures.size() > userSelection) {
-      //       desiredMeasure = (Element) measures.toArray()[userSelection];
-      //       context.remove("currentSelection");
-      //     }
-      //   }
+      // int userSelection = json.getAsNumber("number").intValue() - 1; // user list
+      // starts at 1
+      // if (measures.size() > userSelection) {
+      // desiredMeasure = (Element) measures.toArray()[userSelection];
+      // context.remove("currentSelection");
+      // }
+      // }
       // }
 
       if (desiredMeasure == null) { // try to find measure using tag search
@@ -1015,23 +1016,18 @@ public class RestApiV2 {
         body
       );
       String channel_id = json.getAsString("channel");
-
       String email = json.getAsString("email");
       String intent = json.getAsString("intent");
-
       groupName = json.getAsString("groupName");
       if (groupName == null) defaultGroupMap.get(channel_id);
-
       String groupId = this.getGroupIdByName(groupName);
       if (groupId == null) groupId = service.defaultGroupId;
 
       if ("startUpdatingModel".equals(intent)) {
-        //if user starts the routine we make sure that the context is reset
+        // if user starts the routine we make sure that the context is reset
         userContext.remove(email);
       }
-
       net.minidev.json.JSONObject context = userContext.get(email);
-
       if (context == null) {
         context = new net.minidev.json.JSONObject();
       }
@@ -1047,10 +1043,10 @@ public class RestApiV2 {
 
       if (serviceName == null) serviceName = service.defaultServiceName;
 
-      if (!service.defaultGroupId.equals(groupId)) {
-        GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupId);
-        checkGroupMembershipByEmail(email, groupAgent);
-      }
+      // if (!service.defaultGroupId.equals(groupId)) {
+      //   GroupAgent groupAgent = (GroupAgent) Context.get().fetchAgent(groupId);
+      //   checkGroupMembershipByEmail(email, groupAgent);
+      // }
 
       if (msg.length() > 4 && !"number_selection".equals(intent)) { // assume user typed name instead of number
         if ("provideDimension".equals(context.getAsString("intent"))) {
@@ -1065,7 +1061,7 @@ public class RestApiV2 {
 
       if (intent.equals("number_selection")) {
         intent = determineNewIntent(context); // in this case figure out at which step we are from the old context
-        newContext.put("intent", intent); //set the newly determined intent in the context
+        newContext.put("intent", intent); // set the newly determined intent in the context
 
         System.out.println("Intent is now: " + intent);
 
@@ -1075,12 +1071,12 @@ public class RestApiV2 {
           throw new Exception("Current selection empty");
         }
 
-        if (currentSelection instanceof NodeList) { //measures and factors are NodeLists
+        if (currentSelection instanceof NodeList) { // measures and factors are NodeLists
           if (((NodeList) currentSelection).getLength() > userSelection) msg =
             (
               (Element) ((NodeList) currentSelection).item(userSelection)
             ).getAttribute("name");
-        } else if (currentSelection instanceof List<?>) { //dimensions are Lists of String names
+        } else if (currentSelection instanceof List<?>) { // dimensions are Lists of String names
           if (((List<?>) currentSelection).size() > userSelection) msg =
             (String) ((List<?>) currentSelection).get(userSelection);
         } else {
@@ -1103,11 +1099,16 @@ public class RestApiV2 {
           System.out.println("Context is now: " + newContext);
           userContext.put(email, newContext);
           String response =
-            "I will now guide you through the updating process.\n" +
-            "Which of the following dimensions do you want to edit?\n" +
+            "You chose to update the success model for the _" +
+            serviceName +
+            "_ service and the _" +
+            groupName +
+            "_ group.\n" +
+            "I will now guide you through the updating process ✏️.\n" +
+            "Which of the following dimensions do you want to edit?\n\n" +
             TextFormatter.formatSuccessDimensions(successDimensions) +
-            "\nChoose one by providing a number\n" +
-            "If you want to exit the update process, just let me know by typing quit";
+            "\nChoose one by providing a *number*\n" +
+            "You can exit the update process by typing \"quit\" at any time.";
           chatResponse.put("text", response);
           chatResponse.put("closeContext", false);
           break;
@@ -1134,7 +1135,21 @@ public class RestApiV2 {
           NodeList factors = dimension.getElementsByTagName("factor");
           newContext.put("currentSelection", factors);
           userContext.put(email, newContext);
-          chatResponse.put("text", TextFormatter.formatSuccesFactors(factors));
+          if (factors == null || factors.getLength() == 0) {
+            chatResponse.put(
+              "text",
+              "There are no factors for this dimension yet. \nYou can add one by providing a name."
+            );
+          } else {
+            chatResponse.put(
+              "text",
+              "Which of the following factors do you want to add a measure to?\n" +
+              TextFormatter.formatSuccesFactors(factors) +
+              "Choose one by providing a number.\n" +
+              "You can also add a factor by providing a name."
+            );
+          }
+
           chatResponse.put("closeContext", false);
           break;
         case "provideFactor":
@@ -1148,7 +1163,12 @@ public class RestApiV2 {
           NodeList measures = catalog.getElementsByTagName("measure");
           newContext.put("currentSelection", measures);
           userContext.put(email, newContext);
-          chatResponse.put("text", TextFormatter.formatMeasures(measures));
+          chatResponse.put(
+            "text",
+            "Here are the measures defined by the community.\n\n" +
+            TextFormatter.formatMeasures(measures) +
+            "\nPlease select one of the following measures by choosing a number to add it to the factor\n"
+          );
           chatResponse.put("closeContext", false);
           break;
         case "provideMeasure":
@@ -1360,6 +1380,7 @@ public class RestApiV2 {
 
   /**
    * Determines at which step in the success modeling the user is.
+   *
    * @param oldContext context from the last call
    * @return
    */
@@ -1368,7 +1389,7 @@ public class RestApiV2 {
       oldContext == null || oldContext.getAsString("intent") == null
     ) return "startUpdatingModel";
 
-    String newIntent = "startUpdatingModel"; //first and default step
+    String newIntent = "startUpdatingModel"; // first and default step
     String oldIntent = oldContext.getAsString("intent");
 
     System.out.println("Determening new intent...");
@@ -1441,12 +1462,12 @@ public class RestApiV2 {
   }
 
   // public Document loadXMLFromString(String xml) throws Exception {
-  //   DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+  // DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-  //   factory.setNamespaceAware(true);
-  //   DocumentBuilder builder = factory.newDocumentBuilder();
+  // factory.setNamespaceAware(true);
+  // DocumentBuilder builder = factory.newDocumentBuilder();
 
-  //   return builder.parse(new ByteArrayInputStream(xml.getBytes()));
+  // return builder.parse(new ByteArrayInputStream(xml.getBytes()));
   // }
 
   /**
@@ -1681,8 +1702,9 @@ public class RestApiV2 {
 
   /**
    * Get the chart from a measure
-   * @param measure measure as xml node
-   * @param parser json parser to parse response from api calls
+   *
+   * @param measure       measure as xml node
+   * @param parser        json parser to parse response from api calls
    * @param visualization //the visualization xml node
    * @return chart as base64 encoded string
    * @throws Exception
