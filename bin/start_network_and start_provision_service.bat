@@ -1,3 +1,4 @@
+@REM old startscript please use the bin\start_network.bat generatet by ant
 cd %~p0
 cd ..
 set BASE=%CD%

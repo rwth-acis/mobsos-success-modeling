@@ -19,3 +19,4 @@ bin/test.http
 .vscode/extensions.json
 *.http
 etc/startup/passphrases.txt
+bin/start_network.sh
