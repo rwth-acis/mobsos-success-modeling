@@ -785,7 +785,7 @@ public class RestApiV2 {
 
       if (serviceName == null) {
         chatResponseText +=
-          "No service name was defined so the_" +
+          "No service name was defined so the _" +
           service.defaultServiceName +
           "_ service is used\n";
         serviceName = service.defaultServiceName;
