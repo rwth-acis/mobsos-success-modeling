@@ -35,6 +35,7 @@ export MYSQL_DATABASE='LAS2PEERMON'
 # set defaults for optional web connector parameters
 [[ -z "${START_HTTP}" ]] && export START_HTTP='TRUE'
 [[ -z "${START_HTTPS}" ]] && export START_HTTPS='FALSE'
+[[ -z "${INSERT_DB_INFO_INTO_QVS}" ]] && export INSERT_DB_INFO_INTO_QVS='TRUE'
 [[ -z "${SSL_KEYSTORE}" ]] && export SSL_KEYSTORE=''
 [[ -z "${SSL_KEY_PASSWORD}" ]] && export SSL_KEY_PASSWORD=''
 [[ -z "${CROSS_ORIGIN_RESOURCE_DOMAIN}" ]] && export CROSS_ORIGIN_RESOURCE_DOMAIN='*'
@@ -60,6 +61,8 @@ set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
 set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
 set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
 set_in_service_config defaultServiceName ${DEFAULT_SERVICE_NAME}
+set_in_service_config insertDatabaseCredentialsIntoQVService ${INSERT_DB_INFO_INTO_QVS}
+
 
 # configure web connector properties
 
@@ -121,7 +124,7 @@ function selectMnemonic {
 
 #prepare pastry properties
 echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/pastry.properties
-echo  ${LAUNCH_COMMAND}
+echo  etc/pastry.properties
 # start the service within a las2peer node
 if [[ -z "${@}" ]]
 then
