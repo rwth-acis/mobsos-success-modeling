@@ -13,7 +13,7 @@ ENV HTTPS_PORT=8443
 ENV LAS2PEER_PORT=9011
 
 
-RUN apk add --update bash curl tzdata  xmlstarlet && rm -f /var/cache/apk/*
+RUN apk add --update bash curl  tzdata  xmlstarlet && rm -f /var/cache/apk/*
 
 RUN addgroup -g 1000 -S las2peer && \
     adduser -u 1000 -S las2peer -G las2peer

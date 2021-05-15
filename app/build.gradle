@@ -3,58 +3,14 @@
  *
  * This generated file contains a sample Java application project to get you started.
  * For more details take a look at the 'Building Java & JVM projects' chapter in the Gradle
- * User Manual available at https://docs.gradle.org/7.0.2/userguide/building_java_projects.html
+ * User Manual available at https://docs.gradle.org/6.7/userguide/building_java_projects.html
  */
-
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
+    id 'java'
     id 'application'
-}
-repositories {
-    // Use JCenter for resolving dependencies.
-    jcenter()
-
-    // DBIS Archiva
-    maven {
-        url "https://archiva.dbis.rwth-aachen.de:9911/repository/internal/"
-    }
-}
-
-dependencies {
-    // Use JUnit test framework.
-    testImplementation "junit:junit:4.13.2"
-
-    // las2peer bundle which is not necessary in the runtime path
-    // compileOnly will be moved into the lib dir afterwards
-    compileOnly "i5:las2peer-bundle:${project.property('core.version')}"
-
-    // Add service dependencies here
-    // example:
-    implementation "com.googlecode.json-simple":"json-simple":"1.1"
-    implementation "mysql":"mysql-connector-java":"8.0.15"
-    implementation"commons-codec":"commons-codec":"1.10"
-    implementation "IBMJDBC":"db2jcc":"0"
-    implementation "IBMJDBC":"db2jcc_Licence":"0"
-    implementation "Javaluator":"Javaluator":"1"
-    // implementation "net.minidev:json-smart:1.3.1"
-}
-
-configurations {
-    // This ensures las2peer is available in the tests, but won't be bundled
-    testCompile.extendsFrom compileOnly
-}
-
-jar {
-    manifest {
-        attributes "Main-Class": "${project.property('service.name')}.${project.property('service.class')}"
-        attributes "Library-Version": "${project.property('service.version')}"
-        attributes "Library-SymbolicName": "${project.property('service.name')}"
-    }
-
-    from { (configurations.runtimeClasspath).collect { it.isDirectory() ? it : zipTree(it) } } {
-        // Exclude signatures to be able to natively bundle signed jars
-        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-    }
+    id 'idea'
+    id 'jacoco'
 }
 
 application {
@@ -70,53 +26,81 @@ application {
     targetCompatibility = "${project.property('java.version')}"
 }
 
-// put all .jar files into export/jars folder
-tasks.withType(Jar) {
-    destinationDir = file("$projectDir/export/jars")
+repositories {
+    // Use JCenter for resolving dependencies.
+    jcenter()
+
+    // DBIS Archiva
+    maven {
+        url "https://archiva.dbis.rwth-aachen.de:9911/repository/internal/"
+       
+    }
+    maven {
+        url "https://archiva.dbis.rwth-aachen.de:9911/repository/snapshots/"
+    }
+} 
+
+dependencies {
+    // Use JUnit test framework.
+    testImplementation 'junit:junit:4.13'
+
+    // las2peer bundle which is not necessary in the runtime path
+    // compileOnly will be moved into the lib dir afterwards
+    compileOnly "i5:las2peer-bundle:${project.property('core.version')}"
+
+      // example:
+    implementation "com.googlecode.json-simple:json-simple:1.1"
+    implementation "mysql:mysql-connector-java:8.0.15"
+    implementation"commons-codec:commons-codec:1.10"
+    implementation "IBMJDBC:db2jcc:0"
+    implementation "IBMJDBC:db2jcc_Licence:0"
+    implementation "Javaluator:Javaluator:1"
+    // implementation "net.minidev:json-smart:1.3.1"
+
+    // These dependencies are used by the application.
 }
 
-javadoc {
-    destinationDir = file("$projectDir/export/doc")
+configurations {
+    // This ensures las2peer is available in the tests, but won't be bundled
+    testCompile.extendsFrom compileOnly
 }
 
-build.dependsOn "javadoc"
-
-compileJava {
-    dependsOn "copyMain"
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
 }
 
-compileTestJava {
-    dependsOn "copyTest"
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+    reports {
+        xml.enabled true
+    }
 }
 
-// Copies .xml files into build directory
-task copyMain(type: Copy) {
-    from "src/main/java"
-    include "**/*.xml"
-    into "$buildDir/classes/java/main"
-}
+jar {
+    manifest {
+        attributes "Main-Class": "${project.property('service.name')}.${project.property('service.class')}"
+        attributes "Library-Version": "${project.property('service.version')}"
+        attributes "Library-SymbolicName": "${project.property('service.name')}"
+    }
 
-// Copies .xml files into build directory
-task copyTest(type: Copy) {
-    from "src/test/java"
-    include "**/*.xml"
-    into "$buildDir/classes/java/test"
+    from { (configurations.runtimeClasspath).collect { it.isDirectory() ? it : zipTree(it) } } {
+        // Exclude signatures to be able to natively bundle signed jars
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    }
 }
 
 // These two tasks restore the build and runtime environment used
 // in the ant environment
 task copyJar(type: Copy) {
     from jar // here it automatically reads jar file produced from jar task
-    into "$rootDir/service"
+    into '../service'
 }
 
+// Maybe there is a more idiomatic way to separate out las2peer
 task copyToLib(type: Copy) {
-    from configurations.compileClasspath
-    into "$rootDir/lib"
+    from configurations.compileOnly
+    into "../lib"
 }
-
-build.dependsOn copyJar
-build.dependsOn copyToLib
 
 task startscripts {
     new File("$rootDir/bin", "start_network.sh").text = """#!/bin/bash
@@ -124,7 +108,7 @@ task startscripts {
 # it starts a las2peer node providing the service '${project.property('service.name')}.${project.property('service.class')}' of this project
 # pls execute it from the root folder of your deployment, e. g. ./bin/start_network.sh
 java -cp "lib/*" i5.las2peer.tools.L2pNodeLauncher --port 9011 --service-directory service uploadStartupDirectory startService\\(\\'${project.property('service.name')}.${project.property('service.class')}@${project.property('service.version')}\\'\\) startWebConnector interactive
-""" 
+"""
     new File("$rootDir/bin", "start_network.bat").text = """:: this script is autogenerated by 'gradle startscripts'
 :: it starts a las2peer node providing the service '${project.property('service.name')}.${project.property('service.class')}' of this project
 :: pls execute it from the bin folder of your deployment by double-clicking on it
@@ -138,92 +122,43 @@ pause
 """
 }
 
-build.dependsOn "startscripts"
+build.dependsOn javadoc
+build.dependsOn copyJar
+build.dependsOn copyToLib
+build.dependsOn startscripts
 
-def startup = "$rootDir/etc/startup"
-def userAgent1Path = "${startup}/agent-user-${project.property('las2peer_user1.name')}.xml"
-def userAgent2Path = "${startup}/agent-user-${project.property('las2peer_user2.name')}.xml"
-def userAgent3Path = "${startup}/agent-user-${project.property('las2peer_user3.name')}.xml"
-def passphrasesPath = "${startup}/passphrases.txt"
+// Build export directory which can be shipped on request
+task export (type: Copy, dependsOn: build) {
+    into "$buildDir/export"
 
-task generateUserAgent1 {
-    dependsOn "jar"
-
-    onlyIf { !(new File(userAgent1Path).exists()) }
-
-    doLast {
-        tasks.create("generateUserAgent1Help", JavaExec) {
-            println "Writing User Agent xml to ${userAgent1Path}"
-
-            main = "i5.las2peer.tools.UserAgentGenerator"
-            classpath = sourceSets.main.compileClasspath
-            args "${project.property('las2peer_user1.password')}", "${project.property('las2peer_user1.name')}", "${project.property('las2peer_user1.email')}"
-            mkdir "${startup}"
-            standardOutput new FileOutputStream(userAgent1Path)
-        }.exec()
+    into("service") {
+        from jar
+    }
+    into("lib") {
+        from configurations.compileOnly
+    }
+    into("bin") {
+        from "../bin"
+    }
+    into("etc") {
+        from "../etc"
+    }
+    into("javadoc") {
+        from "$buildDir/docs/javadoc"
     }
 }
 
-task generateUserAgent2 {
-    dependsOn "jar"
+task packageDistribution(type: Zip, dependsOn: export) {
+    archiveFileName = "${project.property('service.class')}.zip"
+    destinationDirectory = file("$buildDir/dist")
 
-    onlyIf { !(new File(userAgent2Path).exists()) }
-
-    doLast {
-        tasks.create("generateUserAgent2Help", JavaExec) {
-            println "Writing User Agent xml to ${userAgent2Path}"
-
-            main = "i5.las2peer.tools.UserAgentGenerator"
-            classpath = sourceSets.main.compileClasspath
-            args "${project.property('las2peer_user2.password')}", "${project.property('las2peer_user2.name')}", "${project.property('las2peer_user2.email')}"
-            mkdir "${startup}"
-            standardOutput new FileOutputStream(userAgent2Path)
-        }.exec()
-    }
+    from "$buildDir/export"
 }
 
-task generateUserAgent3 {
-    dependsOn "jar"
-
-    onlyIf { !(new File(userAgent3Path).exists()) }
-
-    doLast {
-        tasks.create("generateUserAgent3Help", JavaExec) {
-            println "Writing User Agent xml to ${userAgent3Path}"
-
-            main = "i5.las2peer.tools.UserAgentGenerator"
-            classpath = sourceSets.main.compileClasspath
-            args "${project.property('las2peer_user3.password')}", "${project.property('las2peer_user3.name')}", "${project.property('las2peer_user3.email')}"
-            mkdir "${startup}"
-            standardOutput new FileOutputStream(userAgent3Path)
-        }.exec()
-    }
-}
-
-// generate example user agents
-task generateAgents {
-    description "Generate example user agents"
-    dependsOn "generateUserAgent1"
-    dependsOn "generateUserAgent2"
-    dependsOn "generateUserAgent3"
-
-    doLast {
-        new File(passphrasesPath).text = """agent-user-${project.property('las2peer_user1.name')}.xml;${project.property('las2peer_user1.password')}
-agent-user-${project.property('las2peer_user2.name')}.xml;${project.property('las2peer_user2.password')}
-agent-user-${project.property('las2peer_user3.name')}.xml;${project.property('las2peer_user3.password')}
-        """
-    }
-}
-
-build.dependsOn "generateAgents"
-
+// Cleanup
 clean.doLast {
-    file("$rootDir/tmp").deleteDir()
     file("$rootDir/lib").deleteDir()
-    file("$rootDir/servicebundle").deleteDir()
     file("$rootDir/service").deleteDir()
-    file("$rootDir/etc/startup").deleteDir()
-    file("$projectDir/export").deleteDir()
 }
 
 task cleanAll {
@@ -231,6 +166,7 @@ task cleanAll {
 
     doLast {
         file("$rootDir/log").deleteDir()
+        file("$projectDir/log").deleteDir()
         file("$rootDir/node-storage").deleteDir()
     }
 }
