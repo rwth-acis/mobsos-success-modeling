@@ -35,9 +35,7 @@ repositories {
         url "https://archiva.dbis.rwth-aachen.de:9911/repository/internal/"
        
     }
-    maven {
-        url "https://archiva.dbis.rwth-aachen.de:9911/repository/snapshots/"
-    }
+
 } 
 
 dependencies {

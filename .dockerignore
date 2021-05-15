@@ -3,5 +3,4 @@ lib
 service
 log
 node-storage
-etc/startup
-etc/launcher-configuration.ini
+etc
