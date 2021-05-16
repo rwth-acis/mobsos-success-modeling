@@ -1,4 +1,4 @@
-FROM gradle:6.7-jdk14 as build
+FROM gradle:7.0.2-jdk14 as build
 
 COPY . /home/gradle/src
 WORKDIR /home/gradle/src
@@ -35,7 +35,7 @@ RUN dos2unix docker-entrypoint.sh
 RUN dos2unix gradle.properties
 # RUN dos2unix etc/ant_configuration/service.properties
 # run the rest as unprivileged user
-RUN chmod +x gradlew && ./gradlew build --exclude-task test
+RUN chmod +x gradlew && ./gradlew build
 
 
 
