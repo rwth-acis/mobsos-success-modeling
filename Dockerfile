@@ -23,7 +23,7 @@ WORKDIR /src
 USER las2peer
 RUN dos2unix gradlew
 RUN dos2unix /src/docker-entrypoint.sh
-RUN mkdir etc
+
 RUN touch /src/etc/pastry.properties
 # COPY --chown=las2peer:las2peer --from=build /home/gradle/src/file_service/build/export/ .
 COPY --chown=las2peer:las2peer docker-entrypoint.sh /src/docker-entrypoint.sh
