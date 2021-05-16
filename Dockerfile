@@ -1,26 +1,47 @@
-FROM openjdk:8-jdk-alpine
+FROM gradle:6.7-jdk14 as build
+
+COPY . /home/gradle/src
+WORKDIR /home/gradle/src
+
+# RUN gradle export -x test
+
+# Build final container without build dependencies etc.
+FROM openjdk:14-jdk-alpine
 
 ENV HTTP_PORT=8080
 ENV HTTPS_PORT=8443
 ENV LAS2PEER_PORT=9011
-ENV CHART_API_ENDPOINT=http://127.0.0.1:3000
-ENV GRAPHQ_HOST=127.0.0.1:8090
-ENV DEFAULT_GROUP_ID = 17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb
 
-RUN apk add --update bash xmlstarlet mysql-client apache-ant tini curl && rm -f /var/cache/apk/*
+
+RUN apk add --update bash curl  tzdata  xmlstarlet  tini mysql-client && rm -f /var/cache/apk/*
+
 RUN addgroup -g 1000 -S las2peer && \
     adduser -u 1000 -S las2peer -G las2peer
 
 COPY --chown=las2peer:las2peer . /src
-WORKDIR /src 
+WORKDIR /src
+USER las2peer
+RUN dos2unix gradlew
+RUN dos2unix /src/docker-entrypoint.sh
+
+RUN touch /src/etc/pastry.properties
+# COPY --chown=las2peer:las2peer --from=build /home/gradle/src/file_service/build/export/ .
+COPY --chown=las2peer:las2peer docker-entrypoint.sh /src/docker-entrypoint.sh
+COPY --chown=las2peer:las2peer gradle.properties /src/gradle.properties
+COPY --chown=las2peer:las2peer gradle.properties /src/etc/pastry.properties
+RUN chmod +x docker-entrypoint.sh
 
 RUN dos2unix docker-entrypoint.sh
-RUN  dos2unix etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
+RUN dos2unix gradle.properties
+# RUN dos2unix etc/ant_configuration/service.properties
 # run the rest as unprivileged user
-USER las2peer
-RUN ant jar
+RUN chmod +x gradlew && ./gradlew build --exclude-task test
+
+
 
 EXPOSE $HTTP_PORT
 EXPOSE $HTTPS_PORT
 EXPOSE $LAS2PEER_PORT
-ENTRYPOINT ["/sbin/tini", "--", "/src/docker-entrypoint.sh"]
+RUN chmod +x /src/docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["/src/docker-entrypoint.sh"]

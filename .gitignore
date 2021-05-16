@@ -20,3 +20,9 @@ bin/test.http
 *.http
 etc/startup/passphrases.txt
 bin/start_network.sh
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
