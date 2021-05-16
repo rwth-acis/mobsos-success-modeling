@@ -26,3 +26,4 @@ bin/start_network.sh
 
 # Ignore Gradle build output directory
 build
+app/etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
