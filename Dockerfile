@@ -1,11 +1,4 @@
-FROM gradle:6.7-jdk14 as build
 
-COPY . /home/gradle/src
-WORKDIR /home/gradle/src
-
-# RUN gradle export -x test
-
-# Build final container without build dependencies etc.
 FROM openjdk:14-jdk-alpine
 
 ENV HTTP_PORT=8080
