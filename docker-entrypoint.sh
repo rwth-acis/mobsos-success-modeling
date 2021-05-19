@@ -6,13 +6,13 @@ set -e
 if [[ ! -z "${DEBUG}" ]]; then
     set -x
 fi
-
+NODE_ID_SEED=${NODE_ID_SEED:-$RANDOM}
 # set some helpful variables
 export SERVICE_PROPERTY_FILE='etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties'
 export WEB_CONNECTOR_PROPERTY_FILE='etc/i5.las2peer.connectors.webConnector.WebConnector.properties'
-export SERVICE_VERSION=$(xmlstarlet sel -t -v "/project/property[@name='service.version']/@value" build.xml)
-export SERVICE_NAME=$(xmlstarlet sel -t -v "/project/property[@name='service.name']/@value" build.xml)
-export SERVICE_CLASS=$(xmlstarlet sel -t -v "/project/property[@name='service.class']/@value" build.xml)
+export SERVICE_VERSION=$(awk -F "=" '/service.version/ {print $2}' gradle.properties)
+export SERVICE_NAME=$(awk -F "=" '/service.name/ {print $2}' gradle.properties)
+export SERVICE_CLASS=$(awk -F "=" '/service.class/ {print $2}' gradle.properties)
 export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
 export DATABASE_TYPE='2'
 export MYSQL_DATABASE='LAS2PEERMON'
@@ -30,10 +30,12 @@ export MYSQL_DATABASE='LAS2PEERMON'
 [[ -z "${USE_FILE_SERVICE}" ]] && export USE_FILE_SERVICE='FALSE'
 [[ -z "${CATALOG_FILE_LOCATION}" ]] && export CATALOG_FILE_LOCATION='measure_catalogs/'
 [[ -z "${SUCCESS_MODELS_FOLDER_LOCATION}" ]] && export SUCCESS_MODELS_FOLDER_LOCATION='success_models/'
+[[ -z "${DEFAULT_SERVICE_NAME}" ]] && export DEFAULT_SERVICE_NAME='i5.las2peer.services.mensaService.MensaService'
 
 # set defaults for optional web connector parameters
 [[ -z "${START_HTTP}" ]] && export START_HTTP='TRUE'
 [[ -z "${START_HTTPS}" ]] && export START_HTTPS='FALSE'
+[[ -z "${INSERT_DB_INFO_INTO_QVS}" ]] && export INSERT_DB_INFO_INTO_QVS='TRUE'
 [[ -z "${SSL_KEYSTORE}" ]] && export SSL_KEYSTORE=''
 [[ -z "${SSL_KEY_PASSWORD}" ]] && export SSL_KEY_PASSWORD=''
 [[ -z "${CROSS_ORIGIN_RESOURCE_DOMAIN}" ]] && export CROSS_ORIGIN_RESOURCE_DOMAIN='*'
@@ -55,6 +57,12 @@ set_in_service_config databasePort ${MYSQL_PORT}
 set_in_service_config useFileService ${USE_FILE_SERVICE}
 set_in_service_config catalogFileLocation ${CATALOG_FILE_LOCATION}
 set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATION}
+set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
+set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
+set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
+set_in_service_config defaultServiceName ${DEFAULT_SERVICE_NAME}
+set_in_service_config insertDatabaseCredentialsIntoQVService ${INSERT_DB_INFO_INTO_QVS}
+
 
 # configure web connector properties
 
@@ -100,10 +108,31 @@ if [[ ! -z "${BOOTSTRAP}" ]]; then
     LAUNCH_COMMAND="${LAUNCH_COMMAND} -b ${BOOTSTRAP}"
 fi
 
+# it's realistic for different nodes to use different accounts (i.e., to have
+# different node operators). this function echos the N-th mnemonic if the
+# variable WALLET is set to N. If not, first mnemonic is used
+function selectMnemonic {
+    declare -a mnemonics=("differ employ cook sport clinic wedding melody column pave stuff oak price" "memory wrist half aunt shrug elbow upper anxiety maximum valve finish stay" "alert sword real code safe divorce firm detect donate cupboard forward other" "pair stem change april else stage resource accident will divert voyage lawn" "lamp elbow happy never cake very weird mix episode either chimney episode" "cool pioneer toe kiwi decline receive stamp write boy border check retire" "obvious lady prize shrimp taste position abstract promote market wink silver proof" "tired office manage bird scheme gorilla siren food abandon mansion field caution" "resemble cattle regret priority hen six century hungry rice grape patch family" "access crazy can job volume utility dial position shaft stadium soccer seven")
+    if [[ ${WALLET} =~ ^[0-9]+$ && ${WALLET} -lt ${#mnemonics[@]} ]]; then
+    # get N-th mnemonic
+        echo "${mnemonics[${WALLET}]}"
+    else
+        # note: zsh and others use 1-based indexing. this requires bash
+        echo "${mnemonics[0]}"
+    fi
+}
+
+#prepare pastry properties
+echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/pastry.properties
+echo  etc/pastry.properties
 # start the service within a las2peer node
 if [[ -z "${@}" ]]
 then
-  exec ${LAUNCH_COMMAND} startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector
+    if [ -n "$LAS2PEER_ETH_HOST" ]; then
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
+    else
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
+    fi
 else
   exec ${LAUNCH_COMMAND} ${@}
 fi

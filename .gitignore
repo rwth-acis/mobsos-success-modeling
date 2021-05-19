@@ -9,3 +9,20 @@
 .DS_Store
 .DS_Store*
 /.idea
+etc/launcher-configuration.ini
+measure_catalogs/*
+success_models/*
+junit*.properties
+bin/test.http
+.vscode/extensions.json
+*.http
+etc/startup/passphrases.txt
+bin/start_network.sh
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+app/etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
+etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
