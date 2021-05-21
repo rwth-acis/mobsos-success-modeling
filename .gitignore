@@ -26,3 +26,4 @@ bin/start_network.sh
 build
 app/etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
 etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
+app/bin/main/i5/las2peer/services/mobsos/successModeling/*
