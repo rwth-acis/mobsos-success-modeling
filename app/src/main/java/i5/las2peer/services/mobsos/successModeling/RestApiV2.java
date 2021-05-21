@@ -253,6 +253,17 @@ public class RestApiV2 {
     return Response.status(Response.Status.OK).entity(groupInformation).build();
   }
 
+  @GET
+  @Path("/groups/{group}/isMember")
+  public Response isMemberOfGroup(@PathParam("group") String group) {
+    try {
+      checkGroupMembership(group);
+      return Response.ok().build();
+    } catch (ForbiddenException e) {
+      return Response.status(Response.Status.OK).entity(e.getMessage()).build();
+    }
+  }
+
   private String getGroupIdByName(String name) {
     if (name == null) return null;
     ResultSet resultSet;
