@@ -378,17 +378,6 @@ public class RestApiV2 {
     checkGroupMembership(group);
     if (service.getMeasureCatalogByGroup(group) != null) {
       return updateMeasureCatalogForGroup(group, measureCatalog); // measure catalog already exists so we update the existing one
-      // return Response
-      //   .status(Response.Status.BAD_REQUEST)
-      //   .entity(
-      //     new ErrorDTO(
-      //       "Measure catalog for " +
-      //       group +
-      //       " already exists. " +
-      //       "Update the existing catalog instead."
-      //     )
-      //   )
-      //   .build();
     }
     service.writeMeasureCatalog(measureCatalog.xml, group);
     return Response
@@ -408,17 +397,6 @@ public class RestApiV2 {
     checkGroupMembership(group);
     if (service.getMeasureCatalogByGroup(group) == null) {
       return createMeasureCatalogForGroup(group, measureCatalog); //if a measure catalog does not exist yet we create a new one
-      // return Response
-      //   .status(Response.Status.BAD_REQUEST)
-      //   .entity(
-      //     new ErrorDTO(
-      //       "Measure catalog for " +
-      //       group +
-      //       " does not exist yet. " +
-      //       "Please create it via POST method."
-      //     )
-      //   )
-      //   .build();
     }
     service.writeMeasureCatalog(measureCatalog.xml, group);
     return Response
@@ -536,19 +514,11 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (successModelExists(group, serviceName)) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Success model for " +
-            group +
-            " and service " +
-            serviceName +
-            " already exists. " +
-            "Update the existing model instead."
-          )
-        )
-        .build();
+      return updateSuccessModelsForGroupAndService(
+        group,
+        serviceName,
+        successModel
+      ); // success model already exists so we update the existing one
     }
     service.writeSuccessModel(successModel.xml, group, serviceName);
     return getSuccessModelsForGroupAndService(group, serviceName);
@@ -564,19 +534,11 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (!successModelExists(group, serviceName)) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Success model for " +
-            group +
-            " and service " +
-            serviceName +
-            " does not exist yet. " +
-            "Create the model instead."
-          )
-        )
-        .build();
+      return createSuccessModelsForGroupAndService(
+        group,
+        serviceName,
+        successModel
+      ); //if a success model does not exist yet we create a new one
     }
     service.writeSuccessModel(successModel.xml, group, serviceName);
     return getSuccessModelsForGroupAndService(group, serviceName);
