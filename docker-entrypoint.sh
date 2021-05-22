@@ -19,9 +19,9 @@ export MYSQL_DATABASE='LAS2PEERMON'
 
 # check mandatory variables
 [[ -z "${MYSQL_USER}" ]] && \
-    echo "Mandatory variable MYSQL_USER is not set. Add -e MYSQL_USER=myuser to your arguments." && exit 1
+echo "Mandatory variable MYSQL_USER is not set. Add -e MYSQL_USER=myuser to your arguments." && exit 1
 [[ -z "${MYSQL_PASSWORD}" ]] && \
-    echo "Mandatory variable MYSQL_PASSWORD is not set. Add -e MYSQL_PASSWORD=mypasswd to your arguments." && exit 1
+echo "Mandatory variable MYSQL_PASSWORD is not set. Add -e MYSQL_PASSWORD=mypasswd to your arguments." && exit 1
 
 # set defaults for optional service parameters
 [[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='processing'
@@ -114,7 +114,7 @@ fi
 function selectMnemonic {
     declare -a mnemonics=("differ employ cook sport clinic wedding melody column pave stuff oak price" "memory wrist half aunt shrug elbow upper anxiety maximum valve finish stay" "alert sword real code safe divorce firm detect donate cupboard forward other" "pair stem change april else stage resource accident will divert voyage lawn" "lamp elbow happy never cake very weird mix episode either chimney episode" "cool pioneer toe kiwi decline receive stamp write boy border check retire" "obvious lady prize shrimp taste position abstract promote market wink silver proof" "tired office manage bird scheme gorilla siren food abandon mansion field caution" "resemble cattle regret priority hen six century hungry rice grape patch family" "access crazy can job volume utility dial position shaft stadium soccer seven")
     if [[ ${WALLET} =~ ^[0-9]+$ && ${WALLET} -lt ${#mnemonics[@]} ]]; then
-    # get N-th mnemonic
+        # get N-th mnemonic
         echo "${mnemonics[${WALLET}]}"
     else
         # note: zsh and others use 1-based indexing. this requires bash
@@ -124,15 +124,15 @@ function selectMnemonic {
 
 #prepare pastry properties
 echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/pastry.properties
-echo  etc/pastry.properties
+
 # start the service within a las2peer node
 if [[ -z "${@}" ]]
 then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
-        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()"
     else
-        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) 
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)
     fi
 else
-  exec ${LAUNCH_COMMAND} ${@}
+    exec ${LAUNCH_COMMAND} ${@}
 fi
