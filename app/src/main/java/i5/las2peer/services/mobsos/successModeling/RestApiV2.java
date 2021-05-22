@@ -377,17 +377,18 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (service.getMeasureCatalogByGroup(group) != null) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Measure catalog for " +
-            group +
-            " already exists. " +
-            "Update the existing catalog instead."
-          )
-        )
-        .build();
+      return updateMeasureCatalogForGroup(group, measureCatalog); // measure catalog already exists so we update the existing one
+      // return Response
+      //   .status(Response.Status.BAD_REQUEST)
+      //   .entity(
+      //     new ErrorDTO(
+      //       "Measure catalog for " +
+      //       group +
+      //       " already exists. " +
+      //       "Update the existing catalog instead."
+      //     )
+      //   )
+      //   .build();
     }
     service.writeMeasureCatalog(measureCatalog.xml, group);
     return Response
@@ -406,17 +407,18 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (service.getMeasureCatalogByGroup(group) == null) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Measure catalog for " +
-            group +
-            " does not exist yet. " +
-            "Please create it via POST method."
-          )
-        )
-        .build();
+      return createMeasureCatalogForGroup(group, measureCatalog); //if a measure catalog does not exist yet we create a new one
+      // return Response
+      //   .status(Response.Status.BAD_REQUEST)
+      //   .entity(
+      //     new ErrorDTO(
+      //       "Measure catalog for " +
+      //       group +
+      //       " does not exist yet. " +
+      //       "Please create it via POST method."
+      //     )
+      //   )
+      //   .build();
     }
     service.writeMeasureCatalog(measureCatalog.xml, group);
     return Response
