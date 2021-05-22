@@ -1,5 +1,5 @@
 
-FROM gradle:7.0.2-jdk14 as build
+FROM gradle:6.8-jdk14 as build
 
 COPY . /home/gradle/src
 WORKDIR /home/gradle/src
