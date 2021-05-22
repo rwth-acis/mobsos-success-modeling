@@ -1,4 +1,8 @@
 
+FROM gradle:7.0.2-jdk14 as build
+
+COPY . /home/gradle/src
+WORKDIR /home/gradle/src
 FROM openjdk:14-jdk-alpine
 
 ENV HTTP_PORT=8080
