@@ -111,7 +111,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private boolean measureUpdatingStarted = false;
   boolean insertDatabaseCredentialsIntoQVService;
   protected String GRAPHQL_PROTOCOL = "http";
-  protected String GRAPHQ_HOST = "127.0.0.1:8090";
+  protected String GRAPHQL_HOST = "127.0.0.1:8090";
   protected String CHART_API_ENDPOINT = "http://localhost:3000";
 
   protected String defaultGroupId =

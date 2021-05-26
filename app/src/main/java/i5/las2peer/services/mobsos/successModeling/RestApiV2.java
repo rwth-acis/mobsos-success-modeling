@@ -1546,7 +1546,7 @@ public class RestApiV2 {
       String queryString = prepareGQLQueryString(dbName, dbSchema, query);
 
       String urlString =
-        protocol + service.GRAPHQ_HOST + "/graphql?query=" + queryString;
+        protocol + service.GRAPHQL_HOST + "/graphql?query=" + queryString;
 
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -1570,7 +1570,7 @@ public class RestApiV2 {
       String queryString = prepareGQLQueryString(query);
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
-        service.GRAPHQ_HOST,
+        service.GRAPHQL_HOST,
         "/graphql/graphql",
         "query=" + queryString,
         null
@@ -1607,7 +1607,7 @@ public class RestApiV2 {
       String queryString = prepareGQLQueryString(dbName, dbSchema, query);
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
-        service.GRAPHQ_HOST,
+        service.GRAPHQL_HOST,
         "/graphql/graphql",
         "query=" + queryString,
         null
