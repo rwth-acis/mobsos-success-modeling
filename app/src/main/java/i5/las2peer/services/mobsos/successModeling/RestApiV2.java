@@ -232,12 +232,12 @@ public class RestApiV2 {
   }
 
   @PUT
-  @Path("/groups/{groupName}")
-  public Response modifyGroup(
+  @Path("/groups/changeId")
+  public Response modifyGroupId(
     @PathParam("group") String groupName,
     GroupDTO group
   ) {
-    checkGroupMembership(group.groupID);
+    checkGroupMembership(group.groupID); //check that user is part of that new group
     try {
       service.reconnect();
       try {
@@ -252,6 +252,7 @@ public class RestApiV2 {
             .build();
         }
       } catch (SQLException e) {
+        e.printStackTrace();
         return Response.status(500).entity("").build();
       }
 
