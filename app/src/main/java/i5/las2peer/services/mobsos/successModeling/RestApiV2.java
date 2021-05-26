@@ -189,6 +189,21 @@ public class RestApiV2 {
     checkGroupMembership(group.groupID);
     try {
       service.reconnect();
+      try {
+        ResultSet resultSet = service.database.query(
+          service.GROUP_QUERY_WITH_ID_PARAM,
+          Collections.singletonList(group.groupID)
+        );
+        if (service.database.getRowCount(resultSet) >= 0) {
+          return Response
+            .status(422)
+            .entity("Group with ID " + group.groupID + " already exists")
+            .build();
+        }
+      } catch (SQLException e) {
+        return Response.status(500).entity("").build();
+      }
+
       // System.out.println(group.groupID);
       String groupIDHex = DigestUtils.md5Hex(group.groupID);
       // System.out.println(groupIDHex);
@@ -206,9 +221,59 @@ public class RestApiV2 {
         service.GROUP_INFORMATION_INSERT,
         Arrays.asList(groupIDHex, group.groupID, group.name)
       );
-      System.out.println("done");
     } catch (SQLException e) {
       System.out.println("(Add Group) The query has lead to an error: " + e);
+      return null;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+    return Response.status(Response.Status.OK).entity(group).build();
+  }
+
+  @PUT
+  @Path("/groups/{groupName}")
+  public Response modifyGroup(
+    @PathParam("group") String groupName,
+    GroupDTO group
+  ) {
+    checkGroupMembership(group.groupID);
+    try {
+      service.reconnect();
+      try {
+        ResultSet resultSet = service.database.query(
+          service.GROUP_QUERY_WITH_ID_PARAM,
+          Collections.singletonList(group.groupID)
+        );
+        if (service.database.getRowCount(resultSet) >= 0) {
+          return Response
+            .status(422)
+            .entity("Group with ID " + group.groupID + " already exists")
+            .build();
+        }
+      } catch (SQLException e) {
+        return Response.status(500).entity("").build();
+      }
+
+      // System.out.println(group.groupID);
+      String groupIDHex = DigestUtils.md5Hex(group.groupID);
+      // System.out.println(groupIDHex);
+      ResultSet groupAgentResult = service.database.query(
+        service.AGENT_QUERY_WITH_MD5ID_PARAM,
+        Collections.singletonList(groupIDHex)
+      );
+      if (service.database.getRowCount(groupAgentResult) == 0) {
+        service.database.queryWithDataManipulation(
+          service.GROUP_AGENT_INSERT,
+          Collections.singletonList(groupIDHex)
+        );
+      }
+      service.database.queryWithDataManipulation(
+        service.UPDATE_GROUP_QUERY,
+        Arrays.asList(groupIDHex, group.groupID, group.name)
+      );
+    } catch (SQLException e) {
+      System.out.println("(Update Group) The query has lead to an error: " + e);
       return null;
     } catch (Exception e) {
       e.printStackTrace();

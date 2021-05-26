@@ -64,6 +64,7 @@ public class MonitoringDataProvisionService extends RESTService {
   public final String AGENT_QUERY_WITH_MD5ID_PARAM;
   public final String GROUP_QUERY;
   public final String GROUP_QUERY_WITH_ID_PARAM;
+  public final String UPDATE_GROUP_QUERY;
   public final String GROUP_QUERY_WITH_NAME_PARAM;
   public final String GROUP_AGENT_INSERT;
   public final String GROUP_INFORMATION_INSERT;
@@ -155,6 +156,9 @@ public class MonitoringDataProvisionService extends RESTService {
         "INSERT INTO GROUP_INFORMATION VALUES (?, ?, ?, 1)";
       this.GROUP_INFORMATION_UPDATE =
         "UPDATE GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
+
+      this.UPDATE_GROUP_QUERY =
+        "UPDATE GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
     } else {
       this.NODE_QUERY = "SELECT * FROM " + DB2Schema + ".NODE";
       this.SERVICE_QUERY =
@@ -180,6 +184,10 @@ public class MonitoringDataProvisionService extends RESTService {
         "UPDATE " +
         DB2Schema +
         ".GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
+      this.UPDATE_GROUP_QUERY =
+        "UPDATE " +
+        DB2Schema +
+        ".GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
     }
 
     try {
