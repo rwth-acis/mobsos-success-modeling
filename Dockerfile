@@ -18,7 +18,8 @@ USER las2peer
 RUN chmod +x gradlew && ./gradlew build --exclude-task test
 
 
-
+RUN dos2unix /src/docker-entrypoint.sh
+RUN dos2unix /src/gradle.properties
 EXPOSE $HTTP_PORT
 EXPOSE $HTTPS_PORT
 EXPOSE $LAS2PEER_PORT
