@@ -117,7 +117,7 @@ public class MonitoringDataProvisionService extends RESTService {
   protected String defaultGroupId =
     "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
   protected String defaultServiceName =
-    "i5.las2peer.services.mensaService.MensaService";
+    "i5.las2peer.services.tmitocar.TmitocarService";
 
   /**
    * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.
