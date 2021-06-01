@@ -1,7 +1,7 @@
 /tmp
 /node-storage
-/log
-/export
+app/log
+app/export
 /output
 /lib
 /etc/ivy/ivy.jar
