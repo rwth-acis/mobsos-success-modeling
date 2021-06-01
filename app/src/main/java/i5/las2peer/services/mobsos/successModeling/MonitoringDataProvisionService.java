@@ -81,7 +81,7 @@ public class MonitoringDataProvisionService extends RESTService {
     fileServicePrefix + fileServiceVersion;
   private final String mobsosQVServiceIdentifier =
     "i5.las2peer.services.mobsos.queryVisualization.QueryVisualizationService@*";
-  private final String QV_MOBSOS_DB_KEY = "__mobsos";
+  private final String QV_MOBSOS_DB_KEY = "las2peermon";
   protected SQLDatabase database; // The database instance to write to.
   Boolean useFileService;
   String catalogFileLocation;
