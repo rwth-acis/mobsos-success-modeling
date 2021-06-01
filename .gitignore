@@ -26,3 +26,6 @@ bin/start_network.sh
 build
 
 app/bin/main/i5/las2peer/services/mobsos/successModeling/*
+etc/startup/*
+app/export/*
+app/log/*
