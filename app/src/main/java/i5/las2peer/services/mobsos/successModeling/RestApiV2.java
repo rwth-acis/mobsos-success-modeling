@@ -1651,6 +1651,7 @@ public class RestApiV2 {
       throw new Exception("Query cannot be null");
     }
     query = query.replace("\n", " ");
+    query = query.replace("\"", " ");
     // System.out.println(dbName + dbSchema + query);
     return (
       "{customQuery(dbName: \"" +
