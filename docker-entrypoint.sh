@@ -59,6 +59,7 @@ set_in_service_config catalogFileLocation ${CATALOG_FILE_LOCATION}
 set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATION}
 set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
 set_in_service_config GRAPHQL_HOST ${GRAPHQL_HOST}
+set_in_service_config GRAPHQL_PROTOCOL ${GRAPHQL_PROTOCOL}
 set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
 set_in_service_config defaultServiceName ${DEFAULT_SERVICE_NAME}
 set_in_service_config insertDatabaseCredentialsIntoQVService ${INSERT_DB_INFO_INTO_QVS}
