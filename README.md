@@ -32,7 +32,7 @@ The [las2peer-FileService](https://github.com/rwth-acis/las2peer-FileService) ca
 Execute the following command on your shell:
 
 ```shell
-ant all
+./gradlew clean build --info
 ```
 
 ## Start
