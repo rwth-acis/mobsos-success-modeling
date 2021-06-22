@@ -8,6 +8,7 @@ import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.AgentNotFoundException;
 import i5.las2peer.api.security.AgentOperationFailedException;
 import i5.las2peer.api.security.UserAgent;
+import i5.las2peer.logging.L2pLogger;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.serialization.MalformedXMLException;
@@ -31,6 +32,7 @@ import i5.las2peer.services.mobsos.successModeling.visualizations.KPI;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Value;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
 import i5.las2peer.services.mobsos.successModeling.visualizations.charts.MethodResult;
+import java.util.logging.Level;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -211,6 +213,7 @@ public class MonitoringDataProvisionService extends RESTService {
       measureFileBackend = new LocalFileBackend(catalogFileLocation);
       modelFileBackend = new LocalFileBackend(successModelsFolderLocation);
     }
+    L2pLogger.setGlobalConsoleLevel(Level.WARNING);
   }
 
   /**
