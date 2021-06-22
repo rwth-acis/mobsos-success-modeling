@@ -1011,8 +1011,10 @@ public class RestApiV2 {
             visualization
           );
           chatResponse.put("fileBody", imagebase64);
-          chatResponse.put("fileName", "chart.png");
-          chatResponse.put("fileType", "image/png");
+          // chatResponse.put("fileName", "chart.png");
+          // chatResponse.put("fileType", "image/png");
+          chatResponse.put("fileName", "chart");
+          chatResponse.put("fileType", "png");
           res = Response.ok(chatResponse.toString()).build();
           break;
         case "KPI":
@@ -1029,6 +1031,10 @@ public class RestApiV2 {
           chatResponse.put("text", value);
           res = Response.ok(chatResponse.toString()).build();
           break;
+        default:
+          throw new IllegalArgumentException(
+            "Visualization of type " + visualization.getAttribute("type")
+          );
       }
       userContext.remove("email");
     } catch (ChatException e) {
@@ -1651,7 +1657,7 @@ public class RestApiV2 {
       throw new Exception("Query cannot be null");
     }
     query = query.replace("\n", " ");
-    query = query.replace("\"", "'");
+    query = query.replace("\"", "\\\"");
     // System.out.println(dbName + dbSchema + query);
     return (
       "{customQuery(dbName: \"" +
