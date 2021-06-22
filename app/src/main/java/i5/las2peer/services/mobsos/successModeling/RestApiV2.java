@@ -1010,9 +1010,9 @@ public class RestApiV2 {
             parser,
             visualization
           );
-          chatResponse.put("fileBody", imagebase64);
           // chatResponse.put("fileName", "chart.png");
           // chatResponse.put("fileType", "image/png");
+          chatResponse.put("fileBody", imagebase64);
           chatResponse.put("fileName", "chart");
           chatResponse.put("fileType", "png");
           res = Response.ok(chatResponse.toString()).build();
