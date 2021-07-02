@@ -24,7 +24,7 @@ echo "Mandatory variable MYSQL_USER is not set. Add -e MYSQL_USER=myuser to your
 echo "Mandatory variable MYSQL_PASSWORD is not set. Add -e MYSQL_PASSWORD=mypasswd to your arguments." && exit 1
 
 # set defaults for optional service parameters
-[[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='processing'
+[[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='success'
 [[ -z "${MYSQL_HOST}" ]] && export MYSQL_HOST='mysql'
 [[ -z "${MYSQL_PORT}" ]] && export MYSQL_PORT='3306'
 [[ -z "${USE_FILE_SERVICE}" ]] && export USE_FILE_SERVICE='FALSE'
