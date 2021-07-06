@@ -1660,6 +1660,7 @@ public class RestApiV2 {
     if (query == null) {
       throw new Exception("Query cannot be null");
     }
+    System.out.println("SQL query untouched: "+ query);
     query = query.trim();
     query = query.replace("\n", "");
     query = query.replace("\"", "\\\"");
