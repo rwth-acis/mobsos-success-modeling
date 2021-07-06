@@ -26,6 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -1660,10 +1661,12 @@ public class RestApiV2 {
     if (query == null) {
       throw new Exception("Query cannot be null");
     }
+
     System.out.println("SQL query untouched: "+ query);
-    query = query.trim();
-    query = query.replace("\n", "");
-    query = query.replace("\"", "\\\"");
+    // query = query.trim();
+    // query = query.replace("\n", "");
+    // query = query.replace("\"", "\\\"");
+   query= URLEncoder.encode(query.trim(), "UTF-8");
     System.out.println("SQL query: "+ query);
     // System.out.println(dbName + dbSchema + query);
     return (
