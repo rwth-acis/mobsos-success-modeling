@@ -1665,7 +1665,7 @@ public class RestApiV2 {
     System.out.println("SQL query untouched: "+ query);
     query = query.trim();
     query = query.replace("\n", " ");
-    // query = query.replace("\"", "\\\"");
+    query = query.replace("\"", "\\\"");
    
     System.out.println("SQL query: "+ query);
     String test = String.format("{customQuery(dbName:\"%s\",dbSchema:\"%s\",query:\"%s\")}",dbName,dbSchema,query );
