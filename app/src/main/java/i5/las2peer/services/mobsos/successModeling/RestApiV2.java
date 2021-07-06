@@ -1624,9 +1624,13 @@ public class RestApiV2 {
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
       return con.getInputStream();
-    } catch (IOException | URISyntaxException e) {
+    } catch (IOException  e) {
       e.printStackTrace();
       throw new ChatException("Sorry the graphQL request has failed 😶");
+    }
+     catch (URISyntaxException  e) {
+      e.printStackTrace();
+      throw new ChatException("Sorry, I could not encode the query 😶");
     }
   }
 
@@ -1656,8 +1660,10 @@ public class RestApiV2 {
     if (query == null) {
       throw new Exception("Query cannot be null");
     }
-    query = query.replace("\n", " ");
+    query = query.trim();
+    query = query.replace("\n", "");
     query = query.replace("\"", "\\\"");
+    System.out.println("SQL query: "+ query);
     // System.out.println(dbName + dbSchema + query);
     return (
       "{customQuery(dbName: \"" +
