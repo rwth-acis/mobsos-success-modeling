@@ -1663,12 +1663,13 @@ public class RestApiV2 {
     }
 
     System.out.println("SQL query untouched: "+ query);
-    // query = query.trim();
-    // query = query.replace("\n", "");
+    query = query.trim();
+    query = query.replace("\n", " ");
     // query = query.replace("\"", "\\\"");
-   query= URLEncoder.encode(query.trim(), "UTF-8");
+   
     System.out.println("SQL query: "+ query);
     // System.out.println(dbName + dbSchema + query);
+
     return (
       "{customQuery(dbName: \"" +
       dbName +
