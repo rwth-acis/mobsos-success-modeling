@@ -6,6 +6,7 @@ services:
 script: "./gradlew clean build"
 sudo: required
 before_script:
+  - bash chmod +x ./gradlew
   - bash .travis.install-mysql-5.7.sh
   - mysql -u root -e 'CREATE DATABASE LAS2PEERMON;'
   - mysql -u root LAS2PEERMON < bin/db.sql
