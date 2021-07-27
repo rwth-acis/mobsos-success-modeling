@@ -32,7 +32,6 @@ import i5.las2peer.services.mobsos.successModeling.visualizations.KPI;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Value;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
 import i5.las2peer.services.mobsos.successModeling.visualizations.charts.MethodResult;
-import java.util.logging.Level;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -45,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.w3c.dom.Element;
@@ -85,7 +85,7 @@ public class MonitoringDataProvisionService extends RESTService {
     "i5.las2peer.services.mobsos.queryVisualization.QueryVisualizationService@*";
   private final String QV_MOBSOS_DB_KEY = "las2peermon";
   protected SQLDatabase database; // The database instance to write to.
-  Boolean useFileService;
+  Boolean useFileService = false;
   String catalogFileLocation;
   TreeMap<String, MeasureCatalog> measureCatalogs = new TreeMap<>();
   Map<String, SuccessModel> knownModels = new TreeMap<>();
@@ -96,15 +96,15 @@ public class MonitoringDataProvisionService extends RESTService {
   Map<String, Map<String, SuccessModel>> knownModelsV2 = new TreeMap<>();
 
   /**
-   * Configuration parameters, values will be set by the configuration file.
+   * Configuration parameters, values will be set by the configuration file. Set defaults for service tests
    */
-  private String databaseName;
-  private int databaseTypeInt; // See SQLDatabaseType for more information
-  private SQLDatabaseType databaseType;
-  private String databaseHost;
-  private int databasePort;
-  private String databaseUser;
-  private String databasePassword;
+  private String databaseName = "LAS2PEERMON";
+  private int databaseTypeInt = 2; // See SQLDatabaseType for more information
+  private SQLDatabaseType databaseType = SQLDatabaseType.MySQL; 
+  private String databaseHost = "localhost" ;
+  private int databasePort = 3306 ;
+  private String databaseUser = "root";
+  private String databasePassword = "password";
   private String successModelsFolderLocation;
   private String DB2Schema;
 
@@ -128,7 +128,6 @@ public class MonitoringDataProvisionService extends RESTService {
     setFieldValues(); // This sets the values of the configuration file
 
     this.databaseType = SQLDatabaseType.getSQLDatabaseType(databaseTypeInt);
-
     this.database =
       new SQLDatabase(
         this.databaseType,
@@ -200,7 +199,6 @@ public class MonitoringDataProvisionService extends RESTService {
         "Monitoring: Could not connect to database! " + e.getMessage()
       );
     }
-
     if (useFileService) {
       measureFileBackend =
         new FileServiceFileBackend(catalogFileLocation, fileServiceIdentifier);
