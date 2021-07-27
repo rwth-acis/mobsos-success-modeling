@@ -86,7 +86,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private final String QV_MOBSOS_DB_KEY = "las2peermon";
   protected SQLDatabase database; // The database instance to write to.
   Boolean useFileService = false;
-  String catalogFileLocation;
+  String catalogFileLocation ="measure_catalogs/";
   TreeMap<String, MeasureCatalog> measureCatalogs = new TreeMap<>();
   Map<String, SuccessModel> knownModels = new TreeMap<>();
   /**
@@ -105,7 +105,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private int databasePort = 3306 ;
   private String databaseUser = "root";
   private String databasePassword = "password";
-  private String successModelsFolderLocation;
+  private String successModelsFolderLocation ="success_models/";
   private String DB2Schema;
 
   private FileBackend measureFileBackend;
