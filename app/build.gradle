@@ -96,7 +96,17 @@ task copyTest(type: Copy) {
     include "**/*.xml"
     into "$buildDir/classes/java/test"
 }
+copyTest.dependsOn "copyMeasureCatalogs"
+copyTest.dependsOn "copySuccessModels"
 
+task copyMeasureCatalogs(type: Copy) {
+    from "$rootDir/measure_catalogs"
+    into "/measure_catalogs"
+}
+task copySuccessModels(type: Copy) {
+    from "$rootDir/success_models"
+    into "/success_models"
+}
 // These two tasks restore the build and runtime environment used
 // in the ant environment
 task copyJar(type: Copy) {
@@ -226,6 +236,8 @@ task cleanAll {
     doLast {
         file("$rootDir/log").deleteDir()
         file("$rootDir/node-storage").deleteDir()
+        file("/success_models").deleteDir()
+        file("/measure_catalogs").deleteDir()
     }
 }
 
