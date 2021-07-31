@@ -25,7 +25,7 @@ jobs:
       - name: Grant Gradle permissions
         run: chmod +x gradlew
       - name: Create test directories
-        run: mkdir measure_catalogs && mkdir success-models
+        run: cd app && mkdir measure_catalogs && mkdir success-models
       - name: Test with Gradle
         run: ./gradlew test --info
   build:
