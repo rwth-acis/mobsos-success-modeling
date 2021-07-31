@@ -101,7 +101,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private String databaseName = "LAS2PEERMON";
   private int databaseTypeInt = 2; // See SQLDatabaseType for more information
   private SQLDatabaseType databaseType = SQLDatabaseType.MySQL; 
-  private String databaseHost = "localhost" ;
+  private String databaseHost = "127.0.0.1" ;
   private int databasePort = 3306 ;
   private String databaseUser = "root";
   private String databasePassword = "password";

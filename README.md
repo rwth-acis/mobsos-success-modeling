@@ -29,12 +29,15 @@ The [las2peer-FileService](https://github.com/rwth-acis/las2peer-FileService) ca
 
 ## Build
 
-Execute the following command on your shell:
+First make sure that your MySQL database is running. Otherwise the tests will fail. Execute the following command on your shell:
 
 ```shell
 ./gradlew clean build --info
 ```
-
+If you want to skip tests you can run the following command:
+```shell
+./gradlew clean build -x test
+```
 ## Start
 
 To start the MobSOS Success-Modeling service, use one of the available start scripts:
