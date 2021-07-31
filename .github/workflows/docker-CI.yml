@@ -7,7 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    options: --user root
     steps:
       - name: Prepare MySQL database
         uses: mirromutth/mysql-action@v1.1
@@ -21,8 +20,6 @@ jobs:
         with:
           java-version: '14'
           distribution: 'adopt'
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
       - name: Grant Gradle permissions
         run: chmod +x gradlew
       - name: Test with Gradle
