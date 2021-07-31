@@ -23,7 +23,7 @@ jobs:
       - name: Grant Gradle permissions
         run: chmod +x gradlew
       - name: Test with Gradle
-        run: gradle test --scan 
+        run: ./gradlew test --info 
   build:
     needs: test
     runs-on: ubuntu-latest

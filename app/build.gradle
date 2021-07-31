@@ -1,7 +1,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
-     id 'jacoco'
+    id 'jacoco'
     //id 'eclipse' // only required when using Eclipse
 }
 
@@ -101,11 +101,11 @@ copyTest.dependsOn "copySuccessModels"
 
 task copyMeasureCatalogs(type: Copy) {
     from "$rootDir/measure_catalogs"
-    into "/measure_catalogs"
+    into "measure_catalogs"
 }
 task copySuccessModels(type: Copy) {
     from "$rootDir/success_models"
-    into "/success_models"
+    into "success_models"
 }
 // These two tasks restore the build and runtime environment used
 // in the ant environment
