@@ -24,10 +24,8 @@ jobs:
         uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
       - name: Grant Gradle permissions
         run: chmod +x gradlew
-      - name: Create test directories
-        run: cd app/build && mkdir measure_catalogs && mkdir success-models
       - name: Test with Gradle
-        run: ./gradlew test --info
+        run: sudo ./gradlew test --info 
   build:
     needs: test
     runs-on: ubuntu-latest
