@@ -7,6 +7,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    options: --user root
     steps:
       - name: Prepare MySQL database
         uses: mirromutth/mysql-action@v1.1
