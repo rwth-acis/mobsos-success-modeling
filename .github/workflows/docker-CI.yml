@@ -22,8 +22,10 @@ jobs:
           distribution: 'adopt'
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
+      - name: Grant docker priviliges to gradle
+        run: groupadd docker && usermod -aG docker gradle
       - name: Grant Gradle permissions
-        run: chmod +x gradlew && usermod -aG docker gradle
+        run: chmod +x gradlew
       - name: Test with Gradle
         run: ./gradlew test --info 
   build:
