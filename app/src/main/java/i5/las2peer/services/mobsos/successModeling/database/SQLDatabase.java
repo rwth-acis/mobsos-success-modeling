@@ -39,6 +39,7 @@ public class SQLDatabase{
 	 *
 	 */
 	public SQLDatabase(SQLDatabaseType jdbcInfo, String username, String password, String database, String host, int port){		
+		System.out.println(host+port+username+password+database);
 		this.jdbcInfo = jdbcInfo;
 		this.username = username;
 		this.password = password;
@@ -60,6 +61,7 @@ public class SQLDatabase{
 	 */
 	public boolean connect() throws Exception{
 		try {
+			System.out.println(this.username+ this.password);
 			Class.forName(jdbcInfo.getDriverName()).newInstance();
 			String urlPrefix = jdbcInfo.getURLPrefix(this.host, this.database, this.port);
 			this.connection = DriverManager.getConnection(urlPrefix, this.username, this.password);
