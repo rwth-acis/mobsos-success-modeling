@@ -23,7 +23,7 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
       - name: Create directories
-        run: mkdir app/build && cd app/build && mkdir measure_catalogs && mkdir success_models
+        run: cd app && mkdir measure_catalogs && mkdir success_models
       - name: Grant Gradle permissions
         run: chmod +x gradlew
       - name: Test with Gradle
