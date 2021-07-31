@@ -7,10 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Prepare MySQL database
-      - uses: mirromutth/mysql-action@v1.1
+        uses: mirromutth/mysql-action@v1.1
         with:
           mysql database: 'LAS2PEERMON' # Optional, default value is "test". The specified database which will be created
           mysql user: 'root' # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Can use secrets, too
