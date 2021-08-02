@@ -1,7 +1,7 @@
 /tmp
 /node-storage
-/log
-/export
+app/log
+app/export
 /output
 /lib
 /etc/ivy/ivy.jar
@@ -24,6 +24,9 @@ bin/start_network.sh
 
 # Ignore Gradle build output directory
 build
-app/etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
-etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
+
 app/bin/main/i5/las2peer/services/mobsos/successModeling/*
+etc/startup/*
+app/export/*
+app/log/*
+log/*

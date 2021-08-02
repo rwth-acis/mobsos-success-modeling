@@ -3,12 +3,12 @@ jdk:
   - openjdk14
 services:
   - mysql
-script: "./gradlew clean build"
+script: "./gradlew clean build --info"
 sudo: required
 before_script:
   - bash .travis.install-mysql-5.7.sh
   - mysql -u root -e 'CREATE DATABASE LAS2PEERMON;'
   - mysql -u root LAS2PEERMON < bin/db.sql
-  - mysql -u root LAS2PEERMON < etc/migrations/migrate-v1-mysql.sql
+  - mysql -u root LAS2PEERMON < migrations/migrate-v1-mysql.sql
 after_success:
   - bash <(curl -s https://codecov.io/bash)

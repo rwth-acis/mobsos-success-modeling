@@ -24,7 +24,7 @@ echo "Mandatory variable MYSQL_USER is not set. Add -e MYSQL_USER=myuser to your
 echo "Mandatory variable MYSQL_PASSWORD is not set. Add -e MYSQL_PASSWORD=mypasswd to your arguments." && exit 1
 
 # set defaults for optional service parameters
-[[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='processing'
+[[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='success'
 [[ -z "${MYSQL_HOST}" ]] && export MYSQL_HOST='mysql'
 [[ -z "${MYSQL_PORT}" ]] && export MYSQL_PORT='3306'
 [[ -z "${USE_FILE_SERVICE}" ]] && export USE_FILE_SERVICE='FALSE'
@@ -58,7 +58,8 @@ set_in_service_config useFileService ${USE_FILE_SERVICE}
 set_in_service_config catalogFileLocation ${CATALOG_FILE_LOCATION}
 set_in_service_config successModelsFolderLocation ${SUCCESS_MODELS_FOLDER_LOCATION}
 set_in_service_config CHART_API_ENDPOINT ${CHART_API_ENDPOINT}
-set_in_service_config GRAPHQ_HOST ${GRAPHQ_HOST}
+set_in_service_config GRAPHQL_HOST ${GRAPHQL_HOST}
+set_in_service_config GRAPHQL_PROTOCOL ${GRAPHQL_PROTOCOL}
 set_in_service_config defaultGroupId ${DEFAULT_GROUP_ID}
 set_in_service_config defaultServiceName ${DEFAULT_SERVICE_NAME}
 set_in_service_config insertDatabaseCredentialsIntoQVService ${INSERT_DB_INFO_INTO_QVS}
@@ -129,9 +130,9 @@ echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/p
 if [[ -z "${@}" ]]
 then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
-        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()"
+        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED --observer --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)  "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()"
     else
-        exec ${LAUNCH_COMMAND} --observer --node-id-seed $NODE_ID_SEED  startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)
+        exec ${LAUNCH_COMMAND} --node-id-seed $NODE_ID_SEED --observer uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\)
     fi
 else
     exec ${LAUNCH_COMMAND} ${@}
