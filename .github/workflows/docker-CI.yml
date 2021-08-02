@@ -18,7 +18,7 @@ jobs:
           MYSQL_PASSWORD: password
           MYSQL_DATABASE: LAS2PEERMON
           MYSQL_ROOT_PASSWORD: rootpw
-        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
     steps:
       - name: Verify MySQL connection
         run: |
