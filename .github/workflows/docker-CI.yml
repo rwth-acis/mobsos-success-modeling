@@ -22,7 +22,7 @@ jobs:
       with:
         java-version: '14'
         distribution: 'adopt'
-    - run: mysql -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} < ./migrations/las2peermon.sql
+    - run: mysql -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} ${{ env.DB_DATABASE }} < ./migrations/las2peermon.sql
     - name: Grant Gradle permissions
       run: chmod +x gradlew
     - name: Test with Gradle
