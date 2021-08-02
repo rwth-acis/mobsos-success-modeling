@@ -10,7 +10,7 @@ jobs:
     env:
       DB_DATABASE: LAS2PEERMON
       DB_USER: root
-      DB_PASSWORD: password
+      DB_PASSWORD: root
     steps:
     - name: Set up MySQL
       run: |
