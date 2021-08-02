@@ -104,7 +104,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private String databaseHost = "127.0.0.1" ;
   private int databasePort = 3306 ;
   private String databaseUser = "root";
-  private String databasePassword = "password";
+  private String databasePassword = "root";
   private String successModelsFolderLocation ="success_models";
   private String DB2Schema;
 
