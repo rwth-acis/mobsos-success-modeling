@@ -86,7 +86,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private final String QV_MOBSOS_DB_KEY = "las2peermon";
   protected SQLDatabase database; // The database instance to write to.
   Boolean useFileService = false;
-  String catalogFileLocation ="measure_catalogs";
+  String catalogFileLocation = "measure_catalogs";
   TreeMap<String, MeasureCatalog> measureCatalogs = new TreeMap<>();
   Map<String, SuccessModel> knownModels = new TreeMap<>();
   /**
@@ -100,12 +100,12 @@ public class MonitoringDataProvisionService extends RESTService {
    */
   private String databaseName = "LAS2PEERMON";
   private int databaseTypeInt = 2; // See SQLDatabaseType for more information
-  private SQLDatabaseType databaseType = SQLDatabaseType.MySQL; 
-  private String databaseHost = "127.0.0.1" ;
-  private int databasePort = 3306 ;
+  private SQLDatabaseType databaseType = SQLDatabaseType.MySQL;
+  private String databaseHost = "127.0.0.1";
+  private int databasePort = 3306;
   private String databaseUser = "root";
   private String databasePassword = "root";
-  private String successModelsFolderLocation ="success_models";
+  private String successModelsFolderLocation = "success_models";
   private String DB2Schema;
 
   private FileBackend measureFileBackend;
@@ -563,6 +563,7 @@ public class MonitoringDataProvisionService extends RESTService {
 
         Map<String, String> queries = new HashMap<>();
         Visualization visualization = null;
+        String description = null;
 
         if (!measureElement.hasAttribute("name")) {
           throw new MalformedXMLException(
@@ -610,6 +611,15 @@ public class MonitoringDataProvisionService extends RESTService {
                 );
               }
               visualization = readVisualization(measureChild);
+            } else if (childType.equals("description")) {
+              description =
+                measureChild
+                  .getTextContent()
+                  .replaceAll("&amp;&", "&")
+                  .replaceAll("&lt;", "<")
+                  .replaceAll("&lt;", "<")
+                  .replaceAll("&gt;", ">")
+                  .replaceAll("&lt;", "<");
             } else {
               throw new MalformedXMLException(
                 "Measure " +
@@ -632,10 +642,9 @@ public class MonitoringDataProvisionService extends RESTService {
             "Measure " + measureName + " is broken, no query element!"
           );
         }
-
         measures.put(
           measureName,
-          new Measure(measureName, queries, visualization)
+          new Measure(measureName, queries, visualization,description)
         );
       }
     }
