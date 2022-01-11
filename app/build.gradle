@@ -67,6 +67,7 @@ application {
 // put all .jar files into export/jars folder
 tasks.withType(Jar) {
     destinationDirectory = file("$projectDir/export/jars")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 javadoc {
