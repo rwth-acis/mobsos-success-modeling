@@ -8,6 +8,7 @@ import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.AgentNotFoundException;
 import i5.las2peer.api.security.AgentOperationFailedException;
 import i5.las2peer.api.security.UserAgent;
+import i5.las2peer.logging.L2pLogger;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.serialization.MalformedXMLException;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.w3c.dom.Element;
@@ -64,6 +66,7 @@ public class MonitoringDataProvisionService extends RESTService {
   public final String AGENT_QUERY_WITH_MD5ID_PARAM;
   public final String GROUP_QUERY;
   public final String GROUP_QUERY_WITH_ID_PARAM;
+  public final String UPDATE_GROUP_QUERY;
   public final String GROUP_QUERY_WITH_NAME_PARAM;
   public final String GROUP_AGENT_INSERT;
   public final String GROUP_INFORMATION_INSERT;
@@ -80,10 +83,10 @@ public class MonitoringDataProvisionService extends RESTService {
     fileServicePrefix + fileServiceVersion;
   private final String mobsosQVServiceIdentifier =
     "i5.las2peer.services.mobsos.queryVisualization.QueryVisualizationService@*";
-  private final String QV_MOBSOS_DB_KEY = "__mobsos";
+  private final String QV_MOBSOS_DB_KEY = "las2peermon";
   protected SQLDatabase database; // The database instance to write to.
-  Boolean useFileService;
-  String catalogFileLocation;
+  Boolean useFileService = false;
+  String catalogFileLocation = "measure_catalogs";
   TreeMap<String, MeasureCatalog> measureCatalogs = new TreeMap<>();
   Map<String, SuccessModel> knownModels = new TreeMap<>();
   /**
@@ -93,16 +96,16 @@ public class MonitoringDataProvisionService extends RESTService {
   Map<String, Map<String, SuccessModel>> knownModelsV2 = new TreeMap<>();
 
   /**
-   * Configuration parameters, values will be set by the configuration file.
+   * Configuration parameters, values will be set by the configuration file. Set defaults for service tests
    */
-  private String databaseName;
-  private int databaseTypeInt; // See SQLDatabaseType for more information
-  private SQLDatabaseType databaseType;
-  private String databaseHost;
-  private int databasePort;
-  private String databaseUser;
-  private String databasePassword;
-  private String successModelsFolderLocation;
+  private String databaseName = "LAS2PEERMON";
+  private int databaseTypeInt = 2; // See SQLDatabaseType for more information
+  private SQLDatabaseType databaseType = SQLDatabaseType.MySQL;
+  private String databaseHost = "127.0.0.1";
+  private int databasePort = 3306;
+  private String databaseUser = "root";
+  private String databasePassword = "root";
+  private String successModelsFolderLocation = "success_models";
   private String DB2Schema;
 
   private FileBackend measureFileBackend;
@@ -110,13 +113,13 @@ public class MonitoringDataProvisionService extends RESTService {
   private boolean measureUpdatingStarted = false;
   boolean insertDatabaseCredentialsIntoQVService;
   protected String GRAPHQL_PROTOCOL = "http";
-  protected String GRAPHQ_HOST = "127.0.0.1:8090";
+  protected String GRAPHQL_HOST = "127.0.0.1:8090";
   protected String CHART_API_ENDPOINT = "http://localhost:3000";
 
   protected String defaultGroupId =
     "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
   protected String defaultServiceName =
-    "i5.las2peer.services.mensaService.MensaService";
+    "i5.las2peer.services.tmitocar.TmitocarService";
 
   /**
    * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.
@@ -125,7 +128,6 @@ public class MonitoringDataProvisionService extends RESTService {
     setFieldValues(); // This sets the values of the configuration file
 
     this.databaseType = SQLDatabaseType.getSQLDatabaseType(databaseTypeInt);
-
     this.database =
       new SQLDatabase(
         this.databaseType,
@@ -155,6 +157,9 @@ public class MonitoringDataProvisionService extends RESTService {
         "INSERT INTO GROUP_INFORMATION VALUES (?, ?, ?, 1)";
       this.GROUP_INFORMATION_UPDATE =
         "UPDATE GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
+
+      this.UPDATE_GROUP_QUERY =
+        "UPDATE GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
     } else {
       this.NODE_QUERY = "SELECT * FROM " + DB2Schema + ".NODE";
       this.SERVICE_QUERY =
@@ -180,6 +185,10 @@ public class MonitoringDataProvisionService extends RESTService {
         "UPDATE " +
         DB2Schema +
         ".GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
+      this.UPDATE_GROUP_QUERY =
+        "UPDATE " +
+        DB2Schema +
+        ".GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
     }
 
     try {
@@ -190,7 +199,6 @@ public class MonitoringDataProvisionService extends RESTService {
         "Monitoring: Could not connect to database! " + e.getMessage()
       );
     }
-
     if (useFileService) {
       measureFileBackend =
         new FileServiceFileBackend(catalogFileLocation, fileServiceIdentifier);
@@ -203,6 +211,7 @@ public class MonitoringDataProvisionService extends RESTService {
       measureFileBackend = new LocalFileBackend(catalogFileLocation);
       modelFileBackend = new LocalFileBackend(successModelsFolderLocation);
     }
+    L2pLogger.setGlobalConsoleLevel(Level.WARNING);
   }
 
   /**
@@ -554,6 +563,7 @@ public class MonitoringDataProvisionService extends RESTService {
 
         Map<String, String> queries = new HashMap<>();
         Visualization visualization = null;
+        String description = null;
 
         if (!measureElement.hasAttribute("name")) {
           throw new MalformedXMLException(
@@ -601,6 +611,15 @@ public class MonitoringDataProvisionService extends RESTService {
                 );
               }
               visualization = readVisualization(measureChild);
+            } else if (childType.equals("description")) {
+              description =
+                measureChild
+                  .getTextContent()
+                  .replaceAll("&amp;&", "&")
+                  .replaceAll("&lt;", "<")
+                  .replaceAll("&lt;", "<")
+                  .replaceAll("&gt;", ">")
+                  .replaceAll("&lt;", "<");
             } else {
               throw new MalformedXMLException(
                 "Measure " +
@@ -623,10 +642,9 @@ public class MonitoringDataProvisionService extends RESTService {
             "Measure " + measureName + " is broken, no query element!"
           );
         }
-
         measures.put(
           measureName,
-          new Measure(measureName, queries, visualization)
+          new Measure(measureName, queries, visualization,description)
         );
       }
     }

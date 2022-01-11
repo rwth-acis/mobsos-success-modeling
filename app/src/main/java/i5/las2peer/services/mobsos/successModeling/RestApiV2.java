@@ -26,6 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -189,6 +190,21 @@ public class RestApiV2 {
     checkGroupMembership(group.groupID);
     try {
       service.reconnect();
+      try {
+        ResultSet resultSet = service.database.query(
+          service.GROUP_QUERY_WITH_ID_PARAM,
+          Collections.singletonList(group.groupID)
+        );
+        if (service.database.getRowCount(resultSet) >= 0) {
+          return Response
+            .status(422)
+            .entity("Group with ID " + group.groupID + " already exists")
+            .build();
+        }
+      } catch (SQLException e) {
+        return Response.status(500).entity("").build();
+      }
+
       // System.out.println(group.groupID);
       String groupIDHex = DigestUtils.md5Hex(group.groupID);
       // System.out.println(groupIDHex);
@@ -206,9 +222,60 @@ public class RestApiV2 {
         service.GROUP_INFORMATION_INSERT,
         Arrays.asList(groupIDHex, group.groupID, group.name)
       );
-      System.out.println("done");
     } catch (SQLException e) {
       System.out.println("(Add Group) The query has lead to an error: " + e);
+      return null;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+    return Response.status(Response.Status.OK).entity(group).build();
+  }
+
+  @PUT
+  @Path("/groups/changeId")
+  public Response modifyGroupId(
+    @PathParam("group") String groupName,
+    GroupDTO group
+  ) {
+    checkGroupMembership(group.groupID); //check that user is part of that new group
+    try {
+      service.reconnect();
+      try {
+        ResultSet resultSet = service.database.query(
+          service.GROUP_QUERY_WITH_ID_PARAM,
+          Collections.singletonList(group.groupID)
+        );
+        if (service.database.getRowCount(resultSet) >= 0) {
+          return Response
+            .status(422)
+            .entity("Group with ID " + group.groupID + " already exists")
+            .build();
+        }
+      } catch (SQLException e) {
+        e.printStackTrace();
+        return Response.status(500).entity("").build();
+      }
+
+      // System.out.println(group.groupID);
+      String groupIDHex = DigestUtils.md5Hex(group.groupID);
+      // System.out.println(groupIDHex);
+      ResultSet groupAgentResult = service.database.query(
+        service.AGENT_QUERY_WITH_MD5ID_PARAM,
+        Collections.singletonList(groupIDHex)
+      );
+      if (service.database.getRowCount(groupAgentResult) == 0) {
+        service.database.queryWithDataManipulation(
+          service.GROUP_AGENT_INSERT,
+          Collections.singletonList(groupIDHex)
+        );
+      }
+      service.database.queryWithDataManipulation(
+        service.UPDATE_GROUP_QUERY,
+        Arrays.asList(groupIDHex, group.groupID, group.name)
+      );
+    } catch (SQLException e) {
+      System.out.println("(Update Group) The query has lead to an error: " + e);
       return null;
     } catch (Exception e) {
       e.printStackTrace();
@@ -251,6 +318,17 @@ public class RestApiV2 {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
     return Response.status(Response.Status.OK).entity(groupInformation).build();
+  }
+
+  @GET
+  @Path("/groups/{group}/isMember")
+  public Response isMemberOfGroup(@PathParam("group") String group) {
+    try {
+      checkGroupMembership(group);
+      return Response.ok().build();
+    } catch (ForbiddenException e) {
+      return Response.status(Response.Status.OK).entity(e.getMessage()).build();
+    }
   }
 
   private String getGroupIdByName(String name) {
@@ -366,17 +444,7 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (service.getMeasureCatalogByGroup(group) != null) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Measure catalog for " +
-            group +
-            " already exists. " +
-            "Update the existing catalog instead."
-          )
-        )
-        .build();
+      return updateMeasureCatalogForGroup(group, measureCatalog); // measure catalog already exists so we update the existing one
     }
     service.writeMeasureCatalog(measureCatalog.xml, group);
     return Response
@@ -395,17 +463,7 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (service.getMeasureCatalogByGroup(group) == null) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Measure catalog for " +
-            group +
-            " does not exist yet. " +
-            "Please create it via POST method."
-          )
-        )
-        .build();
+      return createMeasureCatalogForGroup(group, measureCatalog); //if a measure catalog does not exist yet we create a new one
     }
     service.writeMeasureCatalog(measureCatalog.xml, group);
     return Response
@@ -523,19 +581,11 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (successModelExists(group, serviceName)) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Success model for " +
-            group +
-            " and service " +
-            serviceName +
-            " already exists. " +
-            "Update the existing model instead."
-          )
-        )
-        .build();
+      return updateSuccessModelsForGroupAndService(
+        group,
+        serviceName,
+        successModel
+      ); // success model already exists so we update the existing one
     }
     service.writeSuccessModel(successModel.xml, group, serviceName);
     return getSuccessModelsForGroupAndService(group, serviceName);
@@ -551,19 +601,11 @@ public class RestApiV2 {
     throws MalformedXMLException, FileBackendException {
     checkGroupMembership(group);
     if (!successModelExists(group, serviceName)) {
-      return Response
-        .status(Response.Status.BAD_REQUEST)
-        .entity(
-          new ErrorDTO(
-            "Success model for " +
-            group +
-            " and service " +
-            serviceName +
-            " does not exist yet. " +
-            "Create the model instead."
-          )
-        )
-        .build();
+      return createSuccessModelsForGroupAndService(
+        group,
+        serviceName,
+        successModel
+      ); //if a success model does not exist yet we create a new one
     }
     service.writeSuccessModel(successModel.xml, group, serviceName);
     return getSuccessModelsForGroupAndService(group, serviceName);
@@ -969,9 +1011,11 @@ public class RestApiV2 {
             parser,
             visualization
           );
+          // chatResponse.put("fileName", "chart.png");
+          // chatResponse.put("fileType", "image/png");
           chatResponse.put("fileBody", imagebase64);
-          chatResponse.put("fileName", "chart.png");
-          chatResponse.put("fileType", "image/png");
+          chatResponse.put("fileName", "chart");
+          chatResponse.put("fileType", "png");
           res = Response.ok(chatResponse.toString()).build();
           break;
         case "KPI":
@@ -988,6 +1032,10 @@ public class RestApiV2 {
           chatResponse.put("text", value);
           res = Response.ok(chatResponse.toString()).build();
           break;
+        default:
+          throw new IllegalArgumentException(
+            "Visualization of type " + visualization.getAttribute("type")
+          );
       }
       userContext.remove("email");
     } catch (ChatException e) {
@@ -1506,7 +1554,7 @@ public class RestApiV2 {
       String queryString = prepareGQLQueryString(dbName, dbSchema, query);
 
       String urlString =
-        protocol + service.GRAPHQ_HOST + "/graphql?query=" + queryString;
+        protocol + service.GRAPHQL_HOST + "/graphql?query=" + queryString;
 
       URL url = new URL(urlString);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -1530,7 +1578,7 @@ public class RestApiV2 {
       String queryString = prepareGQLQueryString(query);
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
-        service.GRAPHQ_HOST,
+        service.GRAPHQL_HOST,
         "/graphql/graphql",
         "query=" + queryString,
         null
@@ -1567,7 +1615,7 @@ public class RestApiV2 {
       String queryString = prepareGQLQueryString(dbName, dbSchema, query);
       URL url = new URI(
         service.GRAPHQL_PROTOCOL,
-        service.GRAPHQ_HOST,
+        service.GRAPHQL_HOST,
         "/graphql/graphql",
         "query=" + queryString,
         null
@@ -1577,9 +1625,13 @@ public class RestApiV2 {
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
       return con.getInputStream();
-    } catch (IOException | URISyntaxException e) {
+    } catch (IOException  e) {
       e.printStackTrace();
       throw new ChatException("Sorry the graphQL request has failed 😶");
+    }
+     catch (URISyntaxException  e) {
+      e.printStackTrace();
+      throw new ChatException("Sorry, I could not encode the query 😶");
     }
   }
 
@@ -1609,8 +1661,17 @@ public class RestApiV2 {
     if (query == null) {
       throw new Exception("Query cannot be null");
     }
+
+    System.out.println("SQL query untouched: "+ query);
+    query = query.trim();
     query = query.replace("\n", " ");
+    query = query.replace("\"", "\\\"");
+   
+    System.out.println("SQL query: "+ query);
+    String test = String.format("{customQuery(dbName:\"%s\",dbSchema:\"%s\",query:\"%s\")}",dbName,dbSchema,query );
+    System.out.println(test);
     // System.out.println(dbName + dbSchema + query);
+
     return (
       "{customQuery(dbName: \"" +
       dbName +

@@ -1,0 +1,331 @@
+<Catalog>
+	
+	<measure name="Successful Agent Uploads Ratio">
+		<query name="AgentUploadStarted">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_STARTED' AND SOURCE_NODE = '$NODE$';
+		</query>
+		<query name="AgentUploadSuccess">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS' AND SOURCE_NODE = '$NODE$';
+		</query>
+		<visualization type="KPI">
+			<operand name="AgentUploadSuccess" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="AgentUploadStarted" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Successful Remote Method Invocation Ratio">
+		<query name="MethodInvocations">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'RMI_SENT' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<query name="SuccessfulMethodInvocations">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'RMI_SUCCESSFUL' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="SuccessfulMethodInvocations" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="MethodInvocations" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of Method Invocations">
+		<query name="AgentUploadSuccess">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'RMI_SENT' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Number of Agent Uploads">
+		<query name="AgentUploadSuccess">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_UPLOAD_SUCCESS' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Number of added or changed Artifacts">
+		<query name="AddedArtifacts">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'ARTIFACT_ADDED' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Number of Service Registrations">
+		<query name="RegisteredServices">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND JSON_EXTRACT(REMARKS,"$.msg")='ServiceAgent' AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Number of User Registrations">
+		<query name="RegisteredUsers">
+			SELECT COUNT(*) FROM MESSAGE WHERE EVENT = 'AGENT_REGISTERED' AND (JSON_EXTRACT(REMARKS,"$.msg")='UserAgent' OR JSON_EXTRACT(REMARKS,"$.msg")='Mediator') AND SOURCE_NODE = '$NODE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Average Time Users Logged-In in Seconds">
+		<query name="AverageUserOnlineTime">
+			SELECT AVG(TIMESTAMPDIFF (SECOND, CAST(r.UNREGISTRATION_DATE AS CHAR), CAST(r.REGISTRATION_DATE AS CHAR)))
+			FROM REGISTERED_AT r, AGENT a
+			WHERE r.AGENT_ID = a.AGENT_ID AND (a.TYPE='MEDIATOR' OR a.TYPE='USER')
+			AND r.RUNNING_AT = '$NODE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageUserOnlineTime" index="0"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of User Registrations over Time">
+		<query name="RegisteredUsers">
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(EVENT) AS "Registrations" FROM MESSAGE
+			WHERE EVENT = 'AGENT_REGISTERED' AND (JSON_EXTRACT(REMARKS,"$.msg")='UserAgent' OR JSON_EXTRACT(REMARKS,"$.msg")='Mediator')
+			AND SOURCE_NODE = '$NODE$'
+			GROUP BY Time
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>RegisteredUsersNodeChart</nodeId>
+			<title>Registered Users</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of send LAS2peer Messages over Time">
+		<query name="SendedMessages">
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(EVENT) AS 'Send Messages' FROM MESSAGE
+			WHERE EVENT = 'MESSAGE_SENDING'
+			AND SOURCE_NODE = '$NODE$'
+			GROUP BY Time;
+		</query>
+		<visualization type="Chart">
+			<chartType>PieChart</chartType>
+			<nodeId>SendMessagesNodeChart</nodeId>
+			<title>Send Messages</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	
+	<measure name="Number of private Chatrooms over Time">
+		<query name="PrivateChatrooms">
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Private Chatrooms' FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3' AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY Time;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>PrivateChatroomsChart</nodeId>
+			<title>Private Chatrooms over Time</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of public Chatrooms over Time">
+		<query name="PublicChatrooms">
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Public Chatrooms' FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4' AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY Time;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>PublicChatroomsChart</nodeId>
+			<title>Public Chatrooms over Time</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of send Messages over Time">
+		<query name="SendMessages">
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Send Messages' FROM MESSAGE
+			WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_2' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_1')
+			AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY Time;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>SendMessagesChart</nodeId>
+			<title>Send Messages</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	<measure name="Number of Received Messages over Time">
+		<query name="ReceivedMessages">
+			SELECT CAST(FROM_UNIXTIME(TIME_STAMP/1000, '%Y %D %M %H:%i') AS CHAR) AS Time, COUNT(*) AS 'Received Messages' FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_7'
+			AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY Time;
+		</query>
+		<visualization type="Chart">
+			<chartType>LineChart</chartType>
+			<nodeId>ReceivedMessagesChart</nodeId>
+			<title>Received Messages</title>
+			<height>300</height>
+			<width>100%</width>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Number of Users per private Chatroom">
+		<query name="StoredPrivateChatrooms">
+			SELECT COUNT(*) AS Number FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_3'
+			AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<query name="UniqueAddedPrivateUsers">
+			SELECT COUNT(privateJoins.PrivateJoins) AS UniqueJoins FROM
+			    (SELECT joins.uniqueJoins AS PrivateJoins FROM MESSAGE,
+			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, JSON_EXTRACT(REMARKS,"$.msg") FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
+			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_3') privateJoins
+		</query>
+		<visualization type="KPI">
+			<operand name="UniqueAddedPrivateUsers" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="StoredPrivateChatrooms" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Number of Users per public Chatroom">
+		<query name="StoredPublicChatrooms">
+			SELECT COUNT(*) AS Number FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_4'
+			AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<query name="UniqueAddedPublicUsers">
+			SELECT COUNT(publicJoins.PublicJoins) AS UniqueJoins FROM
+			    (SELECT joins.uniqueJoins AS PublicJoins FROM MESSAGE,
+			        ((SELECT COUNT(DESTINATION_AGENT) AS uniqueJoins, JSON_EXTRACT(REMARKS,"$.msg") FROM MESSAGE WHERE EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+			        AND SOURCE_AGENT = '$SERVICE$' GROUP BY DESTINATION_AGENT, JSON_EXTRACT(REMARKS,"$.msg")) joins)
+			     	WHERE joins.REMARKS = MESSAGE.REMARKS AND MESSAGE.EVENT = 'SERVICE_CUSTOM_MESSAGE_4') publicJoins
+		</query>
+		<visualization type="KPI">
+			<operand name="UniqueAddedPublicUsers" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="StoredPublicChatrooms" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Number of Messages send per User">
+		<query name="TotalUsers">
+			SELECT COUNT(*) AS UserCount FROM
+			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY DESTINATION_AGENT) allUsers
+		</query>
+		<query name="TotalMessages">
+			SELECT COUNT(*) FROM MESSAGE WHERE
+			EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2'
+			AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="TotalMessages" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="TotalUsers" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Number of Messages received per User">
+		<query name="TotalUsers">
+			SELECT COUNT(*) AS UserCount FROM
+			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY DESTINATION_AGENT) allUsers
+		</query>
+		<query name="TotalMessages">
+			SELECT COUNT(*) FROM MESSAGE WHERE
+			EVENT = 'SERVICE_CUSTOM_MESSAGE_7' AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="TotalMessages" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="TotalUsers" index="2"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Time to fetch Chatroom Information in Milliseconds">
+		<query name="AverageTime">
+			SELECT AVG(timeToFetch.difference) AS AverageTime FROM
+			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
+			m.EVENT = 'SERVICE_CUSTOM_MESSAGE_5' AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_6'
+			AND m.REMARKS=m2.REMARKS AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$') timeToFetch
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageTime" index="0"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Time to send Message in Milliseconds">
+		<query name="AverageTime">
+			SELECT AVG(timeToSend.difference) AS AverageTime FROM
+			(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference FROM MESSAGE m, MESSAGE m2 WHERE
+			(m.EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR m.EVENT = 'SERVICE_CUSTOM_MESSAGE_2')
+			AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_10' AND m.REMARKS=m2.REMARKS AND
+			m.SOURCE_AGENT = '$SERVICE$') timeToSend
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageTime" index="0"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Average Time spend in Chatroom in Seconds">
+		<query name="AverageTime">
+			SELECT AVG(timeSpend.difference)/1000 AS AverageTime FROM
+				(SELECT (m2.TIME_STAMP - m.TIME_STAMP) AS difference
+				FROM MESSAGE m, MESSAGE m2
+				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+				AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_9'
+				AND m.REMARKS = m2.REMARKS AND m.ID &lt; m2.ID
+				AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$'
+				GROUP BY m.ID) timeSpend
+		</query>
+		<visualization type="KPI">
+			<operand name="AverageTime" index="0"/>
+		</visualization>
+	</measure>
+	
+	<measure name="Total Number of Messages shared">
+		<query name="AllSendMessages">
+			SELECT COUNT(*) FROM MESSAGE WHERE (EVENT = 'SERVICE_CUSTOM_MESSAGE_1' OR EVENT = 'SERVICE_CUSTOM_MESSAGE_2') AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Total Time spend in Chatroom in Minutes">
+		<query name="TotalTime">
+			SELECT SUM(timeSpend.difference)/1000/60 AS TotalTime FROM
+				(SELECT AVG(m2.TIME_STAMP - m.TIME_STAMP) AS difference
+				FROM MESSAGE m, MESSAGE m2
+				WHERE m.EVENT = 'SERVICE_CUSTOM_MESSAGE_8'
+				AND m2.EVENT = 'SERVICE_CUSTOM_MESSAGE_9'
+				AND m.REMARKS = m2.REMARKS AND m.ID &lt; m2.ID
+				AND m.SOURCE_AGENT = '$SERVICE$' AND m2.SOURCE_AGENT = '$SERVICE$'
+				GROUP BY m.ID) AS timeSpend
+		</query>
+		<visualization type="Value"/>
+	</measure>
+	
+	<measure name="Average Number of created Chatrooms per User">
+		<query name="TotalUsers">
+			SELECT COUNT(*) AS UserCount FROM
+			(SELECT DESTINATION_AGENT AS AllUsers FROM MESSAGE
+			WHERE EVENT =  'SERVICE_CUSTOM_MESSAGE_8' AND SOURCE_AGENT = '$SERVICE$'
+			GROUP BY DESTINATION_AGENT) allUsers
+		</query>
+		<query name="TotalCreatedChatrooms">
+			SELECT COUNT(*) FROM MESSAGE WHERE
+			(EVENT = 'SERVICE_CUSTOM_MESSAGE_3' or EVENT = 'SERVICE_CUSTOM_MESSAGE_4')
+			 AND SOURCE_AGENT = '$SERVICE$'
+		</query>
+		<visualization type="KPI">
+			<operand name="TotalCreatedChatrooms" index="0"/>
+			<operator name="/" index="1"/>
+			<operand name="TotalUsers" index="2"/>
+		</visualization>
+	</measure>
+	
+</Catalog>
