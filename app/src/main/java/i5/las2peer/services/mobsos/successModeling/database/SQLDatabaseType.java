@@ -99,7 +99,7 @@ public enum SQLDatabaseType {
           port +
           "/" +
           database +
-                "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&autoReconnect=true";
+          "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC";
         break;
       default:
         return null;

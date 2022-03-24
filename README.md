@@ -11,6 +11,7 @@ The Success-Modeling service uses the database with the monitored data. If you n
 - [MySQL](https://github.com/rwth-acis/mobsos-data-processing/blob/master/bin/create_database_MySQL.sql)
 - [DB2](https://github.com/rwth-acis/mobsos-data-processing/blob/master/bin/create_database_DB2.sql)
 
+
 After that configure the [property](etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties) file of the service and enter your database credentials.
 
 ```INI
