@@ -14,7 +14,9 @@ repositories {
         url "https://archiva.dbis.rwth-aachen.de:9911/repository/internal/"
     }
 }
-
+test {
+   failFast = true
+}
 dependencies {
     // Use JUnit test framework.
     testImplementation "junit:junit:4.13.2"
