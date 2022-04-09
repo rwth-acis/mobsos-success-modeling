@@ -3,6 +3,7 @@ package i5.las2peer.services.mobsos.successModeling;
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.api.execution.ServiceInvocationException;
+import i5.las2peer.api.execution.ServiceNotAvailableException;
 import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.AgentNotFoundException;
@@ -501,7 +502,7 @@ public class MonitoringDataProvisionService extends RESTService {
     refreshModels();
   }
 
-  void ensureMobSOSDatabaseIsAccessibleInQVService() {
+  void ensureMobSOSDatabaseIsAccessibleInQVService() throws ServiceNotAvailableException {
     QVConnector connector = new QVConnector(this.mobsosQVServiceIdentifier);
     List<String> databaseKeys;
     try {
@@ -510,8 +511,10 @@ public class MonitoringDataProvisionService extends RESTService {
         return;
       }
     } catch (ServiceInvocationException e) {
-      System.out.println("ServiceInvocationException:" + e.getMessage());
       e.printStackTrace();
+      if (e instanceof ServiceNotAvailableException) {
+        throw (ServiceNotAvailableException) e;
+      }
     }
     QVConnector.SQLDatabaseType dbType;
     if (this.databaseType == SQLDatabaseType.DB2) {
@@ -520,7 +523,6 @@ public class MonitoringDataProvisionService extends RESTService {
       dbType = QVConnector.SQLDatabaseType.MYSQL;
     }
     try {
-      System.out.println("Adding DB...");
       connector.grantUserAccessToDatabase(
         this.QV_MOBSOS_DB_KEY,
         dbType,

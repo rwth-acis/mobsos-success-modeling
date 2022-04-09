@@ -21,7 +21,12 @@ public class PrematchingRequestFilter implements ContainerRequestFilter {
                 .getService();
         service.startUpdatingMeasures();
         if (service.insertDatabaseCredentialsIntoQVService) {
-            service.ensureMobSOSDatabaseIsAccessibleInQVService();
+            try {
+                service.ensureMobSOSDatabaseIsAccessibleInQVService();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
     }
 }
