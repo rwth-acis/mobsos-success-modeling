@@ -1,6 +1,8 @@
 package i5.las2peer.services.mobsos.successModeling;
 
 import i5.las2peer.api.Context;
+import i5.las2peer.api.security.Agent;
+import i5.las2peer.api.security.AnonymousAgent;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -17,6 +19,10 @@ public class PrematchingRequestFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext ctx) {
+        Agent mainAgent = Context.get().getMainAgent();
+        if (mainAgent instanceof AnonymousAgent) {
+            return;
+        }
         MonitoringDataProvisionService service = (MonitoringDataProvisionService) Context.getCurrent()
                 .getService();
         service.startUpdatingMeasures();
