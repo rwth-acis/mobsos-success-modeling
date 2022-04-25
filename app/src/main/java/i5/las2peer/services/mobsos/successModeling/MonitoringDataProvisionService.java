@@ -622,10 +622,8 @@ public class MonitoringDataProvisionService extends RESTService {
       NodeList children = visualizationElement.getChildNodes();
       for (int i = 0; i < children.getLength(); i++) {
         if (children.item(i).getNodeType() == Node.ELEMENT_NODE) {
-          int index = Integer.valueOf(
-              ((Element) children.item(i)).getAttribute("index"));
           String name = ((Element) children.item(i)).getAttribute("name");
-          expression.put(index, name);
+          expression.put(i, name);
         }
       }
       return new KPI(expression);
