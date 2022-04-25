@@ -770,18 +770,21 @@ public class MonitoringDataProvisionService extends RESTService {
                     measureFilePath,
                     updateMeasures(measureFilePath));
               }
-              if (!measureCatalogs
+              if (measureCatalogs
                   .get(measureFilePath)
                   .getMeasures()
                   .containsKey(measureName)) {
-                throw new MalformedXMLException(
-                    "Measure name " + measureName + " is unknown!");
+                factorMeasures.add(
+                    measureCatalogs
+                        .get(measureFilePath)
+                        .getMeasures()
+                        .get(measureName));
+
+              } else {
+                System.out
+                    .println("Skipping adding measure " + measureName + " since it is unknown! in the catalog");
               }
-              factorMeasures.add(
-                  measureCatalogs
-                      .get(measureFilePath)
-                      .getMeasures()
-                      .get(measureName));
+
             }
           }
           Factor factor = new Factor(factorName, dimension, factorMeasures);
