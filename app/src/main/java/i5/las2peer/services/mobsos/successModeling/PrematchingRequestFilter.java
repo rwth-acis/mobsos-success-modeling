@@ -10,8 +10,10 @@ import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.ext.Provider;
 
 /**
- * Start the background tasks responsible for refreshing the models and catalogs.
- * They should be triggered before the first request and keep running during the web servers lifetime.
+ * Start the background tasks responsible for refreshing the models and
+ * catalogs.
+ * They should be triggered before the first request and keep running during the
+ * web servers lifetime.
  */
 @Provider
 @PreMatching
@@ -25,7 +27,11 @@ public class PrematchingRequestFilter implements ContainerRequestFilter {
         }
         MonitoringDataProvisionService service = (MonitoringDataProvisionService) Context.getCurrent()
                 .getService();
-        service.startUpdatingMeasures();
+        try {
+            service.startUpdatingMeasures();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         if (service.insertDatabaseCredentialsIntoQVService) {
             try {
                 service.ensureMobSOSDatabaseIsAccessibleInQVService();
