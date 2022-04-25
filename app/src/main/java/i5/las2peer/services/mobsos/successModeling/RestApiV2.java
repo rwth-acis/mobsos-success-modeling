@@ -475,7 +475,7 @@ public class RestApiV2 {
       e.printStackTrace();
       return Response
           .status(Response.Status.INTERNAL_SERVER_ERROR)
-          .entity(new ErrorDTO("Could not update measure catalog for group " + group))
+          .entity(new ErrorDTO("Could not update measure catalog, reason: " + e.getMessage()))
           .build();
     }
 
