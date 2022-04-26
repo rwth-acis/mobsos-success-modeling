@@ -618,12 +618,11 @@ public class MonitoringDataProvisionService extends RESTService {
     if (visualizationType.equals("Value")) {
       return new Value();
     } else if (visualizationType.equals("KPI")) {
-      Map<Integer, String> expression = new TreeMap<>();
+      String expression = "";
       NodeList children = visualizationElement.getChildNodes();
       for (int i = 0; i < children.getLength(); i++) {
         if (children.item(i).getNodeType() == Node.ELEMENT_NODE) {
-          String name = ((Element) children.item(i)).getAttribute("name");
-          expression.put(i, name);
+          expression = ((Element) children.item(i)).getAttribute("expression");
         }
       }
       return new KPI(expression);
