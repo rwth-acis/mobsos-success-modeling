@@ -4,8 +4,12 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import i5.las2peer.services.mobsos.successModeling.database.SQLDatabase;
 import net.astesana.javaluator.DoubleEvaluator;
@@ -19,7 +23,7 @@ import net.astesana.javaluator.DoubleEvaluator;
  */
 public class KPI implements Visualization {
 	
-	private Map<Integer, String> expression = new TreeMap<Integer, String>();
+	private String expression = "";
 	//Using the "javaluator" for evaluating expressions
 	//http://javaluator.sourceforge.net/en/home/
 	private DoubleEvaluator evaluator;
@@ -32,7 +36,7 @@ public class KPI implements Visualization {
 	 * @param expression a (sorted) map of Strings, containing the expression to calculate the KPI
 	 *
 	 */
-	public KPI(Map<Integer, String> expression){
+	public KPI(String expression) {
 		this.expression = expression;
 		this.evaluator = new DoubleEvaluator();
 	}
@@ -40,8 +44,18 @@ public class KPI implements Visualization {
 	
 	public String visualize(Map<String, String> queries, SQLDatabase database) throws Exception{
 		String expressionWithInsertedValues = "";
-		
-		for (String value : expression.values()) {
+		LinkedList<String> values = new LinkedList<String>();
+		Matcher m = null;
+		try {
+			m = Pattern.compile("\b[a-zA-Z]+\b").matcher(expression);
+		} catch (PatternSyntaxException e) {
+			e.printStackTrace();
+			throw new Exception("Could not parse expression. The expression contains an invalid character.");
+		}
+		while (m.find()) {
+			values.add(m.group());
+		}
+		for (String value : values) {
 			if(queries.containsKey(value)){
 				//Query!
 				ResultSet resultSet;
