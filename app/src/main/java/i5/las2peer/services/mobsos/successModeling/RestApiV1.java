@@ -4,9 +4,13 @@ import i5.las2peer.api.Context;
 import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.serialization.MalformedXMLException;
 import i5.las2peer.services.mobsos.successModeling.files.FileBackendException;
+import i5.las2peer.services.mobsos.successModeling.successModel.Factor;
+import i5.las2peer.services.mobsos.successModeling.successModel.Measure;
 import i5.las2peer.services.mobsos.successModeling.successModel.SuccessModel;
 import io.swagger.annotations.*;
 import java.io.File;
+import java.io.FileWriter;
+import java.net.HttpURLConnection;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -420,4 +424,62 @@ public class RestApiV1 {
     );
     return Response.status(Status.OK).entity(resultList.toJSONString()).build();
   }
+
+
+  @POST
+  @Path("/visualizeFourFactors")
+  @Consumes(MediaType.TEXT_HTML)
+  @Produces(MediaType.TEXT_HTML)
+  @ApiOperation(value = "", notes = "")
+  @ApiResponses(value = { @ApiResponse(code = HttpURLConnection.HTTP_OK, message = "") })
+  public File visualizeFourFactors(String input){
+    List<Factor> factorsOfDimension;
+    List<Measure> measuresOfFactor;
+    File factorsFile = new File("factors.txt");
+    try {
+      FileWriter writer = new FileWriter(factorsFile);
+      JSONParser parser = new JSONParser();
+
+      JSONObject bodyInput = (JSONObject) parser.parse(input);
+
+      String modelname = (String) bodyInput.get("dmodelname");
+      String factorOne = (String) bodyInput.get("factorOne");
+      String factorTwo = (String) bodyInput.get("factorTwo");
+      String factorThree = (String) bodyInput.get("factorThree");
+      String factorFour= (String) bodyInput.get("factorFour");
+
+      SuccessModel mensaSuccessModel = service.knownModels.get(modelname);
+
+      if (mensaSuccessModel == null) {
+        service.knownModels = service.updateModels(service.catalogFileLocation);
+      }
+      mensaSuccessModel = service.knownModels.get(modelname);
+      if (modelname == null) {
+        writer.write("model is unknown");
+        writer.flush();
+        writer.close();
+        return factorsFile;
+      }
+      SuccessModel.Dimension[] dimensions = SuccessModel.Dimension.getDimensions();
+
+      for (int i = 0; i < dimensions.length; i++) {
+        factorsOfDimension = mensaSuccessModel.getFactorsOfDimension(dimensions[i]);
+        for (Factor factor : factorsOfDimension) {
+          measuresOfFactor = factor.getMeasures();
+          for (Measure measure : measuresOfFactor) {
+            if(measure.getName() == factorOne || measure.getName() == factorTwo || measure.getName() == factorThree || measure.getName() == factorFour)
+              writer.write(measure.visualize(service.database));
+            writer.flush();
+            writer.close();
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      System.out.println(service.knownModels);
+    }
+    return factorsFile;
+  }
+
+
 }

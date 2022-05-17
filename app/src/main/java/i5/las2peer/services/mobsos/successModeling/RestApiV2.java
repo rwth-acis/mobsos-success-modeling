@@ -885,7 +885,7 @@ public class RestApiV2 {
       chatResponse.put("closeContext", false);
     } catch (Exception e) {
       e.printStackTrace();
-      chatResponse.put("text", "Sorry an error occured 💁");
+      chatResponse.put("text", "Sorry an error occured ");
       chatResponse.put("closeContext", false);
     }
     return Response.ok(chatResponse).build();
@@ -965,7 +965,7 @@ public class RestApiV2 {
         );
         if (list.isEmpty()) {
           throw new ChatException(
-            "No nodes found matching your input💁\n " +
+            "No nodes found matching your input\n " +
             "you can add them yourself by following this link:\n" +
             "https://sbf-dev.tech4comp.dbis.rwth-aachen.de/monitor/ \n " +
             "or create a requirement by following this link: \n" +
@@ -1154,7 +1154,7 @@ public class RestApiV2 {
             "_ service and the _" +
             groupName +
             "_ group.\n" +
-            "I will now guide you through the updating ✏️ process \n" +
+            "I will now guide you through the updating process \n" +
             "Which of the following dimensions do you want to edit?\n\n" +
             TextFormatter.formatSuccessDimensions(successDimensions) +
             "\nChoose one by providing a *number*. You can exit the update process by typing _quit_ at any time.";
@@ -1421,7 +1421,7 @@ public class RestApiV2 {
     } catch (AgentNotFoundException e) {
       e.printStackTrace();
       throw new ChatException(
-        "Your email ✉️ is not registered in the las2peer network. \nContact your admin or signin to a laspeer service in the network"
+        "Your email is not registered in the las2peer network. \nContact your admin or signin to a laspeer service in the network"
       );
     }
   }

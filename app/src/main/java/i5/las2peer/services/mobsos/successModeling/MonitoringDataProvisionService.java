@@ -33,6 +33,7 @@ import i5.las2peer.services.mobsos.successModeling.visualizations.Value;
 import i5.las2peer.services.mobsos.successModeling.visualizations.Visualization;
 import i5.las2peer.services.mobsos.successModeling.visualizations.charts.MethodResult;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
@@ -104,7 +105,7 @@ public class MonitoringDataProvisionService extends RESTService {
   private String databaseHost = "127.0.0.1";
   private int databasePort = 3306;
   private String databaseUser = "root";
-  private String databasePassword = "root";
+  private String databasePassword = "Lotte2000!";
   private String successModelsFolderLocation = "success_models";
   private String DB2Schema;
 
@@ -1169,4 +1170,7 @@ public class MonitoringDataProvisionService extends RESTService {
         );
     }
   }
+
+  
+
 }
