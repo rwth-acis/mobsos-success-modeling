@@ -426,6 +426,18 @@ public class RestApiV1 {
   }
 
 
+  @GET
+  @Produces(MediaType.TEXT_HTML)
+  @Path("/visualizeDebug")
+  public Response visualizeFourFactorsDev(
+      @QueryParam("service") String serviceName,
+      @QueryParam("messageType") String logMessageType) {
+
+    this.visualizeFourFactors(
+        "{\"dmodelname\":\"someModel\",\"factorOne\":\"f1\",\"factorTwo\":\"f2\",\"factorThree\":\"f3\",\"factorFour\":\"f4\"}");
+    return Response.status(Status.OK).entity("").build();
+  }
+
   @POST
   @Path("/visualizeFourFactors")
   @Consumes(MediaType.TEXT_HTML)
@@ -433,6 +445,7 @@ public class RestApiV1 {
   @ApiOperation(value = "", notes = "")
   @ApiResponses(value = { @ApiResponse(code = HttpURLConnection.HTTP_OK, message = "") })
   public File visualizeFourFactors(String input){
+    System.out.println("called");
     List<Factor> factorsOfDimension;
     List<Measure> measuresOfFactor;
     File factorsFile = new File("factors.txt");
