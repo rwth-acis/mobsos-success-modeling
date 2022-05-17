@@ -513,6 +513,8 @@ public class MonitoringDataProvisionService extends RESTService {
     } catch (ServiceInvocationException e) {
       System.out.println("ServiceInvocationException:" + e.getMessage());
       e.printStackTrace();
+      System.out.println("Aborting database key check...");
+      return;
     }
     QVConnector.SQLDatabaseType dbType;
     if (this.databaseType == SQLDatabaseType.DB2) {
