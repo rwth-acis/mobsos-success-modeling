@@ -465,11 +465,20 @@ public class RestApiV2 {
     if (service.getMeasureCatalogByGroup(group) == null) {
       return createMeasureCatalogForGroup(group, measureCatalog); //if a measure catalog does not exist yet we create a new one
     }
-    service.writeMeasureCatalog(measureCatalog.xml, group);
-    return Response
-      .status(Response.Status.OK)
-      .entity(new MeasureCatalogDTO(service.getMeasureCatalogByGroup(group)))
-      .build();
+    try {
+      service.writeMeasureCatalog(measureCatalog.xml, group);
+      return Response
+          .status(Response.Status.OK)
+          .entity(new MeasureCatalogDTO(service.getMeasureCatalogByGroup(group)))
+          .build();
+    } catch (Exception e) {
+      e.printStackTrace();
+      return Response
+          .status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(new ErrorDTO("Could not update measure catalog, reason: " + e.getMessage()))
+          .build();
+    }
+
   }
 
   @GET
