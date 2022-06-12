@@ -594,8 +594,16 @@ public class MonitoringDataProvisionService extends RESTService {
               "Measure " + measureName + " is broken, no visualization element!");
         }
         if (queries.isEmpty()) {
-          throw new MalformedXMLException(
-              "Measure " + measureName + " is broken, no query element!");
+          if (measureElement.hasAttribute("sid")) {
+            if (!measureElement.hasAttribute("title")) {
+              throw new MalformedXMLException(
+                  "Measure " + measureName + " is broken, Limesurvey measures require a title!");
+            }
+          } else {
+            throw new MalformedXMLException(
+                "Measure " + measureName + " is broken, no query element!");
+             }
+
         }
         measures.put(
             measureName,
