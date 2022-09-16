@@ -32,3 +32,4 @@ app/log/*
 log/*
 etc/i5.las2peer.services.mobsos.successModeling.MonitoringDataProvisionService.properties
 app/bin/
+.settings/org.eclipse.buildship.core.prefs
