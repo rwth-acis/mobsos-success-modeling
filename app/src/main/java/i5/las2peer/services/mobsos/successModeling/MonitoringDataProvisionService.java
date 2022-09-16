@@ -3,6 +3,7 @@ package i5.las2peer.services.mobsos.successModeling;
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.api.execution.ServiceInvocationException;
+import i5.las2peer.api.execution.ServiceNotAvailableException;
 import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.AgentNotFoundException;
@@ -52,7 +53,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * This service will connect to the monitoring database and provide an interface for frontend clients to visualize
+ * This service will connect to the monitoring database and provide an interface
+ * for frontend clients to visualize
  * monitored data.
  *
  * @author Peter de Lange
@@ -76,13 +78,10 @@ public class MonitoringDataProvisionService extends RESTService {
    * Interval between rereading all model and measurement files in milliseconds.
    */
   public final long FILE_REFRESH_INTERVAL = 5000;
-  private final String fileServicePrefix =
-    "i5.las2peer.services.fileService.FileService@";
+  private final String fileServicePrefix = "i5.las2peer.services.fileService.FileService@";
   private final String fileServiceVersion = "*";
-  private final String fileServiceIdentifier =
-    fileServicePrefix + fileServiceVersion;
-  private final String mobsosQVServiceIdentifier =
-    "i5.las2peer.services.mobsos.queryVisualization.QueryVisualizationService@*";
+  private final String fileServiceIdentifier = fileServicePrefix + fileServiceVersion;
+  private final String mobsosQVServiceIdentifier = "i5.las2peer.services.mobsos.queryVisualization.QueryVisualizationService@*";
   private final String QV_MOBSOS_DB_KEY = "las2peermon";
   protected SQLDatabase database; // The database instance to write to.
   Boolean useFileService = false;
@@ -90,13 +89,15 @@ public class MonitoringDataProvisionService extends RESTService {
   TreeMap<String, MeasureCatalog> measureCatalogs = new TreeMap<>();
   Map<String, SuccessModel> knownModels = new TreeMap<>();
   /**
-   * This map contains the same models as knownModels, but it uses groups as first level keys and service names as
+   * This map contains the same models as knownModels, but it uses groups as first
+   * level keys and service names as
    * second level keys. It is only used by the v2 API.
    */
   Map<String, Map<String, SuccessModel>> knownModelsV2 = new TreeMap<>();
 
   /**
-   * Configuration parameters, values will be set by the configuration file. Set defaults for service tests
+   * Configuration parameters, values will be set by the configuration file. Set
+   * defaults for service tests
    */
   private String databaseName = "LAS2PEERMON";
   private int databaseTypeInt = 2; // See SQLDatabaseType for more information
@@ -116,79 +117,60 @@ public class MonitoringDataProvisionService extends RESTService {
   protected String GRAPHQL_HOST = "127.0.0.1:8090";
   protected String CHART_API_ENDPOINT = "http://localhost:3000";
 
-  protected String defaultGroupId =
-    "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
-  protected String defaultServiceName =
-    "i5.las2peer.services.tmitocar.TmitocarService";
+  protected String defaultGroupId = "17fa54869efcd27a04b8077a6274385415cc5e8ba8a0e3c14a9cbe0a030327ad6f4003d4a8eb629c23dfd812f61e908cd4908fbd061ff3268aa9b81bc43f6ebb";
+  protected String defaultServiceName = "i5.las2peer.services.tmitocar.TmitocarService";
 
   /**
-   * Constructor of the Service. Loads the database values from a property file and tries to connect to the database.
+   * Constructor of the Service. Loads the database values from a property file
+   * and tries to connect to the database.
    */
   public MonitoringDataProvisionService() {
     setFieldValues(); // This sets the values of the configuration file
 
     this.databaseType = SQLDatabaseType.getSQLDatabaseType(databaseTypeInt);
-    this.database =
-      new SQLDatabase(
+    this.database = new SQLDatabase(
         this.databaseType,
         this.databaseUser,
         this.databasePassword,
         this.databaseName,
         this.databaseHost,
-        this.databasePort
-      );
+        this.databasePort);
 
     if (this.databaseType == SQLDatabaseType.MySQL) {
       this.NODE_QUERY = "SELECT * FROM NODE";
-      this.SERVICE_QUERY =
-        "SELECT SERVICE.AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH,REGISTRATION_DATE FROM SERVICE LEFT JOIN REGISTERED_AT ON SERVICE.AGENT_ID = REGISTERED_AT.AGENT_ID ORDER BY REGISTRATION_DATE";
-      this.AGENT_QUERY_WITH_MD5ID_PARAM =
-        "SELECT * FROM AGENT WHERE AGENT_ID = ?";
-      this.GROUP_QUERY =
-        "SELECT GROUP_AGENT_ID,GROUP_NAME " +
-        "FROM GROUP_INFORMATION " +
-        "WHERE PUBLIC=1";
-      this.GROUP_QUERY_WITH_NAME_PARAM =
-        this.GROUP_QUERY + " AND GROUP_NAME=? ";
-      this.GROUP_QUERY_WITH_ID_PARAM =
-        this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
+      this.SERVICE_QUERY = "SELECT SERVICE.AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH,REGISTRATION_DATE FROM SERVICE LEFT JOIN REGISTERED_AT ON SERVICE.AGENT_ID = REGISTERED_AT.AGENT_ID ORDER BY REGISTRATION_DATE";
+      this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM AGENT WHERE AGENT_ID = ?";
+      this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
+          "FROM GROUP_INFORMATION " +
+          "WHERE PUBLIC=1";
+      this.GROUP_QUERY_WITH_NAME_PARAM = this.GROUP_QUERY + " AND GROUP_NAME=? ";
+      this.GROUP_QUERY_WITH_ID_PARAM = this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
       this.GROUP_AGENT_INSERT = "INSERT INTO AGENT VALUES (?, \"GROUP\")";
-      this.GROUP_INFORMATION_INSERT =
-        "INSERT INTO GROUP_INFORMATION VALUES (?, ?, ?, 1)";
-      this.GROUP_INFORMATION_UPDATE =
-        "UPDATE GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
+      this.GROUP_INFORMATION_INSERT = "INSERT INTO GROUP_INFORMATION VALUES (?, ?, ?, 1)";
+      this.GROUP_INFORMATION_UPDATE = "UPDATE GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
 
-      this.UPDATE_GROUP_QUERY =
-        "UPDATE GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
+      this.UPDATE_GROUP_QUERY = "UPDATE GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
     } else {
       this.NODE_QUERY = "SELECT * FROM " + DB2Schema + ".NODE";
-      this.SERVICE_QUERY =
-        "SELECT SERVICE.AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH FROM " +
-        DB2Schema +
-        ".SERVICE LEFT OUTER JOIN REGISTERED_AT ON SERVICE.AGENT_ID = REGISTERED_AT.AGENT_ID ORDER BY REGISTRATION_DATE";
-      this.AGENT_QUERY_WITH_MD5ID_PARAM =
-        "SELECT * FROM " + DB2Schema + ".AGENT WHERE AGENT_ID = ?";
-      this.GROUP_QUERY =
-        "SELECT GROUP_AGENT_ID,GROUP_NAME " +
-        "FROM " +
-        DB2Schema +
-        ".GROUP_INFORMATION " +
-        "WHERE PUBLIC=1";
+      this.SERVICE_QUERY = "SELECT SERVICE.AGENT_ID,SERVICE_CLASS_NAME,SERVICE_PATH FROM " +
+          DB2Schema +
+          ".SERVICE LEFT OUTER JOIN REGISTERED_AT ON SERVICE.AGENT_ID = REGISTERED_AT.AGENT_ID ORDER BY REGISTRATION_DATE";
+      this.AGENT_QUERY_WITH_MD5ID_PARAM = "SELECT * FROM " + DB2Schema + ".AGENT WHERE AGENT_ID = ?";
+      this.GROUP_QUERY = "SELECT GROUP_AGENT_ID,GROUP_NAME " +
+          "FROM " +
+          DB2Schema +
+          ".GROUP_INFORMATION " +
+          "WHERE PUBLIC=1";
       this.GROUP_QUERY_WITH_NAME_PARAM = this.GROUP_QUERY + " AND GROUP_NAME=?";
-      this.GROUP_QUERY_WITH_ID_PARAM =
-        this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
-      this.GROUP_AGENT_INSERT =
-        "INSERT INTO " + DB2Schema + ".AGENT VALUES (?, \"GROUP\")";
-      this.GROUP_INFORMATION_INSERT =
-        "INSERT INTO " + DB2Schema + ".GROUP_INFORMATION VALUES (?, ?, ?, 1)";
-      this.GROUP_INFORMATION_UPDATE =
-        "UPDATE " +
-        DB2Schema +
-        ".GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
-      this.UPDATE_GROUP_QUERY =
-        "UPDATE " +
-        DB2Schema +
-        ".GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
+      this.GROUP_QUERY_WITH_ID_PARAM = this.GROUP_QUERY + " AND GROUP_AGENT_ID=?";
+      this.GROUP_AGENT_INSERT = "INSERT INTO " + DB2Schema + ".AGENT VALUES (?, \"GROUP\")";
+      this.GROUP_INFORMATION_INSERT = "INSERT INTO " + DB2Schema + ".GROUP_INFORMATION VALUES (?, ?, ?, 1)";
+      this.GROUP_INFORMATION_UPDATE = "UPDATE " +
+          DB2Schema +
+          ".GROUP_INFORMATION SET GROUP_NAME = ? WHERE GROUP_AGENT_ID = ?";
+      this.UPDATE_GROUP_QUERY = "UPDATE " +
+          DB2Schema +
+          ".GROUP_INFORMATION SET GROUP_AGENT_ID_MD5 = ? , GROUP_AGENT_ID = ? WHERE GROUP_NAME = ? ";
     }
 
     try {
@@ -196,17 +178,13 @@ public class MonitoringDataProvisionService extends RESTService {
       System.out.println("Monitoring: Database connected!");
     } catch (Exception e) {
       System.out.println(
-        "Monitoring: Could not connect to database! " + e.getMessage()
-      );
+          "Monitoring: Could not connect to database! " + e.getMessage());
     }
     if (useFileService) {
-      measureFileBackend =
-        new FileServiceFileBackend(catalogFileLocation, fileServiceIdentifier);
-      modelFileBackend =
-        new FileServiceFileBackend(
+      measureFileBackend = new FileServiceFileBackend(catalogFileLocation, fileServiceIdentifier);
+      modelFileBackend = new FileServiceFileBackend(
           successModelsFolderLocation,
-          fileServiceIdentifier
-        );
+          fileServiceIdentifier);
     } else {
       measureFileBackend = new LocalFileBackend(catalogFileLocation);
       modelFileBackend = new LocalFileBackend(successModelsFolderLocation);
@@ -235,14 +213,15 @@ public class MonitoringDataProvisionService extends RESTService {
     } catch (FileBackendException e) {
       e.printStackTrace();
       Context
-        .get()
-        .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+          .get()
+          .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
       return new ArrayList<>();
     }
   }
 
   /**
-   * This method will read the content of the success model folder and generate a {@link SuccessModel} for each file.
+   * This method will read the content of the success model folder and generate a
+   * {@link SuccessModel} for each file.
    *
    * @return a map with the {@link SuccessModel}s
    * @throws IOException if there exists a problem with the file handling
@@ -255,25 +234,24 @@ public class MonitoringDataProvisionService extends RESTService {
         String successModelFileContent = getSuccessModelFile(successModelFile);
         System.out.println(successModelFileContent);
         SuccessModel successModel;
-        successModel =
-          readSuccessModelFile(successModelFileContent, measureCatalog);
+        successModel = readSuccessModelFile(successModelFileContent, measureCatalog);
         models.put(successModel.getName(), successModel);
       }
     } catch (Exception e) {
       e.printStackTrace();
       Context
-        .get()
-        .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+          .get()
+          .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
     }
     return models;
   }
 
   private List<String> getSuccessModels() throws FileBackendException {
     return modelFileBackend
-      .listFiles()
-      .stream()
-      .filter(s -> s.endsWith(".xml"))
-      .collect(Collectors.toList());
+        .listFiles()
+        .stream()
+        .filter(s -> s.endsWith(".xml"))
+        .collect(Collectors.toList());
   }
 
   public ArrayList<String> getServiceIds(String service) {
@@ -291,8 +269,7 @@ public class MonitoringDataProvisionService extends RESTService {
       }
     } catch (SQLException e) {
       System.out.println(
-        "(Visualize Success Model) The query has lead to an error: " + e
-      );
+          "(Visualize Success Model) The query has lead to an error: " + e);
       return new ArrayList<String>();
     }
     return serviceId;
@@ -302,15 +279,15 @@ public class MonitoringDataProvisionService extends RESTService {
    * Visualizes a given success model.
    *
    * @param modelName the name of the success model
-   * @param nodeName the name of a node necessary if a node success model should be calculated (can be set to null
-   *            otherwise)
+   * @param nodeName  the name of a node necessary if a node success model should
+   *                  be calculated (can be set to null
+   *                  otherwise)
    * @return a HTML representation of the success model
    */
   String visualizeSuccessModel(
-    String modelName,
-    String nodeName,
-    String catalog
-  ) {
+      String modelName,
+      String nodeName,
+      String catalog) {
     SuccessModel model = knownModels.get(modelName);
     // Reload models once
     if (model == null) {
@@ -335,14 +312,11 @@ public class MonitoringDataProvisionService extends RESTService {
         }
       } catch (SQLException e) {
         System.out.println(
-          "(Visualize Success Model) The query has lead to an error: " + e
-        );
+            "(Visualize Success Model) The query has lead to an error: " + e);
         return "Problems getting service agent!";
       }
       if (serviceId == null) {
-        return (
-          "Requested Service: " + model.getServiceName() + " is not monitored!"
-        );
+        return ("Requested Service: " + model.getServiceName() + " is not monitored!");
       }
     } else if (nodeName == null) {
       return "No node given!";
@@ -352,23 +326,22 @@ public class MonitoringDataProvisionService extends RESTService {
     List<Factor> factorsOfDimension;
     List<Measure> measuresOfFactor;
     StringBuilder returnStatement = new StringBuilder(
-      "<div id = '" + modelName + "'>\n"
-    );
+        "<div id = '" + modelName + "'>\n");
     for (int i = 0; i < dimensions.length; i++) {
       returnStatement
-        .append("<div id = '")
-        .append(dimensions[i])
-        .append("'>\n");
+          .append("<div id = '")
+          .append(dimensions[i])
+          .append("'>\n");
       returnStatement
-        .append("<h3>")
-        .append(dimensionNames[i])
-        .append("</h3>\n");
+          .append("<h3>")
+          .append(dimensionNames[i])
+          .append("</h3>\n");
       factorsOfDimension = model.getFactorsOfDimension(dimensions[i]);
       for (Factor factor : factorsOfDimension) {
         returnStatement
-          .append("<h4>")
-          .append(factor.getName())
-          .append("</h4>\n");
+            .append("<h4>")
+            .append(factor.getName())
+            .append("</h4>\n");
         measuresOfFactor = factor.getMeasures();
         for (Measure measure : measuresOfFactor) {
           if (serviceId != null) {
@@ -382,11 +355,10 @@ public class MonitoringDataProvisionService extends RESTService {
             returnStatement.append("\n<br>\n");
           } catch (Exception e) {
             System.out.println(
-              "Problems visualizing measure: " +
-              measure.getName() +
-              " Exception: " +
-              e
-            );
+                "Problems visualizing measure: " +
+                    measure.getName() +
+                    " Exception: " +
+                    e);
           }
         }
       }
@@ -467,30 +439,29 @@ public class MonitoringDataProvisionService extends RESTService {
         String measureCatalog = getMeasureCatalogForModel(successModelFile);
         if (measureCatalog != null) {
           SuccessModel successModel;
-          successModel =
-            readSuccessModelFile(successModelFileContent, measureCatalog);
+          successModel = readSuccessModelFile(successModelFileContent, measureCatalog);
           models.put(successModel.getName(), successModel);
-          // also insert success model in a second map that is structured differently for the v2 API
+          // also insert success model in a second map that is structured differently for
+          // the v2 API
           String group = getSuccessModelGroup(successModelFile);
           if (group != null) {
             if (!modelsV2.containsKey(group)) {
               modelsV2.put(group, new TreeMap<>());
             }
             modelsV2
-              .get(group)
-              .put(successModel.getServiceName(), successModel);
+                .get(group)
+                .put(successModel.getServiceName(), successModel);
           }
         } else {
           System.out.println(
-            "No measure catalog found for model " + successModelFile
-          );
+              "No measure catalog found for model " + successModelFile);
         }
       }
     } catch (Exception e) {
       e.printStackTrace();
       Context
-        .get()
-        .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+          .get()
+          .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
     }
     knownModels = models;
     knownModelsV2 = modelsV2;
@@ -501,7 +472,7 @@ public class MonitoringDataProvisionService extends RESTService {
     refreshModels();
   }
 
-  void ensureMobSOSDatabaseIsAccessibleInQVService() {
+  void ensureMobSOSDatabaseIsAccessibleInQVService() throws ServiceNotAvailableException {
     QVConnector connector = new QVConnector(this.mobsosQVServiceIdentifier);
     List<String> databaseKeys;
     try {
@@ -510,10 +481,10 @@ public class MonitoringDataProvisionService extends RESTService {
         return;
       }
     } catch (ServiceInvocationException e) {
-      System.out.println("ServiceInvocationException:" + e.getMessage());
       e.printStackTrace();
-      System.out.println("Aborting database key check...");
-      return;
+      if (e instanceof ServiceNotAvailableException) {
+        throw (ServiceNotAvailableException) e;
+      }
     }
     QVConnector.SQLDatabaseType dbType;
     if (this.databaseType == SQLDatabaseType.DB2) {
@@ -522,44 +493,39 @@ public class MonitoringDataProvisionService extends RESTService {
       dbType = QVConnector.SQLDatabaseType.MYSQL;
     }
     try {
-      System.out.println("Adding DB...");
       connector.grantUserAccessToDatabase(
-        this.QV_MOBSOS_DB_KEY,
-        dbType,
-        this.databaseUser,
-        this.databasePassword,
-        this.databaseName,
-        this.databaseHost,
-        this.databasePort
-      );
+          this.QV_MOBSOS_DB_KEY,
+          dbType,
+          this.databaseUser,
+          this.databasePassword,
+          this.databaseName,
+          this.databaseHost,
+          this.databasePort);
     } catch (Exception e) {
       System.out.println("Could not access the MobSOS QV Service: " + e);
     }
   }
 
   /**
-   * This method will read the contents of the catalog file and update the available measures.
+   * This method will read the contents of the catalog file and update the
+   * available measures.
    *
    * @return a map with the measures
    * @throws MalformedXMLException
    */
   protected MeasureCatalog updateMeasures(String measureFile)
-    throws MalformedXMLException {
+      throws MalformedXMLException {
     String measureXML = getMeasureFile(measureFile);
     return readMeasureCatalog(measureXML);
   }
 
   private MeasureCatalog readMeasureCatalog(String measureXML)
-    throws MalformedXMLException {
+      throws MalformedXMLException {
     Map<String, Measure> measures = new TreeMap<>();
     Element root;
     root = XmlTools.getRootElement(measureXML, "Catalog");
     NodeList children = root.getChildNodes();
-    for (
-      int measureNumber = 0;
-      measureNumber < children.getLength();
-      measureNumber++
-    ) {
+    for (int measureNumber = 0; measureNumber < children.getLength(); measureNumber++) {
       if (children.item(measureNumber).getNodeType() == Node.ELEMENT_NODE) {
         Element measureElement = (Element) children.item(measureNumber);
 
@@ -569,35 +535,27 @@ public class MonitoringDataProvisionService extends RESTService {
 
         if (!measureElement.hasAttribute("name")) {
           throw new MalformedXMLException(
-            "Catalog contains a measure without a name!"
-          );
+              "Catalog contains a measure without a name!");
         }
         String measureName = measureElement.getAttribute("name");
         if (measures.containsKey("measureName")) {
           throw new MalformedXMLException(
-            "Catalog already contains a measure " + measureName + "!"
-          );
+              "Catalog already contains a measure " + measureName + "!");
         }
         NodeList mChildren = measureElement.getChildNodes();
-        for (
-          int measureChildCount = 0;
-          measureChildCount < mChildren.getLength();
-          measureChildCount++
-        ) {
-          if (
-            mChildren.item(measureChildCount).getNodeType() == Node.ELEMENT_NODE
-          ) {
+        for (int measureChildCount = 0; measureChildCount < mChildren.getLength(); measureChildCount++) {
+          if (mChildren.item(measureChildCount).getNodeType() == Node.ELEMENT_NODE) {
             Element measureChild = (Element) mChildren.item(measureChildCount);
             String childType = measureChild.getNodeName();
 
             if (childType.equals("query")) {
               String queryName = measureChild.getAttribute("name");
               String query = measureChild.getFirstChild().getTextContent();
-              // Replace escape characters with their correct values (seems like the simple XML Parser
+              // Replace escape characters with their correct values (seems like the simple
+              // XML Parser
               // does not do
               // that)
-              query =
-                query
+              query = query
                   .replaceAll("&amp;&", "&")
                   .replaceAll("&lt;", "<")
                   .replaceAll("&lt;", "<")
@@ -607,15 +565,13 @@ public class MonitoringDataProvisionService extends RESTService {
             } else if (childType.equals("visualization")) {
               if (visualization != null) {
                 throw new MalformedXMLException(
-                  "Measure " +
-                  measureName +
-                  " is broken, duplicate 'Visualization' entry!"
-                );
+                    "Measure " +
+                        measureName +
+                        " is broken, duplicate 'Visualization' entry!");
               }
               visualization = readVisualization(measureChild);
             } else if (childType.equals("description")) {
-              description =
-                measureChild
+              description = measureChild
                   .getTextContent()
                   .replaceAll("&amp;&", "&")
                   .replaceAll("&lt;", "<")
@@ -624,30 +580,34 @@ public class MonitoringDataProvisionService extends RESTService {
                   .replaceAll("&lt;", "<");
             } else {
               throw new MalformedXMLException(
-                "Measure " +
-                measureName +
-                " is broken, illegal node " +
-                childType +
-                "!"
-              );
+                  "Measure " +
+                      measureName +
+                      " is broken, illegal node " +
+                      childType +
+                      "!");
             }
           }
         }
 
         if (visualization == null) {
           throw new MalformedXMLException(
-            "Measure " + measureName + " is broken, no visualization element!"
-          );
+              "Measure " + measureName + " is broken, no visualization element!");
         }
         if (queries.isEmpty()) {
-          throw new MalformedXMLException(
-            "Measure " + measureName + " is broken, no query element!"
-          );
+          if (measureElement.hasAttribute("sid")) {
+            if (!measureElement.hasAttribute("title")) {
+              throw new MalformedXMLException(
+                  "Measure " + measureName + " is broken, Limesurvey measures require a title!");
+            }
+          } else {
+            throw new MalformedXMLException(
+                "Measure " + measureName + " is broken, no query element!");
+             }
+
         }
         measures.put(
-          measureName,
-          new Measure(measureName, queries, visualization,description)
-        );
+            measureName,
+            new Measure(measureName, queries, visualization, description));
       }
     }
 
@@ -661,20 +621,16 @@ public class MonitoringDataProvisionService extends RESTService {
    * @throws MalformedXMLException
    */
   private Visualization readVisualization(Element visualizationElement)
-    throws MalformedXMLException {
+      throws MalformedXMLException {
     String visualizationType = visualizationElement.getAttribute("type");
     if (visualizationType.equals("Value")) {
       return new Value();
     } else if (visualizationType.equals("KPI")) {
-      Map<Integer, String> expression = new TreeMap<>();
+      String expression = "";
       NodeList children = visualizationElement.getChildNodes();
       for (int i = 0; i < children.getLength(); i++) {
         if (children.item(i).getNodeType() == Node.ELEMENT_NODE) {
-          int index = Integer.valueOf(
-            ((Element) children.item(i)).getAttribute("index")
-          );
-          String name = ((Element) children.item(i)).getAttribute("name");
-          expression.put(index, name);
+          expression = ((Element) children.item(i)).getAttribute("expression");
         }
       }
       return new KPI(expression);
@@ -722,8 +678,7 @@ public class MonitoringDataProvisionService extends RESTService {
       }
     }
     throw new MalformedXMLException(
-      "Unknown visualization type: " + visualizationType
-    );
+        "Unknown visualization type: " + visualizationType);
   }
 
   /**
@@ -733,10 +688,9 @@ public class MonitoringDataProvisionService extends RESTService {
    * @throws MalformedXMLException
    */
   private SuccessModel readSuccessModelFile(
-    String successModelXml,
-    String measureFilePath
-  )
-    throws MalformedXMLException {
+      String successModelXml,
+      String measureFilePath)
+      throws MalformedXMLException {
     Element root;
     try {
       root = XmlTools.getRootElement(successModelXml, "SuccessModel");
@@ -762,15 +716,9 @@ public class MonitoringDataProvisionService extends RESTService {
     }
     NodeList children = root.getChildNodes();
     ArrayList<Element> elements = new ArrayList<>();
-    for (
-      int dimensionNumber = 0;
-      dimensionNumber < children.getLength();
-      dimensionNumber++
-    ) {
-      if (
-        children.item(dimensionNumber).getNodeType() == Node.ELEMENT_NODE &&
-        children.item(dimensionNumber).getNodeName().equals("dimension")
-      ) {
+    for (int dimensionNumber = 0; dimensionNumber < children.getLength(); dimensionNumber++) {
+      if (children.item(dimensionNumber).getNodeType() == Node.ELEMENT_NODE &&
+          children.item(dimensionNumber).getNodeName().equals("dimension")) {
         elements.add((Element) children.item(dimensionNumber));
       }
     }
@@ -803,60 +751,45 @@ public class MonitoringDataProvisionService extends RESTService {
           break;
         default:
           throw new MalformedXMLException(
-            "Dimension " + dimensionName + " is unknown!"
-          );
+              "Dimension " + dimensionName + " is unknown!");
       }
       NodeList dChildren = dimensionElement.getChildNodes();
-      for (
-        int factorNumber = 0;
-        factorNumber < dChildren.getLength();
-        factorNumber++
-      ) {
+      for (int factorNumber = 0; factorNumber < dChildren.getLength(); factorNumber++) {
         if (dChildren.item(factorNumber).getNodeType() == Node.ELEMENT_NODE) {
           Element factorElement = (Element) dChildren.item(factorNumber);
           String factorName = factorElement.getAttribute("name");
           List<Measure> factorMeasures = new ArrayList<>();
           NodeList fChildren = factorElement.getChildNodes();
-          for (
-            int measureNumber = 0;
-            measureNumber < fChildren.getLength();
-            measureNumber++
-          ) {
-            if (
-              fChildren.item(measureNumber).getNodeType() == Node.ELEMENT_NODE
-            ) {
+          for (int measureNumber = 0; measureNumber < fChildren.getLength(); measureNumber++) {
+            if (fChildren.item(measureNumber).getNodeType() == Node.ELEMENT_NODE) {
               Element measureElement = (Element) fChildren.item(measureNumber);
               String measureName = measureElement.getAttribute("name");
               if (measureCatalogs.get(measureFilePath) == null) {
                 measureCatalogs.put(measureFilePath, new MeasureCatalog());
               }
-              if (
-                !measureCatalogs
+              if (!measureCatalogs
                   .get(measureFilePath)
                   .getMeasures()
-                  .containsKey(measureName)
-              ) {
+                  .containsKey(measureName)) {
                 measureCatalogs.put(
-                  measureFilePath,
-                  updateMeasures(measureFilePath)
-                );
+                    measureFilePath,
+                    updateMeasures(measureFilePath));
               }
-              if (
-                !measureCatalogs
+              if (measureCatalogs
                   .get(measureFilePath)
                   .getMeasures()
-                  .containsKey(measureName)
-              ) {
-                throw new MalformedXMLException(
-                  "Measure name " + measureName + " is unknown!"
-                );
+                  .containsKey(measureName)) {
+                factorMeasures.add(
+                    measureCatalogs
+                        .get(measureFilePath)
+                        .getMeasures()
+                        .get(measureName));
+
+              } else {
+                System.out
+                    .println("Skipping adding measure " + measureName + " since it is unknown! in the catalog");
               }
-              factorMeasures.add(
-                measureCatalogs
-                  .get(measureFilePath)
-                  .getMeasures()
-                  .get(measureName)
-              );
+
             }
           }
           Factor factor = new Factor(factorName, dimension, factorMeasures);
@@ -868,11 +801,10 @@ public class MonitoringDataProvisionService extends RESTService {
       return new NodeSuccessModel(modelName, factors, successModelXml);
     }
     return new ServiceSuccessModel(
-      modelName,
-      serviceName,
-      factors,
-      successModelXml
-    );
+        modelName,
+        serviceName,
+        factors,
+        successModelXml);
   }
 
   /**
@@ -895,15 +827,14 @@ public class MonitoringDataProvisionService extends RESTService {
    * @return the measure with inserted serviceId
    */
   /*
-	protected Measure insertService(Measure measure, String serviceId) {
-	    Pattern pattern = Pattern.compile("\\$SERVICE\\$");
-	    return insertQueryVariable(measure, serviceId, pattern);
-	}
-	*/
+   * protected Measure insertService(Measure measure, String serviceId) {
+   * Pattern pattern = Pattern.compile("\\$SERVICE\\$");
+   * return insertQueryVariable(measure, serviceId, pattern);
+   * }
+   */
   protected Measure insertService(
-    Measure measure,
-    ArrayList<String> serviceId
-  ) {
+      Measure measure,
+      ArrayList<String> serviceId) {
     String[] ps = new String[2];
     ps[0] = "SOURCE";
     ps[1] = "DESTINATION";
@@ -916,9 +847,9 @@ public class MonitoringDataProvisionService extends RESTService {
     Map<String, String> insertedQueries = new HashMap<>();
 
     Iterator<Map.Entry<String, String>> queries = measure
-      .getQueries()
-      .entrySet()
-      .iterator();
+        .getQueries()
+        .entrySet()
+        .iterator();
     while (queries.hasNext()) {
       Map.Entry<String, String> entry = queries.next();
       String[] r = new String[ps.length];
@@ -944,17 +875,15 @@ public class MonitoringDataProvisionService extends RESTService {
   }
 
   private Measure insertQueryVariable(
-    Measure measure,
-    String serviceId,
-    Pattern pattern
-  ) {
+      Measure measure,
+      String serviceId,
+      Pattern pattern) {
     Map<String, String> insertedQueries = new HashMap<>();
 
     for (Map.Entry<String, String> entry : measure.getQueries().entrySet()) {
       insertedQueries.put(
-        entry.getKey(),
-        (pattern.matcher(entry.getValue()).replaceAll(serviceId))
-      );
+          entry.getKey(),
+          (pattern.matcher(entry.getValue()).replaceAll(serviceId)));
     }
     measure.setInsertedQueries(insertedQueries);
     return measure;
@@ -962,10 +891,10 @@ public class MonitoringDataProvisionService extends RESTService {
 
   List<String> getMeasureCatalogList() throws FileBackendException {
     return measureFileBackend
-      .listFiles()
-      .stream()
-      .filter(s -> s.endsWith(".xml"))
-      .collect(Collectors.toList());
+        .listFiles()
+        .stream()
+        .filter(s -> s.endsWith(".xml"))
+        .collect(Collectors.toList());
   }
 
   private String getMeasureFile(String file) {
@@ -975,8 +904,8 @@ public class MonitoringDataProvisionService extends RESTService {
       // one may want to handle some exceptions differently
       e.printStackTrace();
       Context
-        .get()
-        .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+          .get()
+          .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
     }
     return "";
   }
@@ -999,41 +928,38 @@ public class MonitoringDataProvisionService extends RESTService {
   }
 
   void writeMeasureCatalog(String xml, String group)
-    throws MalformedXMLException, FileBackendException {
+      throws MalformedXMLException, FileBackendException {
     readMeasureCatalog(xml);
     measureFileBackend.writeFile(
-      Paths.get(group, "measure-catalog.xml").toString(),
-      xml,
-      group
-    );
+        Paths.get(group, "measure-catalog.xml").toString(),
+        xml,
+        group);
     refreshMeasuresAndModels();
   }
 
   void writeSuccessModel(String xml, String group, String expectedServiceName)
-    throws MalformedXMLException, FileBackendException {
+      throws MalformedXMLException, FileBackendException {
     String measureFilePath = getMeasureCatalogFilePathByGroup(group);
     SuccessModel successModel = readSuccessModelFile(xml, measureFilePath);
     if (!successModel.getServiceName().equals(expectedServiceName)) {
       throw new MalformedXMLException(
-        "Service name is " +
-        successModel.getServiceName() +
-        " and not " +
-        expectedServiceName
-      );
+          "Service name is " +
+              successModel.getServiceName() +
+              " and not " +
+              expectedServiceName);
     }
     modelFileBackend.writeFile(
-      Paths.get(group, successModel.getServiceName() + ".xml").toString(),
-      xml,
-      group
-    );
+        Paths.get(group, successModel.getServiceName() + ".xml").toString(),
+        xml,
+        group);
     refreshMeasuresAndModels();
   }
 
   Map<String, String> getCustomMessageDescriptionsForService(String serviceID) {
     try {
       return (Map<String, String>) Context
-        .get()
-        .invoke(serviceID, "getCustomMessageDescriptions");
+          .get()
+          .invoke(serviceID, "getCustomMessageDescriptions");
     } catch (ServiceInvocationException e) {
       System.out.println(serviceID + ": " + e.getMessage());
       return new HashMap<>();
@@ -1047,8 +973,8 @@ public class MonitoringDataProvisionService extends RESTService {
       // one may want to handle some exceptions differently
       e.printStackTrace();
       Context
-        .get()
-        .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+          .get()
+          .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
     }
     return "";
   }
@@ -1066,18 +992,16 @@ public class MonitoringDataProvisionService extends RESTService {
   }
 
   public net.minidev.json.JSONArray getTrainingDataUnits(
-    String serviceName,
-    String logMessageType
-  ) {
+      String serviceName,
+      String logMessageType) {
     net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
     try {
       // GET SERVICE AGENT
       ArrayList<String> sa = getServiceIds(serviceName);
       // GET MESSAGE FOR SERVICE AGENT
-      String q =
-        "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE (SOURCE_AGENT='" +
-        sa.get(0) +
-        "'";
+      String q = "SELECT REMARKS->>\"$.unit\" u FROM MESSAGE WHERE (SOURCE_AGENT='" +
+          sa.get(0) +
+          "'";
       if (sa.size() > 1) {
         for (int i = 1; i < sa.size(); ++i) {
           q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
@@ -1094,26 +1018,25 @@ public class MonitoringDataProvisionService extends RESTService {
       // one may want to handle some exceptions differently
       e.printStackTrace();
       Context
-        .get()
-        .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+          .get()
+          .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
     }
     return resultList;
   }
 
   public net.minidev.json.JSONArray getTrainingDataSet(
-    String serviceName,
-    String unit,
-    String logMessageType
-  ) {
+      String serviceName,
+      String unit,
+      String logMessageType) {
     net.minidev.json.JSONArray resultList = new net.minidev.json.JSONArray();
     try {
       // GET SERVICE AGENT
       ArrayList<String> sa = getServiceIds(serviceName);
       // GET MESSAGE FOR SERVICE AGENT
-      String q =
-        "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE (SOURCE_AGENT='" +
-        sa.get(0) +
-        "'";
+      String q = "SELECT JSON_EXTRACT(REMARKS,'$.from') f, JSON_EXTRACT(REMARKS,'$.to') t FROM MESSAGE WHERE (SOURCE_AGENT='"
+          +
+          sa.get(0) +
+          "'";
       if (sa.size() > 1) {
         for (int i = 1; i < sa.size(); ++i) {
           q += " OR SOURCE_AGENT='" + sa.get(i) + "'";
@@ -1137,8 +1060,8 @@ public class MonitoringDataProvisionService extends RESTService {
       // one may want to handle some exceptions differently
       e.printStackTrace();
       Context
-        .get()
-        .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
+          .get()
+          .monitorEvent(this, MonitoringEvent.SERVICE_ERROR, e.toString());
     }
     return resultList;
   }
@@ -1155,20 +1078,19 @@ public class MonitoringDataProvisionService extends RESTService {
       refreshMeasuresAndModels();
       measureUpdatingStarted = true;
       Context
-        .get()
-        .getExecutor()
-        .execute(
-          () -> {
-            while (measureUpdatingStarted) {
-              try {
-                Thread.sleep(FILE_REFRESH_INTERVAL);
-              } catch (InterruptedException e) {
-                e.printStackTrace();
-              }
-              refreshMeasuresAndModels();
-            }
-          }
-        );
+          .get()
+          .getExecutor()
+          .execute(
+              () -> {
+                while (measureUpdatingStarted) {
+                  try {
+                    Thread.sleep(FILE_REFRESH_INTERVAL);
+                  } catch (InterruptedException e) {
+                    e.printStackTrace();
+                  }
+                  refreshMeasuresAndModels();
+                }
+              });
     }
   }
 }
